@@ -1,0 +1,91 @@
+# PayPal integration
+
+All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 Oct 2026; recheck them during the day-1 spike.
+
+## 1. Sandbox setup (day 1)
+
+1. In the Developer Dashboard, create a **US sandbox Business account** (Ada) and a **US sandbox Personal account** (the client/buyer). A forum report shows a non-US sandbox merchant getting 422s on capture ([forum](https://paypalaihackathon.devpost.com/forum_topics/45513-sandbox-we-aren-t-able-to-process-your-payment-using-your-paypal-account-at-this-time)).
+2. Create a REST app linked to the US Business account. Enable these features: **Invoicing, Disputes (Customer disputes add-on), Transaction Search, Payouts (off)**. After changing features, request a new token so the new scopes take effect.
+3. Register the webhook URL and subscribe to the events in §6. Store `PAYPAL_WEBHOOK_ID`.
+
+## 2. OAuth
+
+- `POST /v1/oauth2/token` with Basic `client_id:secret` and `grant_type=client_credentials`.
+- Cache the token, which lasts hours in the sandbox, and refresh on a 401.
+
+## 3. Invoicing v2 (F2): REST client
+
+- **Endpoints:**
+  - `POST /v2/invoicing/generate-next-invoice-number`
+  - `POST /v2/invoicing/invoices`: create a draft. It needs `items[]`. Use `detail.note`, `detail.terms_and_conditions` and `detail.payment_term`.
+  - `POST /v2/invoicing/invoices/{id}/send`
+  - `GET /v2/invoicing/invoices/{id}`
+  - `POST /v2/invoicing/invoices/{id}/remind`
+  - `POST /v2/invoicing/invoices/{id}/generate-qr-code`: returns a base64 PNG, used by N4.
+  - `POST /v2/invoicing/invoices/{id}/payments`: records an off-PayPal payment; used only in tests.
+- **Webhooks:** `INVOICING.INVOICE.PAID`, `.UPDATED`, `.CANCELLED`, `.REFUNDED`.
+- **Reference:** [Invoicing v2](https://developer.paypal.com/docs/api/invoicing/v2/).
+- **Demo:** the sandbox buyer pays the invoice from the PayPal-hosted invoice link. The paid webhook reaches the timeline.
+
+## 4. Orders v2 + Add Tracking (F3, F4): `@paypal/paypal-server-sdk`
+
+- **Shop sales (goods path):** `POST /v2/checkout/orders` → buyer approves → `POST /v2/checkout/orders/{id}/capture`.
+- **Tracking:** `POST /v2/checkout/orders/{id}/track` with `{capture_id, tracking_number, carrier, notify_payer, items}`. Cancel with `PATCH …/trackers/{tracker_id}`.
+  - **Do not** use `/v1/shipping/trackers-batch`; it is deprecated. The Agent Toolkit's tracking tool still uses it.
+- **Built with the APIMatic Context Plugin** (`npx context-plugins install paypal`). Keep transcripts and screenshots for [SPONSORS.md](SPONSORS.md).
+- **Webhooks:** `CHECKOUT.ORDER.APPROVED`, `PAYMENT.CAPTURE.COMPLETED`, `.PENDING`, `.REFUNDED`, `.REVERSED`.
+- **Caveat:** `seller_protection.status=ELIGIBLE` is a snapshot of declared data, not a guarantee. Don't present it as one.
+
+## 5. Disputes v1 (F6, F8): REST client
+
+| Action | Endpoint | Notes |
+| --- | --- | --- |
+| List / get | `GET /v1/customer/disputes`, `GET /v1/customer/disputes/{id}` | Always drive actions from the response's HATEOAS `links` |
+| **Provide evidence** | `POST /v1/customer/disputes/{id}/provide-evidence` (multipart) | Parts: `input` (JSON `{evidences:[{evidence_type, notes, evidence_info:{tracking_info:[…]}}]}`) plus `evidence-file` parts. Files must be JPG/GIF/PNG/PDF, ≤10 MB each, ≤50 MB per case. Only allowed when status is `WAITING_FOR_SELLER_RESPONSE` **and** the link exists. |
+| Accept claim | `POST …/{id}/accept-claim` | Refunds the buyer. Offered as an option when evidence is weak. |
+| Make offer | `POST …/{id}/make-offer` | `INQUIRY` stage only |
+| Send message | `POST …/{id}/send-message` | Inquiry-stage message to the buyer |
+
+**Evidence types used:**
+- `PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED` (Ada's case)
+- `PROOF_OF_FULFILLMENT`
+- `ONLINE_TRACKING_INFORMATION`
+- `COPY_OF_CONTRACT` (the invoice + terms)
+- `PROOF_OF_REFUND`
+
+**Sandbox simulation for judge mode** ([test guide](https://developer.paypal.com/disputes/test-go-live)):
+- **Create:** `POST /v1/customer/disputes` (sandbox only), multipart `input={disputed_transactions:[{buyer_transaction_id}], reason, dispute_amount}`.
+  - It needs a `PayPal-Auth-Assertion` header: an unsigned JWT, header `{"alg":"none"}`, payload `{"iss": client_id, "email": buyer_email}`.
+  - Use amounts ≥ $11 so the dispute doesn't escalate early.
+- **Move to seller response:** `POST …/{id}/require-evidence`, which takes the status to `WAITING_FOR_SELLER_RESPONSE`.
+- **Resolve:** `POST …/{id}/adjudicate` with `{"adjudication_outcome":"SELLER_FAVOR"}`. This produces `CUSTOMER.DISPUTE.RESOLVED`.
+- **Backup path:** the sandbox buyer opens a case in the sandbox Resolution Center UI. It takes a few minutes to appear.
+
+**Webhooks:** `CUSTOMER.DISPUTE.CREATED`, `.UPDATED`, `.RESOLVED`.
+
+## 6. Webhooks (F5)
+
+- **Subscribe:** all events above. `POST /v1/notifications/webhooks`, or set them up in the Dashboard.
+- **Verify every event:** `POST /v1/notifications/verify-webhook-signature`, or locally with RSA-SHA256 over `transmissionId|timeStamp|webhookId|crc32(rawBody)`. **Read the raw body before parsing.**
+- **Simulator events cannot be verified** ([simulator](https://developer.paypal.com/api/rest/webhooks/simulator/)). Accept them only when `DEMO_MODE=true`, and tag them "simulated" in the timeline.
+- **Idempotency:** store `event.id` as a unique key. PayPal retries up to 25 times over 3 days.
+- **Processing:** store the event, start the workflow task, and return 200 quickly.
+
+## 7. Transaction Search (F1 history): cached only
+
+- `GET /v1/reporting/transactions` (feature must be enabled; max 31-day window per request).
+- Data **lags up to 3 hours**, so never rely on it in the live demo. Seed Ada's history on day 1 and cache it nightly.
+
+## 8. Open questions for the day-1 spike
+
+1. Can a **service** order be marked "completed" through any public API, to start the 7-day release from [help129](https://www.paypal.com/us/cshelp/article/help129)? If not, the hold coach guides the seller to PayPal's "Get your money" flow. Is carrier `OTHER` with a delivery reference accepted for intangible goods?
+2. Does an invoice payment produce a `capture_id` usable with `/track`? (Needed only for goods sold by invoice.)
+3. Does sandbox `provide-evidence` accept PDFs we generate (the packet PDF and the acceptance receipt)?
+4. Does the sandbox MCP server still fail on `create_invoice`? This decides whether N1 uses the remote MCP or local `npx @paypal/mcp`.
+
+## 9. What we will not touch
+
+- **Agent Ready, Store Sync and WebMCP checkout:** gated, with no public sandbox.
+- **Wallet vaulting on platform apps:** returns `NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE`.
+- **Payouts and Venmo.**
+- **Any live credentials.**
