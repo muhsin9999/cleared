@@ -414,11 +414,34 @@ export default function StyleguidePage() {
                   </div>
                 </div>
                 <div>
-                  <Label>Logo</Label>
-                  <div className="flex items-center gap-8 rounded-[10px] border border-line bg-surface p-6">
-                    <Logo />
-                    <div className="rounded-lg bg-ink px-4 py-3">
-                      <Logo className="text-surface [&_svg]:text-cleared-tint" />
+                  <Label>Logo set</Label>
+                  <div className="grid gap-px overflow-hidden rounded-[10px] border border-line bg-line sm:grid-cols-2">
+                    <div className="flex min-h-28 flex-col items-start justify-between gap-4 bg-surface p-5">
+                      <span className="text-xs text-muted-foreground">Mark only (CLEARED on the ring from 40px)</span>
+                      <StampMark className="size-16 text-cleared" />
+                    </div>
+                    <div className="flex min-h-28 flex-col items-start justify-between gap-4 bg-surface p-5">
+                      <span className="text-xs text-muted-foreground">Wordmark (landing nav)</span>
+                      <Logo size="lg" mark={false} />
+                    </div>
+                    <div className="flex min-h-28 flex-col items-start justify-between gap-4 bg-surface p-5">
+                      <span className="text-xs text-muted-foreground">Horizontal lockup (sidebar, footer)</span>
+                      <Logo />
+                    </div>
+                    <div className="flex min-h-28 flex-col items-start justify-between gap-4 bg-surface p-5">
+                      <span className="text-xs text-muted-foreground">Favicon sizes: 16, 24, 32px</span>
+                      <span className="flex items-end gap-4 text-cleared">
+                        <StampMark className="size-4" />
+                        <StampMark className="size-6" />
+                        <StampMark className="size-8" />
+                      </span>
+                    </div>
+                    <div className="flex min-h-28 flex-col items-start justify-between gap-4 bg-ink p-5 sm:col-span-2">
+                      <span className="text-xs text-paper/60">Reversed on ink</span>
+                      <span className="flex items-center gap-8">
+                        <Logo size="lg" className="text-paper [&_.text-cleared]:text-chart-2" />
+                        <StampMark className="size-14 text-chart-2" />
+                      </span>
                     </div>
                   </div>
                 </div>

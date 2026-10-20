@@ -24,8 +24,8 @@
 
 ## Brand: "Ledger" (chosen)
 
-- **Name styling:** lowercase **cleared** in Geist Semibold with tight tracking (−0.02em).
-- **Mark:** a circular stamp with a check. The same stamp seals the evidence packet, so the brand *is* the product moment.
+- **Name styling:** lowercase **cleared.** in Geist Bold with tight tracking (−0.035em); the full stop is `--cleared` green (on ink, `--cleared-tint`). The landing nav uses the wordmark alone at 1.6rem; the sidebar and footer use the lockup (stamp + wordmark). `Logo` takes `size` (sm/md/lg) and `mark`.
+- **Mark:** a circular stamp: outer ring, thin inner ring, "CLEARED" on a circular path and a bold check. Under 40px (`StampMark` decides with a container query) the text drops and a heavy ring + check remain, as in the favicon (`src/app/icon.svg`, `apple-icon.png`). The same stamp seals the evidence packet, so the brand *is* the product moment.
 - **Theme:** **light** by default. Documents (invoice, packet) read as real paper and stay legible after video compression. Dark mode is supported via tokens but isn't the demo theme.
 
 | Token | Hex | Use |

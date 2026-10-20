@@ -30,3 +30,26 @@ export function SubmitButton({
     </>
   );
 }
+
+/** The quiet alternative to a SubmitButton: a submit control that reads as an underlined text link. */
+export function TextSubmit({ children, pendingLabel, className }: { children: React.ReactNode; pendingLabel: string; className?: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      <button
+        type="submit"
+        disabled={pending}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-sm text-[0.95rem] text-ink/75 underline decoration-ink/25 underline-offset-[5px] transition-colors hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring disabled:opacity-60",
+          className,
+        )}
+      >
+        {pending ? <Spinner aria-hidden className="size-3.5" /> : null}
+        {pending ? pendingLabel : children}
+      </button>
+      <span className="sr-only" role="status" aria-live="polite">
+        {pending ? pendingLabel : ""}
+      </span>
+    </>
+  );
+}

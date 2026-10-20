@@ -1,42 +1,41 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { cn } from "@/lib/utils";
 
 export const GITHUB_URL = "https://github.com/muhsin9999/cleared";
 
 const NAV = [
-  { href: "/#how-it-works", label: "What it does" },
+  { href: "/#how-it-works", label: "How it works" },
   { href: "/#for-judges", label: "For judges" },
 ];
 
-export function SiteHeader() {
+const LINK = "rounded-md px-2.5 py-1.5 text-[0.95rem] text-ink/75 transition-colors hover:text-ink";
+
+/** `overlay` lays the bar over the landing hero's photo instead of above the page. */
+export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   return (
-    <header className="relative z-20 mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-      <Link href="/" className="-m-1 rounded-md p-1" aria-label="cleared, home">
-        <Logo />
-      </Link>
-      <nav aria-label="Main" className="flex items-center gap-0.5 text-sm sm:gap-1">
-        {NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="hidden rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-ink sm:inline-flex"
-          >
-            {item.label}
-          </Link>
-        ))}
-        <Link href="/#for-judges" className="rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-ink sm:hidden">
-          Judges
+    <header className={cn("z-20 w-full", overlay ? "absolute inset-x-0 top-0" : "relative")}>
+      <div className="mx-auto flex h-18 w-full max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-20 sm:px-8 xl:px-[clamp(2rem,5.5vw,6rem)]">
+        <Link href="/" className="-m-1 rounded-md p-1" aria-label="cleared, home">
+          <Logo size="lg" mark={false} />
         </Link>
-        <a
-          href={GITHUB_URL}
-          className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-ink"
-        >
-          GitHub
-          <ArrowUpRight className="size-3.5" aria-hidden />
-          <span className="sr-only">(opens the source code)</span>
-        </a>
-      </nav>
+        <nav aria-label="Main" className="flex items-center gap-0.5 sm:gap-3">
+          {NAV.map((item) => (
+            <Link key={item.href} href={item.href} className={cn(LINK, "hidden sm:inline-flex")}>
+              {item.label}
+            </Link>
+          ))}
+          <Link href="/#for-judges" className={cn(LINK, "sm:hidden")}>
+            Judges
+          </Link>
+          <a href={GITHUB_URL} className={cn(LINK, "inline-flex items-center gap-1")}>
+            GitHub
+            <ArrowUpRight className="size-3.5" aria-hidden />
+            <span className="sr-only">(opens the source code)</span>
+          </a>
+        </nav>
+      </div>
     </header>
   );
 }
