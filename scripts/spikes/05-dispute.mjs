@@ -45,12 +45,13 @@ if (cmd === "create") {
     for (let i = 0; i < 10 && d.dispute_life_cycle_stage === "INQUIRY"; i++) { await wait(3000); d = await status(arg); }
     step("escalate inquiry → claim", d.dispute_life_cycle_stage !== "INQUIRY", `${d.status} stage=${d.dispute_life_cycle_stage}`);
   }
-  if (d.status !== "WAITING_FOR_SELLER_RESPONSE") {
+  if (d.status !== "WAITING_FOR_SELLER_RESPONSE" && !has("provide_evidence") && has("require_evidence")) {
     await pp("POST", `/v1/customer/disputes/${arg}/require-evidence`, { body: { action: "SELLER_EVIDENCE" } });
     for (let i = 0; i < 10 && d.status !== "WAITING_FOR_SELLER_RESPONSE"; i++) { await wait(3000); d = await status(arg); }
     step("require-evidence → WAITING_FOR_SELLER_RESPONSE", d.status === "WAITING_FOR_SELLER_RESPONSE", `${d.status} stage=${d.dispute_life_cycle_stage}`);
   }
   console.log("links:", d.links.map((l) => l.rel).join(", "));
+  if (!d.links.some((l) => l.rel === "provide_evidence")) { step("provide-evidence link present", false, "PayPal does not allow evidence in this state"); process.exit(1); }
   const form = new FormData();
   form.append("input", new Blob([JSON.stringify({ evidences: [{ evidence_type: "PROOF_OF_FULFILLMENT",
     notes: "Client accepted the delivered files on the Cleared acceptance page. See exhibit A." }] })], { type: "application/json" }));
@@ -63,6 +64,8 @@ if (cmd === "create") {
   } catch (e) { step("provide-evidence with PDF", false, e.message.slice(0, 400)); }
   d = await status(arg);
   console.log("after evidence:", d.status, d.dispute_life_cycle_stage, "evidences:", (d.evidences ?? []).length);
+  for (let i = 0; i < 10 && !d.links.some((l) => l.rel === "adjudicate"); i++) { await wait(3000); d = await status(arg); }
+  console.log("links now:", d.links.map((l) => l.rel).join(", "));
   try {
     await pp("POST", `/v1/customer/disputes/${arg}/adjudicate`, { body: { adjudication_outcome: "SELLER_FAVOR" } });
     for (let i = 0; i < 10 && d.status !== "RESOLVED"; i++) { await wait(3000); d = await status(arg); }

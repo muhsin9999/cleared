@@ -87,6 +87,14 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 | Buyer pays the invoice | **Pass**, invoice `PAID`; payment id `35156309J57118646` |
 | `INVOICING.INVOICE.PAID` webhook + `verify-webhook-signature` | **Pass**, `SUCCESS` on a real event (redelivered with `POST /v1/notifications/webhooks-events/{id}/resend` after the tunnel dropped) |
 | Render Workflows: `startTask` → chained tasks → PayPal OAuth inside a task | **Pass** on the local task server (`render workflows dev`, SDK 1.3.0). The SDK method is `render.workflows.startTask`, not `runTask`. Hosted run on day 2 |
+| Orders create → buyer approves → capture → `/track` | **Pass** (capture `00X721973U2377446`, `seller_protection=ELIGIBLE`, tracker `SHIPPED`). The new checkout page (`payment_source.paypal.experience_context`) failed twice with "Things don't appear to be working"; the classic `application_context` approve link worked. **Use the classic form for the demo.** |
+| `CHECKOUT.ORDER.APPROVED`, `PAYMENT.CAPTURE.COMPLETED` webhooks | **Pass**, both verified |
+| Card payments | Not enabled: `PAYEE_NOT_ENABLED_FOR_CARD_PROCESSING`. Turn on Advanced Credit and Debit Card in the app only if we need card-paid test orders |
+| Buyer opens a dispute in the sandbox UI | **Pass**, `PP-R-JBX-10193752` (INR, $40, on the invoice payment). Visible to the API after a few minutes, in `WAITING_FOR_SELLER_RESPONSE` / `INQUIRY` |
+| Escalate (seller) | Status went to `UNDER_REVIEW`, but the stage stayed `INQUIRY` and only a note was recorded |
+| **`provide-evidence` with a generated PDF** | **Pass, HTTP 200.** Answers §8 Q3: our own PDFs are accepted |
+| `require-evidence`, `adjudicate` | **Not yet:** `ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE`; no `adjudicate` link offered while the case is in inquiry. Next test: the buyer escalates a case to a claim in the UI, then retry. **Always follow the HATEOAS links**; never call an action PayPal doesn't offer |
+| `CUSTOMER.DISPUTE.*` webhooks | **None received** for a UI-opened dispute (none in `webhooks-events` either). **Design consequence:** a poller task (`GET /v1/customer/disputes`, every few minutes from cron, and on demand in judge mode) detects new and changed disputes; the webhook is a bonus, deduplicated by dispute id |
 | **Dispute create via API** | **Blocked:** `400 No permissions to set target_client_id`. PayPal's [set-up guide](https://developer.paypal.com/disputes/set-up) says the `disputes/create` scope must be added by a PayPal account manager, plus Log in with PayPal buyer consent |
 
 **Consequence for judge mode (F8):** until the scope is granted, disputes are opened by the sandbox buyer in the PayPal UI (Resolution Center). We keep a **pool of pre-opened disputes**. "Simulate a buyer dispute" claims the next one and runs everything after creation live through the API: escalate → `require-evidence` → evidence packet → `provide-evidence` → `adjudicate`. Ask for the scope through PayPal developer support and the hackathon Discord; if it arrives, switch back to API creation.
@@ -97,7 +105,7 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 
 1. Can a **service** order be marked "completed" through any public API, to start the 7-day release from [help129](https://www.paypal.com/us/cshelp/article/help129)? If not, the hold coach guides the seller to PayPal's "Get your money" flow. Is carrier `OTHER` with a delivery reference accepted for intangible goods?
 2. Does an invoice payment produce a `capture_id` usable with `/track`? (Needed only for goods sold by invoice.)
-3. Does sandbox `provide-evidence` accept PDFs we generate (the packet PDF and the acceptance receipt)?
+3. ~~Does sandbox `provide-evidence` accept PDFs we generate?~~ **Yes** (20 Oct, HTTP 200).
 4. Does the sandbox MCP server still fail on `create_invoice`? This decides whether N1 uses the remote MCP or local `npx @paypal/mcp`.
 
 ## 9. What we will not touch
