@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, m, useInView, useReducedMotion } from "motion/react";
 import { BadgeCheck, Check, FileImage, FileText, ReceiptText, TriangleAlert } from "lucide-react";
@@ -8,10 +8,13 @@ import { ReadinessRing } from "@/components/brand/readiness-ring";
 import { cn } from "@/lib/utils";
 import { InkStamp } from "./hero-stage";
 
-/** Counts 0 → steps.length once the element scrolls into view, one step every `gap` ms. */
-function useSteps(count: number, { gap, start }: { gap: number; start: number }) {
+/**
+ * Counts 0 → count once, on its own, when 40% of the element is on screen: one step every `gap` ms
+ * after `start`. `order` staggers the three panels (350ms each) so they read left to right.
+ */
+function useSteps(count: number, { gap, start, order = 0 }: { gap: number; start: number; order?: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px -15% 0px" });
+  const inView = useInView(ref, { once: true, amount: 0.4 });
   const reduce = useReducedMotion();
   const [step, setStep] = useState(0);
 
@@ -21,9 +24,10 @@ function useSteps(count: number, { gap, start }: { gap: number; start: number })
       const t = window.setTimeout(() => setStep(count), 0);
       return () => clearTimeout(t);
     }
-    const timers = Array.from({ length: count }, (_, i) => window.setTimeout(() => setStep(i + 1), start + i * gap));
+    const lead = start + order * 350;
+    const timers = Array.from({ length: count }, (_, i) => window.setTimeout(() => setStep(i + 1), lead + i * gap));
     return () => timers.forEach(clearTimeout);
-  }, [inView, reduce, count, gap, start]);
+  }, [inView, reduce, count, gap, start, order]);
 
   return { ref, step };
 }
@@ -38,7 +42,7 @@ const CHECKS = [
 ];
 
 export function CheckMoment() {
-  const { ref, step } = useSteps(CHECKS.length, { gap: 450, start: 500 });
+  const { ref, step } = useSteps(CHECKS.length, { gap: 420, start: 300, order: 0 });
   const score = step === 0 ? 38 : CHECKS[step - 1].score;
   return (
     <div ref={ref} className="flex w-full items-center gap-5">
@@ -75,7 +79,7 @@ const LOCKER = [
 ];
 
 export function LockerMoment() {
-  const { ref, step } = useSteps(LOCKER.length, { gap: 380, start: 350 });
+  const { ref, step } = useSteps(LOCKER.length, { gap: 380, start: 300, order: 1 });
   return (
     <div ref={ref} className="w-full">
       <p className="mb-2 flex items-center justify-between text-[0.75rem] text-muted-foreground">
@@ -117,7 +121,7 @@ const EXHIBITS = [
 
 export function DisputeMoment() {
   // 1: reply page replaces the notice · 2–4: exhibits A, B, C · 5: sealed
-  const { ref, step } = useSteps(5, { gap: 420, start: 900 });
+  const { ref, step } = useSteps(5, { gap: 420, start: 450, order: 2 });
   return (
     <div ref={ref} className="relative mx-auto w-full max-w-[21rem]" role="img" aria-label="A “not received” dispute becomes a drafted reply citing three exhibits, sealed with the cleared stamp once Ada approves it">
       <AnimatePresence mode="wait" initial={false}>
@@ -174,39 +178,70 @@ export function DisputeMoment() {
   );
 }
 
-/** A big figure that counts up from zero the first time it scrolls into view. */
-export function CountUp({ value, suffix, className }: { value: number; suffix?: string; className?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px" });
+type CountState = { go: boolean; armed: boolean };
+const CountContext = createContext<CountState>({ go: true, armed: false });
+
+/**
+ * Wraps the numbers band and starts every CountUp inside it together, once, when half the band is
+ * on screen (plus 250ms). Server HTML and no-JS show the final figures. On the client the figures
+ * are reset to 0 only if the band is still below the fold, so nobody sees a 0 flash.
+ */
+export function CountUpGroup({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDListElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
   const reduce = useReducedMotion();
-  // Server and first paint show the real number; it only resets to 0 if it is still off-screen.
-  const [shown, setShown] = useState(value);
-  const armed = useRef(false);
+  const [armed, setArmed] = useState(false);
+  const [go, setGo] = useState(true);
 
   useEffect(() => {
-    if (reduce || armed.current) return;
-    armed.current = true;
-    if (!inView) {
-      const t = window.setTimeout(() => setShown(0), 0);
-      return () => clearTimeout(t);
-    }
-  }, [inView, reduce]);
+    if (reduce || !ref.current) return;
+    if (ref.current.getBoundingClientRect().top < window.innerHeight) return;
+    // First a silent reset to 0, then switch animation on for the count up.
+    const t1 = window.setTimeout(() => setGo(false), 0);
+    const t2 = window.setTimeout(() => setArmed(true), 60);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [reduce]);
 
   useEffect(() => {
-    if (!inView) return;
-    const t = window.setTimeout(() => setShown(value), 150);
+    if (!inView || go) return;
+    const t = window.setTimeout(() => setGo(true), 250);
     return () => clearTimeout(t);
-  }, [inView, value]);
+  }, [inView, go]);
 
   return (
-    <span ref={ref} className={className}>
+    <CountContext.Provider value={{ go, armed }}>
+      <dl ref={ref} className={className}>
+        {children}
+      </dl>
+    </CountContext.Provider>
+  );
+}
+
+const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+/** A big figure. Inside a CountUpGroup it counts up from 0 with the others the first time the band is in view. */
+export function CountUp({ value, suffix, className }: { value: number; suffix?: string; className?: string }) {
+  const { go, armed } = useContext(CountContext);
+  return (
+    <span className={className}>
       <span className="sr-only">
         {value.toLocaleString("en-US")}
         {suffix}
       </span>
       <NumberFlow
         aria-hidden
-        className="[&::part(suffix)]:text-[0.42em] [&::part(suffix)]:tracking-[-0.02em]" value={shown} suffix={suffix} transformTiming={{ duration: 1100, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }} spinTiming={{ duration: 1100, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }} />
+        // The reset to 0 happens off-screen and without animation; only the count up animates.
+        animated={armed}
+        className="[&::part(suffix)]:text-[0.42em] [&::part(suffix)]:tracking-[-0.02em]"
+        value={go ? value : 0}
+        suffix={suffix}
+        transformTiming={{ duration: 1100, easing: EASE_OUT }}
+        spinTiming={{ duration: 1100, easing: EASE_OUT }}
+        opacityTiming={{ duration: 350, easing: "ease-out" }}
+      />
     </span>
   );
 }

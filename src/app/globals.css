@@ -11,6 +11,7 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-geist-sans);
   --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-line: var(--line);
@@ -63,6 +64,7 @@
 :root {
   /* Ledger brand tokens (docs/DESIGN.md) */
   --paper: #f7f6f2;
+  --paper-deep: #f1efe9; /* the alternate ledger page on the landing */
   --surface: #ffffff;
   --ink: #0b1215;
   --ink-muted: #5b6470;
@@ -114,6 +116,7 @@
 
 .dark {
   --paper: #0e1416;
+  --paper-deep: #11191b;
   --surface: #151d20;
   --ink: #eef1ef;
   --ink-muted: #9aa5ad;

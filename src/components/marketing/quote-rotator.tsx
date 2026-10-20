@@ -1,33 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, m, useInView, useReducedMotion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { instrumentSerif } from "./fonts";
 
 export type SellerQuote = { quote: string; who: string; when: string; href: string };
 
-/** One seller's words at a time, every 6s. Hover or focus pauses it; picking a quote stops it. */
+/**
+ * One seller's words at a time. It moves on by itself every 6s while it is on screen. Hovering it,
+ * or keyboard focus inside it, pauses it; picking a quote holds that quote for 10s, then rotation
+ * resumes. Reduced motion: no rotation, the dots still work.
+ */
 export function QuoteRotator({ quotes }: { quotes: SellerQuote[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { amount: 0.3 });
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [stopped, setStopped] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [pick, setPick] = useState(0); // bumps on every manual pick, restarting the 10s hold
+  const [held, setHeld] = useState(false);
 
   useEffect(() => {
-    if (reduce || paused || stopped) return;
-    const t = window.setInterval(() => setI((n) => (n + 1) % quotes.length), 6000);
-    return () => clearInterval(t);
-  }, [reduce, paused, stopped, quotes.length]);
+    if (reduce || !inView || hovered || focused) return;
+    // A manual pick waits 10s; otherwise the next quote comes 6s after the last change.
+    const t = window.setTimeout(
+      () => {
+        setI((n) => (n + 1) % quotes.length);
+        setHeld(false);
+      },
+      held ? 10000 : 6000,
+    );
+    return () => clearTimeout(t);
+  }, [reduce, inView, hovered, focused, held, pick, i, quotes.length]);
 
   const q = quotes[i];
   return (
     <div
-      onPointerEnter={() => setPaused(true)}
-      onPointerLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
+      ref={ref}
+      onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      // Only keyboard focus pauses: a mouse click leaves focus on the dot, which must not stop it.
+      onFocus={(e) => setFocused(e.target.matches(":focus-visible"))}
+      onBlur={() => setFocused(false)}
       className="mx-auto max-w-4xl text-center"
     >
       <div className="grid min-h-[13rem] items-center sm:min-h-[11rem]">
@@ -57,7 +74,8 @@ export function QuoteRotator({ quotes }: { quotes: SellerQuote[] }) {
             type="button"
             onClick={() => {
               setI(n);
-              setStopped(true);
+              setHeld(true);
+              setPick((p) => p + 1);
             }}
             aria-label={`Quote ${n + 1} of ${quotes.length}`}
             aria-current={n === i ? "true" : undefined}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ForJudges, Hero, HowItWorks, SellersWords, TheNumbers } from "@/components/marketing/landing";
+import { ClosingCta, ForJudges, Hero, HowItWorks, SellersWords, TheNumbers } from "@/components/marketing/landing";
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 
 export const metadata: Metadata = {
@@ -19,6 +19,7 @@ export default function LandingPage() {
         <HowItWorks />
         <SellersWords />
         <ForJudges />
+        <ClosingCta />
       </main>
       <SiteFooter />
     </div>

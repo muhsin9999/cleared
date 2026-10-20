@@ -35,11 +35,11 @@ What the research says, in one line: the pain is not "fraud" or "disputes" in th
 
 ## Ledger
 
-Landing v4 (visual-first, 20 Oct 2026). Body copy is cut to one line per section; the product moments carry the rest. Lines removed from v3 are listed under "Not verified, or changed".
+Landing v5 (20 Oct 2026): v4 plus a closing call to action and a full footer; the nav shows the stamp + wordmark lockup. Body copy is cut to one line per section; the product moments carry the rest. Lines removed from v3 are listed under "Not verified, or changed".
 
 | Line on the page | Why it is there (which pain) | Source | Status |
 | --- | --- | --- | --- |
-| **Header** wordmark "cleared." ; nav "How it works", "For judges", "GitHub" | Way-finding; judges need the path and the code. No "Pricing" or "Sign in": there is neither | - | our promise |
+| **Header** lockup (stamp + "cleared.", link labelled "cleared, home"); nav "How it works", "For judges" (phone: "Judges"), "GitHub" | Way-finding; judges need the path and the code. No "Pricing" or "Sign in": there is neither | - | our promise |
 | **Hero** H1 "Get paid, and stay paid." | Kept. V1, V5, V11 all describe being paid and then losing access, so "stay paid" is exactly the gap | PRODUCT.md tagline | our promise |
 | "Check every sale before PayPal does, keep your proof, and answer disputes with evidence." | The three moments in 14 words; "evidence" because V3/V10/V11 sellers gather it too late. Says what Cleared does, not what PayPal will decide | PRODUCT.md F1, F4, F6 | our promise |
 | Button "Try the live demo" / link "or start as a new seller" | Says what happens; no sign-up step hidden | session actions | our promise |
@@ -61,7 +61,12 @@ Landing v4 (visual-first, 20 Oct 2026). Body copy is cut to one line per section
 | **Sellers' words** rotator: V1, V3, V5 with "who" lines and r/paypal links (unchanged wording from v3) | Sellers' own words, one at a time | V1, V3, V5 | seller's own words |
 | **For judges** H2 "For judges: try it as Ada, in about three minutes." / "PayPal Invoicing, Orders, Tracking, Disputes and Webhooks APIs, sandbox only. The AI only drafts." | Sponsor/API clarity | STACK.md, AI.md | our promise (check each API is live before submission) |
 | Steps 0:00 "Try the live demo" (You're Ada Okafor. No account, no keys.); 0:30 "Check the Northwind sale" (Use the $400 sample, accept the fixes: 38 to 94.); 1:30 "Open a test dispute" (Sandbox controls: “not received” on the Harmattan cover.); 2:30 "Review and approve" (Read the drafted reply and exhibits, edit, approve.) ; "Read the code on GitHub" | Matches what the app does today; the dispute is simulated and labelled so | demo.ts, demo-panel.tsx, new-sale-flow.tsx | our promise |
-| Footer "Works with PayPal (sandbox). Not affiliated with or endorsed by PayPal." | Required honesty | DESIGN.md | verified fact |
+| **Closing CTA** H2 "Your next commission should stay paid." | The first-commission story (V1, V7) turned into the promise of the H1; "should", not "will": Cleared can't guarantee an outcome | V1, V7; PRODUCT.md tagline | our framing |
+| "Try it as Ada on the PayPal sandbox. No sign-up." + button "Try the live demo" (pending: "Opening Ada's workspace…") | Says exactly what the button does | session actions (enterDemo) | our promise |
+| Stamp "CLEARED" on the desk-photo corner | The brand mark, decorative (hidden from screen readers) | DESIGN.md mark | our framing |
+| **Footer** lockup + "Get paid, and stay paid." | The tagline, repeated once | PRODUCT.md tagline | our promise |
+| Columns: **Product** "How it works", "For judges", "Live demo" (pending: "Opening Ada's workspace…"); **Project** "GitHub", "README", "Legal & privacy", "Report an issue"; **Built on** "PayPal sandbox", "Render", "Neon", "Cloudflare R2", "OpenAI" | Way-finding; "Built on" is the actual stack, plain text, no logos | STACK.md | verified fact (re-check the stack before submission) |
+| Footer "Works with PayPal (sandbox). Not affiliated with or endorsed by PayPal." / "© 2026 cleared" | Required honesty | DESIGN.md | verified fact |
 
 ## Voice
 

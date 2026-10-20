@@ -24,7 +24,8 @@
 
 ## Brand: "Ledger" (chosen)
 
-- **Name styling:** lowercase **cleared.** in Geist Bold with tight tracking (−0.035em); the full stop is `--cleared` green (on ink, `--cleared-tint`). The landing nav uses the wordmark alone at 1.6rem; the sidebar and footer use the lockup (stamp + wordmark). `Logo` takes `size` (sm/md/lg) and `mark`.
+- **Name styling:** lowercase **cleared.** in Geist Bold with tight tracking (−0.035em); the full stop is `--cleared` green (on ink, `--cleared-tint`). The landing nav uses the lockup at `size="xl"` (38px "seal" stamp without ring text + 1.7rem wordmark; hover/focus turns the stamp a few degrees and deepens the ink); the sidebar and footer use the default lockup. `Logo` takes `size` (sm/md/lg/xl), `mark` and `markClassName`; `StampMark` takes `detail` (auto/simple/full/seal).
+- **Landing surfaces:** the page stays on paper. Sections alternate `--paper` (#F7F6F2) and `--paper-deep` (#F1EFE9) with a `--line` hairline between them, like ledger pages; cards are `--surface` white. Dark ink (#0B1215) is used for one band only, the closing call to action. Landing motion plays on its own once, when in view (hero check 500ms after it is on screen, numbers when half the band is visible, the three moments staggered 350ms); nothing replays on hover.
 - **Mark:** a circular stamp: outer ring, thin inner ring, "CLEARED" on a circular path and a bold check. Under 40px (`StampMark` decides with a container query) the text drops and a heavy ring + check remain, as in the favicon (`src/app/icon.svg`, `apple-icon.png`). The same stamp seals the evidence packet, so the brand *is* the product moment.
 - **Theme:** **light** by default. Documents (invoice, packet) read as real paper and stay legible after video compression. Dark mode is supported via tokens but isn't the demo theme.
 

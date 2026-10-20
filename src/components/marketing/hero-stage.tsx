@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import NumberFlow from "@number-flow/react";
-import { m, useReducedMotion } from "motion/react";
+import { m, useInView, useReducedMotion } from "motion/react";
 import { Check, RotateCcw, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,42 +26,41 @@ const ROWS = [
 
 // phase: 0 found · 1–3 rows fixed · 4 refund terms added · 5 ready to invoice · 6 stamped
 const SCORE_AT = [38, 54, 68, 84, 94, 94, 94];
-const STEPS_MS = [650, 1100, 1550, 1950, 2250, 2550];
+// Milliseconds after the sequence starts. It starts 500ms after the card is on screen.
+const STEPS_MS = [400, 850, 1300, 1700, 2000, 2300];
+const START_DELAY_MS = 500;
 const FINAL = 6;
 
-function usePhase() {
+/**
+ * Runs the check once, on its own, 500ms after the card is first in view, then holds the final
+ * state. Scrolling away and back does not restart it; only the Replay button does.
+ * Reduced motion goes straight to the final state.
+ */
+function usePhase<T extends Element>() {
+  const ref = useRef<T>(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState(0);
   const [run, setRun] = useState(0);
-  const doneAt = useRef(0);
 
   useEffect(() => {
     if (reduce) {
       const t = window.setTimeout(() => setPhase(FINAL), 0);
       return () => clearTimeout(t);
     }
-    const timers = STEPS_MS.map((ms, i) =>
-      window.setTimeout(() => {
-        setPhase(i + 1);
-        if (i + 1 === FINAL) doneAt.current = Date.now();
-      }, ms + (run === 0 ? 0 : -350)),
-    );
+    if (!inView) return;
+    const lead = run === 0 ? START_DELAY_MS : 150;
+    const timers = STEPS_MS.map((ms, i) => window.setTimeout(() => setPhase(i + 1), lead + ms));
     return () => timers.forEach(clearTimeout);
-  }, [reduce, run]);
+  }, [reduce, inView, run]);
 
-  const replay = useCallback(
-    (force = false) => {
-      if (reduce) return;
-      // Hover and focus replay only once the last run has settled, so the card never loops.
-      if (!force && (doneAt.current === 0 || Date.now() - doneAt.current < 1200)) return;
-      doneAt.current = 0;
-      setPhase(0);
-      setRun((r) => r + 1);
-    },
-    [reduce],
-  );
+  const replay = useCallback(() => {
+    if (reduce) return;
+    setPhase(0);
+    setRun((r) => r + 1);
+  }, [reduce]);
 
-  return { phase, replay, reduce };
+  return { ref, phase, replay, reduce };
 }
 
 function ArtTile() {
@@ -113,14 +112,12 @@ function Ring({ score, ready }: { score: number; ready: boolean }) {
   );
 }
 
-function SaleCard({ phase, onReplay, className }: { phase: number; onReplay: (force?: boolean) => void; className?: string }) {
+function SaleCard({ phase, onReplay, canReplay, className }: { phase: number; onReplay: () => void; canReplay: boolean; className?: string }) {
   const ready = phase >= 5;
   const score = SCORE_AT[phase];
   return (
     <div
-      className={cn("group/card relative rounded-[0.9em] bg-surface p-[1.5em] shadow-[0_1px_2px_rgb(11_18_21/0.06),0_18px_48px_-12px_rgb(40_30_15/0.28)] ring-1 ring-ink/[0.06]", className)}
-      onPointerEnter={() => onReplay()}
-      onFocus={() => onReplay()}
+      className={cn("relative rounded-[0.9em] bg-surface p-[1.5em] shadow-[0_1px_2px_rgb(11_18_21/0.06),0_18px_48px_-12px_rgb(40_30_15/0.28)] ring-1 ring-ink/[0.06]", className)}
     >
       <div className="flex items-start gap-[0.9em]">
         <ArtTile />
@@ -191,15 +188,17 @@ function SaleCard({ phase, onReplay, className }: { phase: number; onReplay: (fo
           {phase >= 4 ? <Check className="size-[1.05em] text-cleared" strokeWidth={3} aria-hidden /> : <span className="size-[1.05em]" aria-hidden />}
           {phase >= 4 ? "Refund and revision terms added" : "No refund or revision terms yet"}
         </span>
-        <button
-          type="button"
-          onClick={() => onReplay(true)}
-          className="-mr-[0.4em] inline-flex items-center gap-[0.35em] rounded-[0.4em] px-[0.4em] py-[0.15em] text-muted-foreground transition-colors hover:bg-secondary hover:text-ink"
-        >
-          <RotateCcw className="size-[1em]" aria-hidden />
-          Replay
-          <span className="sr-only"> the check</span>
-        </button>
+        {canReplay ? (
+          <button
+            type="button"
+            onClick={onReplay}
+            className="-mr-[0.4em] inline-flex items-center gap-[0.35em] rounded-[0.4em] px-[0.5em] py-[0.25em] text-ink/70 transition-colors duration-200 hover:bg-secondary hover:text-ink"
+          >
+            <RotateCcw className="size-[1em]" aria-hidden />
+            Replay
+            <span className="sr-only"> the check</span>
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -297,18 +296,20 @@ function PaperInvoice({ visible }: { visible: boolean }) {
  * (positions are fractions of desk-wide.png, sizes are container-relative so they track the photo);
  * `stack` is the phone version, with the card in the flow and the stamp on its corner.
  *
- * Sequence: card in (0–0.5s) → each finding ticks to "Fixed" 450ms apart while the score steps
- * 38 → 54 → 68 → 84 → 94 → "Ready to invoice" (2.25s) → the stamp presses on (2.55s, settles by ~3s).
+ * Sequence, once, from the moment the card is in view: card in (0–0.5s) → each finding ticks to
+ * "Fixed" 450ms apart from 0.9s while the score steps 38 → 54 → 68 → 84 → 94 → "Ready to invoice"
+ * (2.5s) → the stamp presses on (2.8s, settles by ~3.2s). No hover or focus replay.
  */
 export function HeroStage({ layout }: { layout: "scene" | "stack" }) {
-  const { phase, replay } = usePhase();
+  const { ref, phase, replay, reduce } = usePhase<HTMLDivElement>();
   const stamped = phase >= FINAL;
+  const canReplay = !reduce;
 
   if (layout === "stack") {
     return (
-      <div className="relative mx-auto w-full max-w-[24rem] text-[13.5px] sm:text-[15px]">
+      <div ref={ref} className="relative mx-auto w-full max-w-[24rem] text-[13.5px] sm:text-[15px]">
         <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
-          <SaleCard phase={phase} onReplay={replay} />
+          <SaleCard phase={phase} onReplay={replay} canReplay={canReplay} />
         </m.div>
         <InkStamp pressed={stamped} className="absolute -right-1 -bottom-24 size-[7rem]" />
       </div>
@@ -322,12 +323,13 @@ export function HeroStage({ layout }: { layout: "scene" | "stack" }) {
       </div>
       <InkStamp pressed={stamped} className="absolute top-[38.5%] left-[79.6%] size-[10.5cqw]" />
       <m.div
+        ref={ref}
         className="absolute top-[34%] left-[45%] w-[30em] text-[1cqw]"
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <SaleCard phase={phase} onReplay={replay} />
+        <SaleCard phase={phase} onReplay={replay} canReplay={canReplay} />
       </m.div>
     </>
   );
