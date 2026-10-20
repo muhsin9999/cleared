@@ -108,7 +108,7 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 ## 8. Open questions for the day-1 spike
 
 1. Can a **service** order be marked "completed" through any public API, to start the 7-day release from [help129](https://www.paypal.com/us/cshelp/article/help129)? If not, the hold coach guides the seller to PayPal's "Get your money" flow. Is carrier `OTHER` with a delivery reference accepted for intangible goods?
-2. Does an invoice payment produce a `capture_id` usable with `/track`? (Needed only for goods sold by invoice.)
+2. ~~Does an invoice payment produce a `capture_id` usable with `/track`?~~ **Yes** (20 Oct). An invoice payment id is a capture (`GET /v2/payments/captures/{id}`), its `supplementary_data.related_ids.order_id` names the order, and `POST /v2/checkout/orders/{order}/track` accepts it (tracker `SHIPPED`), also through the Server SDK's `createOrderTracking`. The sandbox once answered the SDK with a Cloudflare bot-check page; `tracking.ts` retries that.
 3. ~~Does sandbox `provide-evidence` accept PDFs we generate?~~ **Yes** (20 Oct, HTTP 200).
 4. Does the sandbox MCP server still fail on `create_invoice`? This decides whether N1 uses the remote MCP or local `npx @paypal/mcp`.
 

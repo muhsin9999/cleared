@@ -6,6 +6,7 @@ import { CopyButton } from "@/components/app/copy-button";
 import { CoverageDots } from "@/components/app/coverage-dots";
 import { MessageProofForm } from "@/components/app/message-proof-form";
 import { ProofDropzone } from "@/components/app/proof-dropzone";
+import { TrackingForm } from "@/components/app/tracking-form";
 import { EventList } from "@/components/app/event-row";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { SaleStatusBadge } from "@/components/brand/status-badge";
@@ -157,8 +158,14 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><PackageIcon aria-hidden className="size-4" /> Tracking</CardTitle>
-                  <CardDescription>Sent to PayPal with the Add Tracking API.</CardDescription>
+                  <CardDescription>Sent to PayPal with the Add Tracking API. PayPal releases the hold about 24 hours after the carrier confirms delivery.</CardDescription>
                 </CardHeader>
+                <CardContent className="space-y-3">
+                  {sale.proofs.filter((p) => p.kind === "tracking").map((p) => (
+                    <p key={p.id} className="flex items-center gap-2 rounded-md bg-cleared-tint/70 px-3 py-2 text-sm text-cleared-strong"><CheckIcon aria-hidden className="size-4" /> {p.label} · sent {shortDate(p.occurredAt)}</p>
+                  ))}
+                  {sale.paidAt ? <TrackingForm saleId={sale.id} /> : <p className="text-sm text-muted-foreground">Available once the client has paid.</p>}
+                </CardContent>
               </Card>
             ) : null}
           </div>

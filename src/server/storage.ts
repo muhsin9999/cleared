@@ -1,7 +1,7 @@
 // Proof file storage on Cloudflare R2 (S3 API). Files are private; the app hands out short-lived links.
-import "server-only";
-import "@/lib/net";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+// No "server-only" import, so scripts (nightly reset) can use it; it reads secrets, so never import it from client code.
+import "../lib/net";
+import { DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 let client: S3Client | undefined;
@@ -36,4 +36,13 @@ export function fileUrl(key: string, downloadName?: string) {
 
 export async function deleteFile(key: string) {
   await s3().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key }));
+}
+
+/** Deletes many files at once (R2 accepts up to 1,000 keys per request). Missing keys are ignored. */
+export async function deleteFiles(keys: string[]) {
+  if (!process.env.R2_ACCOUNT_ID?.trim()) return 0;
+  for (let i = 0; i < keys.length; i += 1000) {
+    await s3().send(new DeleteObjectsCommand({ Bucket: bucket(), Delete: { Objects: keys.slice(i, i + 1000).map((Key) => ({ Key })), Quiet: true } }));
+  }
+  return keys.length;
 }

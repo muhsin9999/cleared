@@ -1,5 +1,6 @@
 // Ada Okafor's demo workspace. Dates are relative to the time of seeding so the story never goes stale.
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { deleteFiles } from "../server/storage";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import * as s from "./schema";
 
@@ -16,6 +17,15 @@ type Db = PgDatabase<any, typeof s>;
 export const DEMO_TAG = "ada";
 
 export async function seedDemo(db: Db, tag = DEMO_TAG) {
+  // Remove the old workspace's uploaded files from R2 before its rows disappear.
+  const old = await db
+    .select({ key: s.proofs.fileKey })
+    .from(s.proofs)
+    .innerJoin(s.sales, eq(s.sales.id, s.proofs.saleId))
+    .innerJoin(s.sellers, eq(s.sellers.id, s.sales.sellerId))
+    .where(and(eq(s.sellers.tag, tag), isNotNull(s.proofs.fileKey)));
+  const keys = old.map((r) => r.key!).filter(Boolean);
+  if (keys.length) await deleteFiles(keys).catch((e) => console.warn("R2 clean-up failed; continuing", (e as Error).message));
   await db.delete(s.sellers).where(eq(s.sellers.tag, tag));
 
   const [ada] = await db
