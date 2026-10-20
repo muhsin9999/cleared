@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { FlaskConicalIcon, GavelIcon, RotateCcwIcon, ShieldAlertIcon } from "lucide-react";
+import { CreditCardIcon, ExternalLinkIcon, FlaskConicalIcon, GavelIcon, RotateCcwIcon, ShieldAlertIcon } from "lucide-react";
+import { CopyButton } from "./copy-button";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -14,7 +15,7 @@ const ACTIONS = [
   { key: "reset", icon: RotateCcwIcon, title: "Reset demo", body: "Restores Ada’s workspace to its starting state. Runs nightly too." },
 ] as const;
 
-export function DemoPanel() {
+export function DemoPanel({ buyerEmail, payable }: { buyerEmail: string | null; payable: { url: string; label: string } | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
@@ -40,6 +41,28 @@ export function DemoPanel() {
           <SheetDescription>Actions that would normally come from Ada’s client or from PayPal. Everything runs on the PayPal sandbox; no real money moves.</SheetDescription>
         </SheetHeader>
         <ul className="space-y-3 px-4 pb-6">
+          <li className="rounded-lg border bg-surface p-4">
+            <div className="flex items-start gap-3">
+              <CreditCardIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="font-medium">Pay as the client</p>
+                <p className="text-sm text-muted-foreground">
+                  {payable ? `Opens ${payable.label} on PayPal’s own page.` : "Send an invoice first; it will appear here."} Log in with the sandbox buyer account, never a real PayPal account.
+                </p>
+                {buyerEmail ? (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{buyerEmail}</code>
+                    <CopyButton value={buyerEmail} label="Copy" toastMessage="Sandbox buyer email copied" />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            {payable ? (
+              <a href={payable.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border bg-paper text-sm font-medium hover:bg-muted">
+                Open invoice in PayPal <ExternalLinkIcon aria-hidden className="size-4" />
+              </a>
+            ) : null}
+          </li>
           {ACTIONS.map(({ key, icon: Icon, title, body }) => (
             <li key={key} className="rounded-lg border bg-surface p-4">
               <div className="flex items-start gap-3">

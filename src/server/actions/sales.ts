@@ -7,6 +7,8 @@ import { z } from "zod";
 import { db, schema as s } from "@/db";
 import { preflight } from "@/lib/preflight";
 import { requireSeller } from "../auth";
+import { PayPalError } from "../paypal/client";
+import { createAndSendInvoice, type InvoiceDraft } from "../paypal/invoicing";
 
 const Draft = z.object({
   clientName: z.string().trim().min(1, "Add the client’s name"),
@@ -68,15 +70,33 @@ export async function createSale(input: z.input<typeof Draft>) {
   redirect(`/sales/${sale.id}/invoice`);
 }
 
-// Day 2 wireframe: marks the invoice as sent. Day 5 replaces this with Invoicing v2 create → send (scripts/spikes/03-invoice.mjs).
+// Invoicing v2 create → send (F2). On a PayPal error the draft is kept and the reason is returned.
 export async function sendInvoice(saleId: string) {
   const seller = await requireSeller();
   const sale = await db.query.sales.findFirst({ where: and(eq(s.sales.sellerId, seller.id), eq(s.sales.id, saleId)), with: { invoices: true } });
   if (!sale) return { ok: false as const, message: "Sale not found" };
   const invoice = sale.invoices[0];
-  const number = String(8 + (await db.$count(s.invoices))).padStart(4, "0");
-  await db.update(s.invoices).set({ status: "SENT", invoiceNumber: number, sentAt: new Date() }).where(eq(s.invoices.id, invoice.id));
+  if (!invoice) return { ok: false as const, message: "This sale has no invoice draft" };
+  if (invoice.sentAt) redirect(`/sales/${sale.id}`);
+
+  let sent: Awaited<ReturnType<typeof createAndSendInvoice>>;
+  try {
+    sent = await createAndSendInvoice({
+      workspaceTag: seller.tag,
+      saleId: sale.id,
+      sellerName: seller.businessName ?? seller.name,
+      clientName: sale.clientName,
+      clientEmail: sale.clientEmail,
+      draft: invoice.draft as InvoiceDraft,
+    });
+  } catch (e) {
+    const detail = e instanceof PayPalError ? ((e.body as { details?: { description?: string }[] } | null)?.details?.[0]?.description ?? e.message) : "PayPal didn’t respond";
+    return { ok: false as const, message: `PayPal didn’t accept the invoice: ${detail}. Your draft is saved; try again.` };
+  }
+
+  await db.update(s.invoices).set({ status: sent.status, invoiceNumber: sent.number, paypalInvoiceId: sent.id, payerViewUrl: sent.payerViewUrl, sentAt: new Date() }).where(eq(s.invoices.id, invoice.id));
   await db.update(s.sales).set({ status: "sent" }).where(eq(s.sales.id, sale.id));
-  await db.insert(s.events).values({ sellerId: seller.id, saleId: sale.id, source: "cleared", type: "INVOICING.INVOICE.SENT", summary: `Invoice #${number} sent to ${sale.clientName}`, simulated: true, verified: false });
+  await db.insert(s.events).values({ sellerId: seller.id, saleId: sale.id, source: "cleared", type: "INVOICING.INVOICE.SENT", summary: `Invoice #${sent.number} sent to ${sale.clientName} through PayPal`, verified: true, payload: { invoice_id: sent.id } });
+  await db.insert(s.audit).values({ sellerId: seller.id, kind: "paypal.invoice.send", subjectType: "invoice", subjectId: invoice.id, output: { paypalInvoiceId: sent.id, number: sent.number }, approvedBy: seller.id });
   redirect(`/sales/${sale.id}?sent=1`);
 }

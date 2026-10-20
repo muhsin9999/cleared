@@ -1,6 +1,6 @@
 // Read models for the seller pages. Every function takes the seller id from requireSeller().
 import "server-only";
-import { and, desc, eq, inArray, notInArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 
 const IN_FLIGHT = ["paid", "delivered", "accepted"] as const;
@@ -59,6 +59,18 @@ export async function getHome(sellerId: string) {
     proofCoverage: paidish.length ? Math.round((covered.length / paidish.length) * 100) : null,
     missingProof: inFlight.filter((x) => { const c = coverage(x); return c.done < c.total; }),
   };
+}
+
+/** The newest invoice that is out with a client and payable on PayPal's page (for "Pay as the client"). */
+export async function latestPayableInvoice(sellerId: string) {
+  const rows = await db
+    .select({ url: s.invoices.payerViewUrl, number: s.invoices.invoiceNumber, clientName: s.sales.clientName, amountCents: s.sales.amountCents })
+    .from(s.invoices)
+    .innerJoin(s.sales, eq(s.sales.id, s.invoices.saleId))
+    .where(and(eq(s.sales.sellerId, sellerId), eq(s.sales.status, "sent"), isNotNull(s.invoices.payerViewUrl)))
+    .orderBy(desc(s.invoices.sentAt))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 export async function salesByIds(sellerId: string, ids: string[]) {

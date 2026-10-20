@@ -85,6 +85,11 @@ async function Invoice({ params }: { params: PageProps<"/sales/[id]/invoice">["p
               </ul>
             </CardContent>
           </Card>
+          {invoice.payerViewUrl ? (
+            <a href={invoice.payerViewUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg border bg-surface px-4 py-3 text-sm font-medium hover:bg-muted">
+              See it as the client does, on PayPal ↗
+            </a>
+          ) : null}
           {invoice.sentAt ? null : <SendInvoice saleId={sale.id} clientEmail={sale.clientEmail} amount={money(sale.amountCents)} />}
         </aside>
       </div>
