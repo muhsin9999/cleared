@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { BotIcon, InfoIcon, PlugZapIcon, RadioTowerIcon, RotateCcwIcon } from "lucide-react";
+import { BotIcon, InfoIcon, PlugZapIcon, RotateCcwIcon } from "lucide-react";
+import { WebhookHealth } from "@/components/app/webhook-health";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { resetDemo } from "@/server/actions/demo";
 import { requireSeller } from "@/server/auth";
+import { requestNow } from "@/server/time";
 
 export const metadata = { title: "Settings" };
 
@@ -22,10 +24,10 @@ export default function SettingsPage() {
 }
 
 async function Settings() {
+  const now = await requestNow();
   const seller = await requireSeller();
   const rows = [
     { icon: PlugZapIcon, title: "PayPal connection", body: "Sandbox business account · Invoicing, Orders, Tracking and Disputes enabled", badge: "Sandbox" },
-    { icon: RadioTowerIcon, title: "Webhook health", body: "Every event is checked with PayPal’s verify-webhook-signature before it is stored.", badge: "Live from day 3" },
     { icon: BotIcon, title: "AI audit log", body: "Every AI draft, the model that wrote it, the claim checker’s result and who approved it.", badge: "From day 7" },
   ];
   return (
@@ -37,6 +39,7 @@ async function Settings() {
           <Badge variant="outline">{r.badge}</Badge>
         </Card>
       ))}
+      <WebhookHealth now={now} />
       {seller.isDemo ? (
         <Card>
           <CardHeader>

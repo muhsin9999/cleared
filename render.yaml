@@ -45,6 +45,20 @@ services:
         value: "22"
       - fromGroup: cleared-secrets
 
+  - type: cron
+    name: cleared-dispute-sync
+    runtime: node
+    plan: starter
+    region: oregon
+    # Every 30 minutes: often enough to catch buyer-opened disputes, rare enough to let Neon sleep.
+    schedule: "*/30 * * * *"
+    buildCommand: npm ci
+    startCommand: npm run disputes:sync
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - fromGroup: cleared-secrets
+
 envVarGroups:
   - name: cleared-secrets
     envVars:

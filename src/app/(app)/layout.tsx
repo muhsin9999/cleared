@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/app/app-sidebar";
+import { LiveEvents } from "@/components/app/live-events";
 import { MobileTabs } from "@/components/app/mobile-tabs";
 import { Topbar } from "@/components/app/topbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -17,6 +18,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense>
         <MobileTabs />
       </Suspense>
+      <LiveEvents />
     </SidebarProvider>
   );
 }

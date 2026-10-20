@@ -25,7 +25,7 @@ export function DemoPanel() {
       if (key === "reset") return resetDemo();
       const result = key === "dispute" ? await simulateDispute() : await resolveLatestDispute();
       if (!result.ok) return void toast.error(result.message);
-      toast.success(key === "dispute" ? "Dispute opened on “Harmattan Tapes”" : "Dispute closed in your favour");
+      // The success notice arrives through <LiveEvents>, the same path a real PayPal webhook takes.
       router.push(`/cases/${result.disputeId}`);
     });
 

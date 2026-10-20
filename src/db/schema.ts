@@ -108,8 +108,24 @@ export const events = pgTable(
     simulated: boolean("simulated").notNull().default(false),
     payload: jsonb("payload"),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("events_paypal_event_idx").on(t.paypalEventId), index("events_seller_idx").on(t.sellerId, t.occurredAt)],
+);
+
+// Every webhook delivery, accepted or not, for the Settings > Webhook health panel.
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: id(),
+    paypalEventId: text("paypal_event_id"),
+    type: text("type"),
+    verification: text("verification").notNull(),
+    outcome: text("outcome").notNull(),
+    error: text("error"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("webhook_deliveries_received_idx").on(t.receivedAt)],
 );
 
 export const disputes = pgTable("disputes", {
