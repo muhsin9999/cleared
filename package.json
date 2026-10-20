@@ -15,7 +15,8 @@
     "test": "vitest run",
     "workflow:dev": "render workflows dev -- npm run workflow:start",
     "workflow:start": "tsx src/workflows/main.ts",
-    "disputes:sync": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/sync-disputes.ts"
+    "disputes:sync": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/sync-disputes.ts",
+    "db:cleanup": "tsx --env-file-if-exists=.env.local scripts/db.ts --cleanup"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1154.0",

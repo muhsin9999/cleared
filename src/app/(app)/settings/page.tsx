@@ -44,7 +44,7 @@ async function Settings() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><RotateCcwIcon aria-hidden className="size-4" /> Demo data</CardTitle>
-            <CardDescription>Put Ada’s workspace back to how a judge first sees it. This also runs every night.</CardDescription>
+            <CardDescription>Put your copy of Ada’s workspace back to how a judge first sees it. Each visitor gets their own copy.</CardDescription>
           </CardHeader>
           <CardContent><form action={resetDemo}><Button type="submit" variant="outline">Reset demo data</Button></form></CardContent>
         </Card>

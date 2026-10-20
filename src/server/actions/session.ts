@@ -5,16 +5,19 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
 import { DEMO_TAG, seedDemo } from "@/db/seed";
-import { createSession, destroySession } from "../session";
+import { createSession, destroySession, readSession } from "../session";
 
-// "Try the live demo": sign in as Ada, seeding her workspace if it is missing.
+// "Try the live demo": every visitor gets a private copy of Ada's workspace, so judges never see each
+// other's changes. A returning visitor keeps their copy; the nightly clean-up removes copies after 48 hours.
 export async function enterDemo() {
-  let ada = await db.query.sellers.findFirst({ where: eq(schema.sellers.tag, DEMO_TAG) });
-  if (!ada) {
-    await seedDemo(db);
-    ada = await db.query.sellers.findFirst({ where: eq(schema.sellers.tag, DEMO_TAG) });
+  const session = await readSession();
+  if (session?.tag.startsWith(`${DEMO_TAG}-`)) {
+    const existing = await db.query.sellers.findFirst({ where: eq(schema.sellers.id, session.sellerId), columns: { id: true } });
+    if (existing) redirect("/home");
   }
-  await createSession({ sellerId: ada!.id, tag: ada!.tag });
+  const tag = `${DEMO_TAG}-${randomBytes(5).toString("hex")}`;
+  const { seller } = await seedDemo(db, tag);
+  await createSession({ sellerId: seller, tag });
   redirect("/home");
 }
 

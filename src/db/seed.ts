@@ -1,5 +1,5 @@
 // Ada Okafor's demo workspace. Dates are relative to the time of seeding so the story never goes stale.
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, lt, ne } from "drizzle-orm";
 import { deleteFiles } from "../server/storage";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import * as s from "./schema";
@@ -15,6 +15,23 @@ const at = (days: number, hour = 10) => {
 type Db = PgDatabase<any, typeof s>;
 
 export const DEMO_TAG = "ada";
+
+/** Deletes demo workspaces (and their R2 files) created more than `hours` ago. Ada's base workspace stays. */
+export async function cleanupDemoWorkspaces(db: Db, hours = 48) {
+  const cutoff = new Date(Date.now() - hours * 3_600_000);
+  const stale = await db.select({ id: s.sellers.id }).from(s.sellers).where(and(eq(s.sellers.isDemo, true), lt(s.sellers.createdAt, cutoff), ne(s.sellers.tag, DEMO_TAG)));
+  if (!stale.length) return { removed: 0, files: 0 };
+  const ids = stale.map((r) => r.id);
+  const files = await db
+    .select({ key: s.proofs.fileKey })
+    .from(s.proofs)
+    .innerJoin(s.sales, eq(s.sales.id, s.proofs.saleId))
+    .where(and(inArray(s.sales.sellerId, ids), isNotNull(s.proofs.fileKey)));
+  const keys = files.map((f) => f.key!).filter(Boolean);
+  if (keys.length) await deleteFiles(keys).catch((e) => console.warn("R2 clean-up failed; continuing", (e as Error).message));
+  await db.delete(s.sellers).where(inArray(s.sellers.id, ids));
+  return { removed: ids.length, files: keys.length };
+}
 
 export async function seedDemo(db: Db, tag = DEMO_TAG) {
   // Remove the old workspace's uploaded files from R2 before its rows disappear.
@@ -92,7 +109,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     saleId: cover.id,
     invoiceNumber: "0007",
     status: "PAID",
-    paypalInvoiceId: "INV2-SEED-COVR-0007",
+    paypalInvoiceId: `SEED-${tag}-0007`,
     draft: {
       items: [{ name: "Album cover artwork", description: "3000×3000 px PNG + layered PSD, 2 revision rounds", quantity: "1", unitAmount: "250.00" }],
       note: "Final files delivered within 10 days of payment.",

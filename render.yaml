@@ -39,7 +39,7 @@ services:
     region: oregon
     schedule: "0 4 * * *"
     buildCommand: npm ci
-    startCommand: npm run db:seed
+    startCommand: npm run db:cleanup
     envVars:
       - key: NODE_VERSION
         value: "22"
