@@ -15,7 +15,7 @@ Each choice is judged against four tests:
 | Hosting | **Render web service, Starter ($7/mo, always on)** | The Render prize requires Render hosting. Free instances sleep after 15 min, which would lose webhooks and give judges a one-minute cold start. | Render free tier; Vercel (would forfeit the Render prize story) |
 | Background jobs | **Render Workflows** (`@renderinc/sdk` ≥1.3, public beta) | The prize requires it, and Cleared genuinely needs durable, retried, multi-step jobs: the dispute investigation, evidence submission and auto-tracking. Task chaining fits the packet pipeline. | A queue library on the web service. It works, but loses the sponsor prize and the retries Render provides. |
 | Schedules | **Render cron job** → starts a workflow task | Workflows has no native schedule. The nightly hold-release and deadline watcher runs from cron. | — |
-| Database | **Render Postgres basic-256mb ($6/mo)** | The free Postgres **expires after 30 days**, which would break judging on 15 Dec. Paid stays on the private network and keeps the whole story on Render. | Render free Postgres; Neon free (fallback only) |
+| Database | **Neon Postgres, free tier** (project `cleared`, Oregon `aws-us-west-2`, Postgres 18; branch `main` for production, `dev` for local work) | Free and doesn't expire (Render's free Postgres expires after 30 days, before judging ends). Keeps all three hackathon entries inside the $50 Render credit. Same region as the Render services. The `dev` branch means no local Postgres install. Drizzle + `postgres` (postgres-js) over Neon's **pooled** endpoint with `prepare: false` (PgBouncer transaction mode). | Render Postgres basic-256mb ($6/mo: pushes the three entries over the $50 credit); PGlite for local dev (single-process, needed bundler workarounds) |
 | ORM | **Drizzle + drizzle-kit** | SQL-first, light, quick cold starts, and migrations run as a Render pre-deploy command | Prisma (heavier engine, slower cold start) |
 | File storage | **Cloudflare R2** (S3 API, 10 GB free, free egress) | Proof files must persist and be fetchable by workflows by key. Workflow arguments are capped at 4 MB, so pass keys, not files. Render disks block zero-downtime deploys. | Render disk; Supabase storage |
 | PayPal (Orders, capture, tracking) | **`@paypal/paypal-server-sdk`**, written with the **APIMatic Context Plugin** | The SDK covers Orders, including `createOrderTracking`. The plugin is the APIMatic prize requirement. | — |
@@ -39,7 +39,7 @@ Each choice is judged against four tests:
                                          │            │ @renderinc/sdk  startTask("cleared-wf/<task>", [ids])
                               Drizzle    │            ▼
                                          ▼     Render Workflow  "cleared-wf"
-                               Render Postgres   preflightCheck · createInvoice · autoTrack(captureId)
+                               Neon Postgres     preflightCheck · createInvoice · autoTrack(captureId)
                                (sellers, sales,  onDisputeCreated → gatherProof → draftPacket(GPT)  
                                 proofs, events,     → checkClaims → status=AWAITING_APPROVAL
                                 packets, audit)  submitEvidence (only after approval) · sandboxAdjudicate
@@ -68,7 +68,7 @@ cleared/
   scripts/             seed-demo, reset-demo, sandbox helpers
   tests/               vitest + playwright
   docs/                these planning docs
-  render.yaml          Blueprint: web + workflow + cron + postgres
+  render.yaml          Blueprint: web + workflow + cron (database is Neon)
   postman/             collection + environment
 ```
 
@@ -92,16 +92,22 @@ DEMO_MODE=true
 | Item | Monthly |
 | --- | --- |
 | Render web Starter | $7 |
-| Postgres basic-256mb | $6 |
+| Neon Postgres (free tier) | $0 |
 | Workflows (flex, well under 10 CPU-hours) | about $1–3 |
 | Cron | under $1 |
 | R2 | $0 |
-| **Render total** | **about $15** (covered by the $50 hackathon credit; **confirm the credit lasts into December**) |
+| **Render total** | **about $9** (covered by the $50 hackathon credit, valid until 1 Oct 2027; a card must be on file) |
 | OpenAI API | about $2–10 (spend limit set; demo results cached) |
+
+## Database notes (Neon)
+
+- `.env.local` holds `DATABASE_URL` (the `dev` branch) and `DATABASE_URL_PROD` (`main`). Render's `DATABASE_URL` is the `main` pooled URL.
+- Neon's free compute scales to zero after about 5 idle minutes, and the first query after that takes roughly a second. The free plan caps monthly compute hours, so the Render health check (`/api/health`) deliberately **does not** query the database; otherwise Neon would never sleep. Warm it up before recording the video or a judging session by opening the app once.
+- **Network gotcha:** Node 22 gives each address only 250 ms when racing IPv4/IPv6. From Lagos the round trip to Oregon is about 260 ms, so every connect timed out (`ETIMEDOUT`). `src/lib/net.ts` raises the per-attempt timeout to 2 s.
 
 ## Deployment
 
 1. Deploy the empty skeleton **on day 2**. A deployed "hello" beats a perfect local app.
-2. Use a `render.yaml` Blueprint with four services: web, workflow, cron and postgres. The pre-deploy command runs `drizzle-kit migrate`.
+2. Use a `render.yaml` Blueprint with three services: web, workflow and cron. `DATABASE_URL` (Neon `main`, pooled) is a secret env var. The pre-deploy command runs the migrations (`npm run db:migrate`).
 3. Register the PayPal webhook to `https://<cleared-web>.onrender.com/api/paypal/webhook` (HTTPS, port 443). Use a tunnel such as `cloudflared` for local development.
-4. Run `scripts/reset-demo` nightly from cron so judges always see a clean, seeded state.
+4. Run `npm run db:seed` nightly from cron so judges always see a clean, seeded state.

@@ -2,7 +2,7 @@
 
 **Get paid, and stay paid.** Cleared protects new sellers, freelancers and artists from sudden PayPal holds, limitations and disputes. It checks a sale before it happens, sends a clear PayPal invoice, keeps the proof as the work is delivered, and drafts a cited evidence packet the moment PayPal asks questions. **The seller approves every step before anything is sent.**
 
-> Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (deadline 12 Nov 2026). Status: **planning**. No application code yet.
+> Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (deadline 12 Nov 2026). Status: **skeleton built** (day 2): every page, the database and the demo path work; PayPal and AI calls are wired in on days 3–9.
 >
 > Cleared is not affiliated with or endorsed by PayPal. It uses the public PayPal sandbox APIs.
 

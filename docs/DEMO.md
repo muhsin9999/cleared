@@ -37,7 +37,7 @@
 - **How we built it:**
   - PayPal: Invoicing v2, Orders v2 + Add Tracking (Server SDK, built with the APIMatic Context Plugin), Disputes v1, Webhooks.
   - OpenAI `gpt-5-mini` with strict structured outputs and a deterministic claim checker.
-  - Render web, Workflows, cron and Postgres; Cloudflare R2; Next.js, shadcn/ui and Motion.
+  - Render web, Workflows and cron; Neon Postgres; Cloudflare R2; Next.js, shadcn/ui and Motion.
 - **Challenges:** simulator webhooks can't be verified; tracking-endpoint deprecation; no limitation API (honest manual hand-off).
 - **Accomplishments:** the eval numbers.
 - **What's next:** multi-merchant via Partner Referrals; PayPal-native hold API partnership.

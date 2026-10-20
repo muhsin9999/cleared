@@ -14,3 +14,8 @@ scripts/spikes/.webhook-id
 scripts/spikes/out/
 scripts/spikes/out-server.log
 scripts/spikes/render-wf/node_modules/
+/out/
+/build
+*.pem
+*.tsbuildinfo
+.vercel

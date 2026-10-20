@@ -1,0 +1,70 @@
+# Render Blueprint: web app, background workflow and nightly demo reset. The database is Neon (DATABASE_URL secret).
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: cleared-web
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm ci && npm run build
+    preDeployCommand: npm run db:migrate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEMO_MODE
+        value: "true"
+      - key: WORKFLOW_SLUG
+        value: cleared-wf
+      - fromGroup: cleared-secrets
+
+  - type: workflow
+    name: cleared-wf
+    runtime: node
+    region: oregon
+    buildCommand: npm ci
+    startCommand: npm run workflow:start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - fromGroup: cleared-secrets
+
+  - type: cron
+    name: cleared-nightly-reset
+    runtime: node
+    plan: starter
+    region: oregon
+    schedule: "0 4 * * *"
+    buildCommand: npm ci
+    startCommand: npm run db:seed
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - fromGroup: cleared-secrets
+
+envVarGroups:
+  - name: cleared-secrets
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: PAYPAL_SANDBOX_BUSINESS_EMAIL
+        sync: false
+      - key: PAYPAL_SANDBOX_BUYER_EMAIL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: gpt-5-mini
+      - key: RENDER_API_KEY
+        sync: false
