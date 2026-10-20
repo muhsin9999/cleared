@@ -5,7 +5,7 @@ import { Logo } from "@/components/brand/logo";
 export const GITHUB_URL = "https://github.com/muhsin9999/cleared";
 
 const NAV = [
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#how-it-works", label: "What it does" },
   { href: "/#for-judges", label: "For judges" },
 ];
 

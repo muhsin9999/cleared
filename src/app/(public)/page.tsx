@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EvidenceStrip, ForJudges, Hero, HowItWorks, ProofPoints } from "@/components/marketing/landing";
+import { ForJudges, Hero, SellersWords, WhatItDoes } from "@/components/marketing/landing";
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 
 export const metadata: Metadata = {
@@ -15,9 +15,8 @@ export default function LandingPage() {
       <SiteHeader />
       <main id="main" className="flex-1">
         <Hero />
-        <ProofPoints />
-        <HowItWorks />
-        <EvidenceStrip />
+        <SellersWords />
+        <WhatItDoes />
         <ForJudges />
       </main>
       <SiteFooter />

@@ -9,7 +9,7 @@
 - Creators taking first sponsorships.
 
 **Why it matters (evidence):**
-- CFPB lists **3,040** "trouble accessing funds" and **1,550** account-management complaints against PayPal from Jan 2025 to Oct 2026.
+- CFPB lists **3,010** complaints against PayPal under "Trouble accessing funds in your mobile or digital wallet" from 1 Jan 2025 to 30 Sep 2026 (company filter "Paypal Holdings, Inc"; checked 20 Oct, see [COPY.md](COPY.md)). The earlier "1,550 account-management" figure is unverified.
 - About one-third of the top r/paypal posts of the past year are limitations or holds.
 - A lawyer's demand letter for frozen funds costs about **$575**.
 
