@@ -86,7 +86,7 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 | Invoicing create → send | **Pass** (`INV2-HB7L-9RVB-TAER-U88E`) |
 | Buyer pays the invoice | **Pass**, invoice `PAID`; payment id `35156309J57118646` |
 | `INVOICING.INVOICE.PAID` webhook + `verify-webhook-signature` | **Pass**, `SUCCESS` on a real event (redelivered with `POST /v1/notifications/webhooks-events/{id}/resend` after the tunnel dropped) |
-| Render Workflows: `startTask` → chained tasks → PayPal OAuth inside a task | **Pass** on the local task server (`render workflows dev`, SDK 1.3.0). The SDK method is `render.workflows.startTask`, not `runTask`. Hosted run on day 2 |
+| Render Workflows: `startTask` → chained tasks → PayPal OAuth inside a task | **Pass** locally (`render workflows dev`, SDK 1.3.0) and **hosted on Render** (20 Oct, `cleared-wf`, run `trn-0994gdbbp5ru70650008gv2a0`, PayPal OAuth from the env group). The SDK method is `render.workflows.startTask`, not `runTask` |
 | Orders create → buyer approves → capture → `/track` | **Pass** (capture `00X721973U2377446`, `seller_protection=ELIGIBLE`, tracker `SHIPPED`). The new checkout page (`payment_source.paypal.experience_context`) failed twice with "Things don't appear to be working"; the classic `application_context` approve link worked. **Use the classic form for the demo.** |
 | `CHECKOUT.ORDER.APPROVED`, `PAYMENT.CAPTURE.COMPLETED` webhooks | **Pass**, both verified |
 | Card payments | Not enabled: `PAYEE_NOT_ENABLED_FOR_CARD_PROCESSING`. Turn on Advanced Credit and Debit Card in the app only if we need card-paid test orders |
