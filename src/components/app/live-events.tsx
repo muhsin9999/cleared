@@ -29,7 +29,7 @@ export function LiveEvents() {
             events.forEach((e) => seen.current.add(e.id));
             since.current = now;
             for (const e of fresh.reverse()) {
-              const fromPayPal = e.type.includes(".") && !e.type.startsWith("PROOF.") && !e.type.startsWith("CLIENT.");
+              const fromPayPal = /^(INVOICING|PAYMENT|CHECKOUT|CUSTOMER)\./.test(e.type);
               (e.type.includes("DISPUTE.CREATED") ? toast.warning : toast.success)(e.summary, { description: fromPayPal ? "Verified event from PayPal" : undefined });
             }
             if (fresh.length) router.refresh();

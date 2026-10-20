@@ -52,7 +52,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
       name: "Ada Okafor",
       businessName: "Okafor Studio",
       email: "ada@okafor.studio",
-      sells: "service",
+      sells: "digital",
       typicalPriceCents: 6_000,
       typicalDeliveryDays: 7,
       takesDeposits: true,

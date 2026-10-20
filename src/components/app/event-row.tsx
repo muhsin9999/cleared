@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type EventLike = { id: string; type: string; summary: string; occurredAt: Date; simulated: boolean; verified: boolean; source: string };
 
 const tone = (type: string) =>
-  type.includes("DISPUTE.CREATED") || type.includes("REPORTED_PROBLEM")
+  type.includes("DISPUTE.CREATED") || type.includes("REPORTED_PROBLEM") || type.includes("PHISHING")
     ? "bg-risk"
     : type.includes("EVIDENCE_SUBMITTED") || type.endsWith("DISPUTE.RESOLVED")
       ? "bg-cleared"

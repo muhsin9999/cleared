@@ -63,7 +63,19 @@ async function Cases() {
         <CardHeader><CardTitle className="flex items-center gap-2"><MailWarningIcon aria-hidden className="size-4" /> PayPal notices</CardTitle></CardHeader>
         <CardContent>
           {notices.length ? (
-            <ul className="divide-y">{notices.map((n) => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 hover:underline">{shortDate(n.createdAt)} · {n.verdict}</Link></li>)}</ul>
+            <ul className="divide-y">
+              {notices.map((n) => (
+                <li key={n.id}>
+                  <Link href={`/notices/${n.id}`} className="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 hover:bg-muted/60">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{n.verdict === "likely_phishing" ? "Likely phishing" : n.verdict === "genuine" ? "PayPal notice" : "Unconfirmed notice"}</p>
+                      <p className="truncate text-sm text-muted-foreground">{shortDate(n.createdAt)}{n.doneAt ? " · done" : ""}</p>
+                    </div>
+                    <Badge variant={n.verdict === "likely_phishing" ? "destructive" : n.doneAt ? "outline" : "secondary"}>{n.verdict === "likely_phishing" ? "Don’t reply" : n.doneAt ? "Done" : "To answer"}</Badge>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           ) : (
             <p className="py-6 text-center text-sm text-muted-foreground">Got an email about a limitation or hold? Paste it and Cleared checks it for phishing first.</p>
           )}
