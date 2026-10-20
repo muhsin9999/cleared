@@ -12,6 +12,15 @@ function create() {
   return drizzle(postgres(url, { max: 5, prepare: false }), { schema });
 }
 
-const g = globalThis as unknown as { __clearedDb?: ReturnType<typeof create> };
-export const db = (g.__clearedDb ??= create());
+type Db = ReturnType<typeof create>;
+const g = globalThis as unknown as { __clearedDb?: Db };
+
+// Connect on first use, so importing this module (e.g. during `next build`) never needs the database.
+export const db = new Proxy({} as Db, {
+  get(_target, prop) {
+    const real = (g.__clearedDb ??= create());
+    const value = Reflect.get(real, prop, real);
+    return typeof value === "function" ? value.bind(real) : value;
+  },
+});
 export { schema };
