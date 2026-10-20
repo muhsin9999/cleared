@@ -18,6 +18,7 @@
 | 12 | Fri 31 Oct | Video + docs | Record and edit the video ([DEMO.md](DEMO.md)); README with architecture, eval numbers and sponsor sections; Postman collection; APIMatic form |
 | 13 | Sat 1 Nov | **SUBMIT** | Devpost submitted (not draft), live link tested in a private window |
 | — | 2–3 Nov | Buffer | Fix anything that broke; then move to **Lifeline** |
+| — | 29–30 Nov | **Restock judge-mode disputes** | Fund the sandbox buyer, run `06-pool-invoices.mjs 8`, pay each, open 8 "not received" disputes; check the stock shows 8 available before judging starts on 1 Dec |
 | — | to 12 Nov | Optional | N1 "Ask Cleared" via the PayPal MCP/Agent Toolkit, N2 Elastic; improve the video; re-check competitors |
 
 ## Daily rule

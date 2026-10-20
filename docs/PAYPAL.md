@@ -103,6 +103,8 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 
 **Day 5 (20 Oct), live:** the app's own "Send invoice" created and sent `INV2-ACZS-3V59-57RG-6BXH` ($200, 3.9 s), the sandbox buyer paid it on PayPal's page, and the signed `INVOICING.INVOICE.PAID` webhook marked the sale paid and posted "Northwind Games paid $200" to the timeline. **Sandbox trap:** invoices addressed to an email that is not a sandbox account (e.g. `art@northwind.example`) fail at payment with "something went wrong on our end", so demo invoices are addressed to the sandbox buyer while the client's name stays on the invoice.
 
+**Judge mode, live (20 Oct):** the sandbox buyer paid three $250 invoices (`scripts/spikes/06-pool-invoices.mjs`) and opened a "not received" dispute on each; the cron loads such disputes into a stock (`dispute_pool`). A visitor's "Simulate a buyer dispute" claimed `PP-R-LNM-10193814`; after approval the Render Workflow task `submitEvidence` (run `trn-0994gdbbu0l5plr0s739887j0`) sent `evidence-summary.pdf` + notes through provide-evidence in ~6 s and PayPal moved the case to `UNDER_REVIEW`. **Sandbox traps:** a buyer whose PayPal balance runs low gets "something went wrong on our end" at payment (top the balance up in Sandbox Accounts → Funding); buyer-opened disputes wait about 10 days for the seller, so the stock must be refilled shortly before judging.
+
 **Lessons:** quick tunnels die when the laptop sleeps, so re-register the webhook after restarting one. Unapproved orders disappear after a few hours. One sandbox checkout failed with "Things don't appear to be working right now"; the retry uses `shipping_preference: GET_FROM_FILE`.
 
 ## 8. Open questions for the day-1 spike
