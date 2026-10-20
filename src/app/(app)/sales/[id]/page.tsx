@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { CheckIcon, FileIcon, FileImageIcon, HourglassIcon, MailIcon, MessageSquareTextIcon, PackageIcon, ShieldCheckIcon, UploadIcon, UserCheckIcon } from "lucide-react";
+import { CheckIcon, FileIcon, FileImageIcon, HourglassIcon, MailIcon, MessageSquareTextIcon, PackageIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
 import { CopyButton } from "@/components/app/copy-button";
 import { CoverageDots } from "@/components/app/coverage-dots";
+import { MessageProofForm } from "@/components/app/message-proof-form";
+import { ProofDropzone } from "@/components/app/proof-dropzone";
 import { EventList } from "@/components/app/event-row";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { SaleStatusBadge } from "@/components/brand/status-badge";
@@ -101,7 +103,11 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
                   <li key={p.id} className="flex items-center gap-3 px-4 py-3">
                     {p.kind === "message" ? <MessageSquareTextIcon aria-hidden className="size-4 text-muted-foreground" /> : p.mimeType?.startsWith("image/") ? <FileImageIcon aria-hidden className="size-4 text-muted-foreground" /> : <FileIcon aria-hidden className="size-4 text-muted-foreground" />}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{p.fileName ?? p.label}</p>
+                      {p.fileKey ? (
+                        <a href={`/api/proofs/${p.id}`} target="_blank" rel="noreferrer" className="block truncate text-sm font-medium hover:underline">{p.fileName ?? p.label}</a>
+                      ) : (
+                        <p className="truncate text-sm font-medium">{p.fileName ?? p.label}</p>
+                      )}
                       <p className="truncate text-xs text-muted-foreground">{p.kind === "message" ? p.text : `${p.label} · ${((p.sizeBytes ?? 0) / 1_000_000).toFixed(1)} MB`}</p>
                     </div>
                     <time className="text-xs text-muted-foreground" dateTime={p.occurredAt.toISOString()}>{shortDate(p.occurredAt)}</time>
@@ -109,11 +115,8 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
                 ))}
                 {!sale.proofs.some((p) => p.kind === "file" || p.kind === "message") ? <li className="px-4 py-6 text-center text-sm text-muted-foreground">Nothing here yet.</li> : null}
               </ul>
-              <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed bg-paper/60 px-4 py-8 text-center">
-                <UploadIcon aria-hidden className="size-5 text-muted-foreground" />
-                <p className="text-sm font-medium">Drop delivered files here</p>
-                <p className="text-xs text-muted-foreground">Uploads arrive with the proof locker build (day 6).</p>
-              </div>
+              <ProofDropzone saleId={sale.id} />
+              <MessageProofForm saleId={sale.id} />
             </CardContent>
           </Card>
 
