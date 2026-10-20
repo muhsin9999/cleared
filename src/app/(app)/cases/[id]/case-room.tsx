@@ -63,7 +63,7 @@ export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved }: 
         </CardHeader>
         <CardContent className="space-y-6">
           <section aria-label="Exhibits">
-            <h3 className="mb-2 text-xs font-medium tracking-[0.1em] text-muted-foreground uppercase">Exhibits</h3>
+            <h3 className="mb-2 text-sm font-medium text-muted-foreground">{packet.exhibits.length ? "Exhibits" : "No proof in the locker for this sale yet"}</h3>
             <ul className="grid gap-2 sm:grid-cols-2">
               <AnimatePresence>
                 {step >= 1 &&
@@ -107,7 +107,7 @@ export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved }: 
             </m.section>
           ) : null}
 
-          {ready ? (
+          {ready && packet.recommendation === "fight" ? (
             <m.div aria-hidden initial={{ opacity: 0, scale: 1.6, rotate: -24 }} animate={{ opacity: 0.85, scale: 1, rotate: -12 }} transition={{ delay: 0.5 + packet.claims.length * 0.15, duration: 0.25, ease: "easeOut" }} className="pointer-events-none absolute top-5 right-5 text-cleared">
               <StampMark className="size-16" />
             </m.div>
@@ -118,11 +118,19 @@ export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved }: 
       {ready ? (
         <Card className="flex-row flex-wrap items-center justify-between gap-3 px-5 py-4">
           <p className="text-sm text-muted-foreground">
-            {resolved ? "This case is closed." : submitted ? "Submitted to PayPal ✓ Waiting for PayPal’s decision." : canSubmit ? "Nothing is sent to PayPal until you approve." : "PayPal isn’t accepting evidence on this case right now."}
+            {resolved
+              ? "This case is closed."
+              : submitted
+                ? "Submitted to PayPal ✓ Waiting for PayPal’s decision."
+                : !packet.claims.length
+                  ? "There’s nothing to submit yet. Add proof to the sale, or refund the client in PayPal."
+                  : canSubmit
+                    ? "Nothing is sent to PayPal until you approve."
+                    : "PayPal isn’t accepting evidence on this case right now."}
           </p>
           {!submitted && !resolved ? (
             <Dialog>
-              <DialogTrigger render={<Button size="lg" disabled={!canSubmit} />}>Approve &amp; submit to PayPal</DialogTrigger>
+              <DialogTrigger render={<Button size="lg" disabled={!canSubmit || !packet.claims.length} />}>Approve &amp; submit to PayPal</DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Submit this evidence to PayPal?</DialogTitle>

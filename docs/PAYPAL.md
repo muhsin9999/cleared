@@ -99,6 +99,8 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 
 **Consequence for judge mode (F8):** until the scope is granted, disputes are opened by the sandbox buyer in the PayPal UI (Resolution Center). We keep a **pool of pre-opened disputes**. "Simulate a buyer dispute" claims the next one and runs everything after creation live through the API: escalate → `require-evidence` → evidence packet → `provide-evidence` → `adjudicate`. Ask for the scope through PayPal developer support and the hackathon Discord; if it arrives, switch back to API creation.
 
+**Day 3 (20 Oct), live on Render:** real, PayPal-signed deliveries (redelivered with the resend API) verify as `SUCCESS`; a repeat delivery is stored once (`duplicate`); an `INVOICING.INVOICE.PAID` event matched its sale by invoice id, marked it paid and recorded the payment id; the dispute poller then matched the buyer-opened dispute `PP-R-JBX-10193752` to that sale through `seller_transaction_id`. **Invoicing webhooks wrap the invoice in `resource.invoice`**; other events put the object directly in `resource`.
+
 **Lessons:** quick tunnels die when the laptop sleeps, so re-register the webhook after restarting one. Unapproved orders disappear after a few hours. One sandbox checkout failed with "Things don't appear to be working right now"; the retry uses `shipping_preference: GET_FROM_FILE`.
 
 ## 8. Open questions for the day-1 spike

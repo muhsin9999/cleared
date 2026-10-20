@@ -13,6 +13,8 @@ export async function approveAndSubmit(disputeId: string) {
   const dispute = await db.query.disputes.findFirst({ where: and(eq(s.disputes.sellerId, seller.id), eq(s.disputes.id, disputeId)), with: { sale: { with: { proofs: true } } } });
   if (!dispute?.sale) return { ok: false as const, message: "Case not found" };
   if (!dispute.allowedActions?.includes("provide_evidence")) return { ok: false as const, message: "PayPal isn’t accepting evidence on this case right now." };
+  // Real PayPal disputes are only submitted by the submitEvidence workflow (PLAN day 8). Never pretend.
+  if (!dispute.paypalDisputeId.startsWith("SIM-")) return { ok: false as const, message: "Submitting to PayPal from Cleared arrives with the evidence workflow. Nothing was sent." };
 
   const packet = templatePacket(dispute.sale, dispute.sale.proofs, dispute.reason);
   const [row] = await db

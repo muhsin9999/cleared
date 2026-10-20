@@ -25,7 +25,9 @@ export function templatePacket(sale: Sale, proofs: Proof[], reason: string) {
     recommendation: strong ? "fight" : missing.length >= 2 ? "accept" : "offer",
     rationale: strong
       ? `The client says the ${reason === "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" ? "work never arrived" : "work wasn’t as described"}, but the locker shows delivery and the client’s own confirmation.`
-      : "The locker is missing key proof, so a partial refund may be the fairest and cheapest outcome.",
+      : missing.length >= 2
+        ? "There is no proof of delivery in the locker, so PayPal is likely to side with the client. Refunding now avoids a lost case on your record. If you did deliver, add the files and the client’s messages first."
+        : "Some proof is missing. Offering a partial refund may be fairer and cheaper than a case you might lose.",
     claims,
     missing,
     exhibits,
