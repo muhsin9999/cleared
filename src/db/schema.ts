@@ -128,6 +128,19 @@ export const webhookDeliveries = pgTable(
   (t) => [index("webhook_deliveries_received_idx").on(t.receivedAt)],
 );
 
+// Real sandbox disputes opened by the sandbox buyer ahead of time. "Simulate a buyer dispute" claims one per
+// demo workspace, because PayPal's dispute-create API needs a scope only PayPal can grant (docs/PAYPAL.md §7b).
+export const disputePool = pgTable("dispute_pool", {
+  id: id(),
+  paypalDisputeId: text("paypal_dispute_id").notNull().unique(),
+  transactionId: text("transaction_id").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  status: text("status").notNull().default("available"),
+  claimedBySeller: uuid("claimed_by_seller"),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
 export const disputes = pgTable("disputes", {
   id: id(),
   saleId: uuid("sale_id").references(() => sales.id, { onDelete: "set null" }),

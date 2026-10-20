@@ -24,7 +24,7 @@ type Packet = {
 const STEPS = ["Gathering proof from the locker", "Drafting the packet", "Checking every claim against an exhibit"];
 const KIND_ICON = { file: FileIcon, message: MessageSquareTextIcon, acceptance: UserCheckIcon, tracking: FileIcon } as const;
 
-export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved }: { disputeId: string; packet: Packet; canSubmit: boolean; submitted: boolean; resolved: boolean }) {
+export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved, sending, failure, real }: { disputeId: string; packet: Packet; canSubmit: boolean; submitted: boolean; resolved: boolean; sending: boolean; failure: string | null; real: boolean }) {
   const [step, setStep] = useState(submitted ? STEPS.length : 0);
   const [pending, start] = useTransition();
   const ready = step >= STEPS.length;
@@ -120,20 +120,26 @@ export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved }: 
           <p className="text-sm text-muted-foreground">
             {resolved
               ? "This case is closed."
-              : submitted
-                ? "Submitted to PayPal ✓ Waiting for PayPal’s decision."
+              : sending
+                ? "Sending your evidence to PayPal through the evidence workflow…"
+                : submitted
+                ? real
+                  ? "Sent to PayPal ✓ PayPal now reviews it; the decision arrives on this page."
+                  : "Submitted ✓ (simulated case). Waiting for the decision."
+                : failure
+                  ? `Last attempt failed: ${failure}`
                 : !packet.claims.length
                   ? "There’s nothing to submit yet. Add proof to the sale, or refund the client in PayPal."
                   : canSubmit
                     ? "Nothing is sent to PayPal until you approve."
                     : "PayPal isn’t accepting evidence on this case right now."}
           </p>
-          {!submitted && !resolved ? (
+          {!submitted && !resolved && !sending ? (
             <Dialog>
               <DialogTrigger render={<Button size="lg" disabled={!canSubmit || !packet.claims.length} />}>Approve &amp; submit to PayPal</DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Submit this evidence to PayPal?</DialogTitle>
+                  <DialogTitle>{failure ? "Try sending this evidence again?" : "Submit this evidence to PayPal?"}</DialogTitle>
                   <DialogDescription>PayPal will receive {packet.claims.length} statements and {packet.exhibits.length} exhibits as “proof of fulfilment”. You can’t edit them after submitting.</DialogDescription>
                 </DialogHeader>
                 <ul className="space-y-1 text-sm">{packet.exhibits.map((e) => <li key={e.id} className="flex gap-2"><span className="font-mono text-muted-foreground">{e.number}</span>{e.label}</li>)}</ul>
@@ -144,7 +150,7 @@ export function CaseRoom({ disputeId, packet, canSubmit, submitted, resolved }: 
                     onClick={() =>
                       start(async () => {
                         const r = await approveAndSubmit(disputeId);
-                        if (r.ok) toast.success("Evidence submitted to PayPal");
+                        if (r.ok) toast.success(r.mode === "workflow" ? "Sending to PayPal…" : "Evidence submitted");
                         else toast.error(r.message);
                       })
                     }

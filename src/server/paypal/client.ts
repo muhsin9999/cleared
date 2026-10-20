@@ -41,3 +41,15 @@ export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DE
   }
   return json as T;
 }
+
+/** Multipart POST (used by Disputes provide-evidence). */
+export async function paypalMultipart<T = unknown>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, { method: "POST", headers: { Authorization: `Bearer ${await token()}` }, body: form, cache: "no-store" });
+  const text = await res.text();
+  const json = text ? (JSON.parse(text) as unknown) : null;
+  if (!res.ok) {
+    const details = (json as { details?: { issue?: string; description?: string }[]; message?: string } | null) ?? {};
+    throw new PayPalError(res.status, res.headers.get("paypal-debug-id"), json, details.details?.[0]?.description ?? details.details?.[0]?.issue ?? details.message ?? `PayPal POST ${path} failed`);
+  }
+  return json as T;
+}

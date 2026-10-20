@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, schema as s } from "@/db";
 import { seedDemo } from "@/db/seed";
+import { reasonText } from "@/lib/paypal-events";
 import { requireSeller } from "../auth";
+import { adjudicate, claimPoolDispute } from "../paypal/disputes";
 import { createSession } from "../session";
 
 // Demo panel actions. Until judge mode is wired to the sandbox (PLAN day 9) the dispute buttons
@@ -24,6 +26,22 @@ export async function simulateDispute() {
   const seller = await requireSeller();
   const sale = await db.query.sales.findFirst({ where: and(eq(s.sales.sellerId, seller.id), eq(s.sales.status, "accepted")) });
   if (!sale) return { ok: false as const, message: "No paid and delivered sale to dispute. Reset the demo first." };
+
+  // Prefer a real sandbox dispute from the stock; it then behaves exactly like one PayPal sent us.
+  try {
+    const real = await claimPoolDispute(seller.id, sale.id, sale.amountCents);
+    if (real) {
+      await db
+        .insert(s.events)
+        .values({ sellerId: seller.id, saleId: sale.id, paypalEventId: `pool:${real.paypalDisputeId}:claimed`, type: "CUSTOMER.DISPUTE.CREATED", summary: `${sale.clientName} opened a dispute: ${reasonText(real.reason)}`, verified: true, payload: { dispute_id: real.paypalDisputeId, via: "sandbox stock" } })
+        .onConflictDoNothing({ target: s.events.paypalEventId });
+      revalidatePath("/", "layout");
+      return { ok: true as const, disputeId: real.id };
+    }
+  } catch (e) {
+    console.warn("Dispute stock unavailable, falling back to a simulated dispute:", (e as Error).message);
+  }
+
   const [dispute] = await db
     .insert(s.disputes)
     .values({
@@ -51,6 +69,14 @@ export async function resolveLatestDispute() {
   const dispute = await db.query.disputes.findFirst({ where: and(eq(s.disputes.sellerId, seller.id), eq(s.disputes.status, "under_review")) })
     ?? (await db.query.disputes.findFirst({ where: and(eq(s.disputes.sellerId, seller.id), eq(s.disputes.status, "waiting_for_seller")) }));
   if (!dispute) return { ok: false as const, message: "No open dispute to resolve." };
+  if (!dispute.paypalDisputeId.startsWith("SIM-")) {
+    // A real sandbox dispute is only ever decided by PayPal. Never fake the outcome.
+    const r = await adjudicate(dispute.paypalDisputeId, "SELLER_FAVOR");
+    if (!r.ok) return { ok: false as const, message: `PayPal hasn’t opened this case for a decision yet (${r.status.toLowerCase().replaceAll("_", " ")}). In the sandbox that can take a while after evidence is sent.` };
+    await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "paypal", type: "CUSTOMER.DISPUTE.RESOLVED", summary: "PayPal closed the dispute in your favour (sandbox decision)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
+    revalidatePath("/", "layout");
+    return { ok: true as const, disputeId: dispute.id };
+  }
   await db.update(s.disputes).set({ status: "resolved_seller", paypalStatus: "RESOLVED", resolvedAt: new Date() }).where(eq(s.disputes.id, dispute.id));
   if (dispute.saleId) await db.update(s.sales).set({ status: "accepted" }).where(eq(s.sales.id, dispute.saleId));
   await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, type: "CUSTOMER.DISPUTE.RESOLVED", summary: "Dispute closed in your favour", simulated: true, payload: { dispute_id: dispute.paypalDisputeId, outcome: "RESOLVED_SELLER_FAVOUR" } });

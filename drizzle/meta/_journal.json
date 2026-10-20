@@ -15,6 +15,13 @@
       "when": 1792514807362,
       "tag": "0001_live_webhooks",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792530403022,
+      "tag": "0002_dispute_pool",
+      "breakpoints": true
     }
   ]
 }

@@ -40,7 +40,8 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
   const sale = dispute.sale;
   const packet = templatePacket(sale, sale.proofs, dispute.reason);
   const due = daysUntil(dispute.responseDueAt, now);
-  const submitted = dispute.packets[0]?.status === "submitted";
+  const latest = dispute.packets[0];
+  const submitted = latest?.status === "submitted";
 
   return (
     <>
@@ -78,6 +79,9 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
           disputeId={dispute.id}
           canSubmit={!!dispute.allowedActions?.includes("provide_evidence")}
           submitted={submitted}
+          sending={latest?.status === "submitting"}
+          failure={latest?.status === "failed" ? latest.error : null}
+          real={!dispute.paypalDisputeId.startsWith("SIM-")}
           resolved={dispute.status.startsWith("resolved")}
           packet={{ ...packet, exhibits: packet.exhibits.map((e) => ({ ...e, date: e.date.toISOString() })) }}
         />

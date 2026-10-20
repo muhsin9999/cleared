@@ -19,6 +19,8 @@ services:
         value: "true"
       - key: WORKFLOW_SLUG
         value: cleared-wf
+      - key: USE_RENDER_WORKFLOWS
+        value: "true"
       - fromGroup: cleared-secrets
 
   - type: workflow

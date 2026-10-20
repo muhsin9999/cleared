@@ -1,7 +1,7 @@
 // Disputes v1. Disputes reach Cleared two ways: CUSTOMER.DISPUTE.* webhooks and a poller (syncDisputes),
 // because in the sandbox no dispute webhook fired for a buyer-opened case (docs/PAYPAL.md §7b).
 import "server-only";
-import { eq, inArray, or } from "drizzle-orm";
+import { eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { paypal } from "./client";
 
@@ -96,4 +96,53 @@ export async function syncDisputes() {
     }
   }
   return { seen: ids.length, matched, created };
+}
+
+/** Adds open, unused sandbox disputes to the judge-mode stock and retires ones PayPal no longer accepts evidence on. */
+export async function syncPool() {
+  const list = await paypal<{ items?: { dispute_id: string }[] }>("GET", "/v1/customer/disputes?page_size=50");
+  const claimed = new Set((await db.select({ id: s.disputes.paypalDisputeId }).from(s.disputes)).map((d) => d.id));
+  const pool = new Map((await db.select().from(s.disputePool)).map((p) => [p.paypalDisputeId, p]));
+  let added = 0;
+  let retired = 0;
+  for (const { dispute_id } of list.items ?? []) {
+    if (claimed.has(dispute_id) && !pool.has(dispute_id)) continue;
+    const d = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${dispute_id}`);
+    const usable = d.status === "WAITING_FOR_SELLER_RESPONSE" && (d.links ?? []).some((l) => l.rel === "provide_evidence");
+    const existing = pool.get(dispute_id);
+    if (!existing && usable && !claimed.has(dispute_id)) {
+      const tx = d.disputed_transactions?.[0]?.seller_transaction_id;
+      if (!tx) continue;
+      await db.insert(s.disputePool).values({ paypalDisputeId: dispute_id, transactionId: tx, amountCents: Math.round(Number(d.dispute_amount?.value ?? 0) * 100) }).onConflictDoNothing();
+      added++;
+    } else if (existing?.status === "available" && !usable) {
+      await db.update(s.disputePool).set({ status: "expired" }).where(eq(s.disputePool.id, existing.id));
+      retired++;
+    }
+  }
+  const [{ available }] = await db.select({ available: sql<number>`count(*) filter (where ${s.disputePool.status} = 'available')::int` }).from(s.disputePool);
+  return { added, retired, available };
+}
+
+/** Claims one real sandbox dispute for a demo sale (atomically, so two judges never share one) and links it. */
+export async function claimPoolDispute(sellerId: string, saleId: string, saleAmountCents: number) {
+  // Prefer a dispute for the same amount as the sale, so the case reads naturally.
+  const [claim] = await db.execute<{ paypal_dispute_id: string; transaction_id: string }>(sql`
+    update ${s.disputePool} set status = 'claimed', claimed_by_seller = ${sellerId}, claimed_at = now()
+    where id = (select id from ${s.disputePool} where status = 'available'
+                order by (amount_cents = ${saleAmountCents}) desc, created_at limit 1 for update skip locked)
+    returning paypal_dispute_id, transaction_id`);
+  if (!claim) return null;
+  await db.update(s.sales).set({ paypalCaptureId: claim.transaction_id }).where(eq(s.sales.id, saleId));
+  const detail = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${claim.paypal_dispute_id}`);
+  return upsertDispute(detail);
+}
+
+/** Sandbox only: asks PayPal to decide a dispute, when PayPal offers that step (the `adjudicate` link). */
+export async function adjudicate(paypalDisputeId: string, outcome: "SELLER_FAVOR" | "BUYER_FAVOR") {
+  const live = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${paypalDisputeId}`);
+  if (!(live.links ?? []).some((l) => l.rel === "adjudicate")) return { ok: false as const, status: live.status, stage: live.dispute_life_cycle_stage };
+  await paypal("POST", `/v1/customer/disputes/${paypalDisputeId}/adjudicate`, { body: { adjudication_outcome: outcome } });
+  await upsertDispute(await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${paypalDisputeId}`));
+  return { ok: true as const };
 }
