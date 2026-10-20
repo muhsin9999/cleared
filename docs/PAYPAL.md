@@ -101,6 +101,8 @@ Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scrip
 
 **Day 3 (20 Oct), live on Render:** real, PayPal-signed deliveries (redelivered with the resend API) verify as `SUCCESS`; a repeat delivery is stored once (`duplicate`); an `INVOICING.INVOICE.PAID` event matched its sale by invoice id, marked it paid and recorded the payment id; the dispute poller then matched the buyer-opened dispute `PP-R-JBX-10193752` to that sale through `seller_transaction_id`. **Invoicing webhooks wrap the invoice in `resource.invoice`**; other events put the object directly in `resource`.
 
+**Day 5 (20 Oct), live:** the app's own "Send invoice" created and sent `INV2-ACZS-3V59-57RG-6BXH` ($200, 3.9 s), the sandbox buyer paid it on PayPal's page, and the signed `INVOICING.INVOICE.PAID` webhook marked the sale paid and posted "Northwind Games paid $200" to the timeline. **Sandbox trap:** invoices addressed to an email that is not a sandbox account (e.g. `art@northwind.example`) fail at payment with "something went wrong on our end", so demo invoices are addressed to the sandbox buyer while the client's name stays on the invoice.
+
 **Lessons:** quick tunnels die when the laptop sleeps, so re-register the webhook after restarting one. Unapproved orders disappear after a few hours. One sandbox checkout failed with "Things don't appear to be working right now"; the retry uses `shipping_preference: GET_FROM_FILE`.
 
 ## 8. Open questions for the day-1 spike
