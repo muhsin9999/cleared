@@ -7,6 +7,9 @@ suite("PayPal event descriptions", () => {
   it("names the client and amount on a paid invoice", () => {
     expect(describe(ev("INVOICING.INVOICE.PAID", { payments: { paid_amount: { value: "40.00", currency_code: "USD" } } }), "Lagos Lo-Fi Records")).toBe("Lagos Lo-Fi Records paid $40");
   });
+  it("reads invoice events, which PayPal wraps in resource.invoice", () => {
+    expect(describe(ev("INVOICING.INVOICE.PAID", { invoice: { id: "INV2-X", payments: { paid_amount: { value: "40.00", currency_code: "USD" } } } }), "Northwind Games")).toBe("Northwind Games paid $40");
+  });
   it("explains dispute reasons in plain words", () => {
     expect(describe(ev("CUSTOMER.DISPUTE.CREATED", { reason: "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" }), "Rowan Hale")).toBe("Rowan Hale opened a dispute: “not received”");
     expect(reasonText("SOME_NEW_REASON")).toBe("some new reason");

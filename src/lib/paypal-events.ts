@@ -16,8 +16,13 @@ type Resource = {
 };
 
 /** Plain-English line for the timeline. Unknown types fall back to a readable version of the name. */
+/** Invoicing events wrap the invoice in `resource.invoice`; other events put the object in `resource`. */
+export function resourceOf(event: WebhookEvent) {
+  return ((event.resource as { invoice?: Record<string, unknown> }).invoice ?? event.resource) as Record<string, unknown>;
+}
+
 export function describe(event: WebhookEvent, clientName?: string | null) {
-  const r = event.resource as Resource;
+  const r = resourceOf(event) as Resource;
   const who = clientName ?? "Your client";
   switch (event.event_type) {
     case "INVOICING.INVOICE.PAID":

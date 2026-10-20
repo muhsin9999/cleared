@@ -2,7 +2,7 @@
 import "server-only";
 import { eq, or } from "drizzle-orm";
 import { db, schema as s } from "@/db";
-import { describe, type WebhookEvent } from "@/lib/paypal-events";
+import { describe, resourceOf, type WebhookEvent } from "@/lib/paypal-events";
 import { paypal } from "./client";
 import { upsertDispute, type PayPalDispute } from "./disputes";
 
@@ -30,7 +30,7 @@ export async function verifySignature(headers: Headers, event: WebhookEvent) {
 
 /** Finds the Cleared sale an event belongs to, using the ids PayPal includes. */
 async function matchSale(event: WebhookEvent) {
-  const r = event.resource as Record<string, unknown>;
+  const r = resourceOf(event);
   const invoiceId = event.resource_type === "invoices" || event.event_type.startsWith("INVOICING.") ? ((r.id as string) ?? (r.invoice_id as string)) : null;
   if (invoiceId) {
     const inv = await db.query.invoices.findFirst({ where: eq(s.invoices.paypalInvoiceId, invoiceId), with: { sale: true } });
@@ -65,7 +65,7 @@ export async function ingest(event: WebhookEvent): Promise<IngestOutcome> {
     const at = event.create_time ? new Date(event.create_time) : new Date();
     if (event.event_type === "INVOICING.INVOICE.PAID") {
       await db.update(s.sales).set({ status: sale.status === "sent" || sale.status === "draft" ? "paid" : sale.status, paidAt: sale.paidAt ?? at }).where(eq(s.sales.id, sale.id));
-      const payment = ((event.resource as { payments?: { transactions?: { payment_id?: string }[] } }).payments?.transactions ?? [])[0]?.payment_id;
+      const payment = ((resourceOf(event) as { payments?: { transactions?: { payment_id?: string }[] } }).payments?.transactions ?? [])[0]?.payment_id;
       await db.update(s.invoices).set({ status: "PAID", paidAt: at, ...(payment ? { paypalPaymentId: payment } : {}) }).where(eq(s.invoices.saleId, sale.id));
     }
     if (event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
