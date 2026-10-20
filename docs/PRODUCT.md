@@ -34,7 +34,7 @@ We **never** claim to predict or reverse PayPal's decisions. Cleared prepares, d
 | F5 | **Live timeline** (wow 3) | Every verified PayPal webhook appears live: paid, captured, dispute opened, resolved. Each entry is in plain English with the raw event available. | Webhooks (verified) |
 | F6 | **Dispute → evidence packet** (wow 2) | When `CUSTOMER.DISPUTE.CREATED` arrives, a Render Workflow gathers the dispute, invoice, locker items and tracking. The AI drafts a packet where **every claim cites an exhibit**. A checker removes any claim it can't verify. Ada edits and approves, then Cleared submits through `provide-evidence`. | Disputes v1 get → provide-evidence (multipart) |
 | F7 | **Limitation notice reader** | Ada pastes or uploads a limitation or hold email or screenshot. Cleared **first checks for phishing**: is it in the Resolution Center? does the sender look genuine? It then maps each PayPal request to locker evidence, lists what's missing, and drafts the response. Ada uploads it herself in PayPal, because there is no public API for this. | None; honest manual hand-off |
-| F8 | **Judge mode** | One click: "Enter as Ada (demo)". Then "Simulate a buyer dispute" creates a real sandbox dispute through the API, and the whole loop runs live. | Sandbox dispute create, require-evidence, adjudicate |
+| F8 | **Judge mode** | One click: "Enter as Ada (demo)". Then "Simulate a buyer dispute" takes a real sandbox dispute (opened by the sandbox buyer; see [PAYPAL.md](PAYPAL.md) §7b), and the whole loop after it runs live. | Sandbox dispute create, require-evidence, adjudicate |
 
 ### Nice to have (only after must-ship is done)
 

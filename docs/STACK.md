@@ -36,7 +36,7 @@ Each choice is judged against four tests:
                                       • /api/paypal/webhook  (raw body → verify signature → store event)
                                       • /accept/[token]  (public client acceptance page)
                                       • approval inbox (human-in-the-loop)
-                                         │            │ @renderinc/sdk  runTask("cleared-wf/<task>", [ids])
+                                         │            │ @renderinc/sdk  startTask("cleared-wf/<task>", [ids])
                               Drizzle    │            ▼
                                          ▼     Render Workflow  "cleared-wf"
                                Render Postgres   preflightCheck · createInvoice · autoTrack(captureId)

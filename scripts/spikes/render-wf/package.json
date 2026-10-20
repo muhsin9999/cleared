@@ -1,0 +1,15 @@
+{
+  "name": "cleared-wf-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "trigger": "tsx src/trigger.ts"
+  },
+  "dependencies": {
+    "@renderinc/sdk": "1.3.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.2"
+  }
+}

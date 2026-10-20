@@ -54,7 +54,7 @@ All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 O
 - `PROOF_OF_REFUND`
 
 **Sandbox simulation for judge mode** ([test guide](https://developer.paypal.com/disputes/test-go-live)):
-- **Create:** `POST /v1/customer/disputes` (sandbox only), multipart `input={disputed_transactions:[{buyer_transaction_id}], reason, dispute_amount}`.
+- **Create via API (blocked for now):** `POST /v1/customer/disputes` (sandbox only), multipart `input={disputed_transactions:[{buyer_transaction_id}], reason, dispute_amount}`.
   - It needs a `PayPal-Auth-Assertion` header: an unsigned JWT, header `{"alg":"none"}`, payload `{"iss": client_id, "email": buyer_email}`.
   - Use amounts ≥ $11 so the dispute doesn't escalate early.
 - **Move to seller response:** `POST …/{id}/require-evidence`, which takes the status to `WAITING_FOR_SELLER_RESPONSE`.
@@ -75,6 +75,23 @@ All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 O
 
 - `GET /v1/reporting/transactions` (feature must be enabled; max 31-day window per request).
 - Data **lags up to 3 hours**, so never rely on it in the live demo. Seed Ada's history on day 1 and cache it nightly.
+
+## 7b. Day-1 spike results (20 Oct 2026)
+
+Scripts live in `scripts/spikes/` and run with `node --env-file=.env.local scripts/spikes/<file>.mjs`.
+
+| Call | Result |
+| --- | --- |
+| OAuth client credentials | **Pass.** 32 scopes, including invoicing, disputes (read-seller, update-seller) and webhooks |
+| Invoicing create → send | **Pass** (`INV2-HB7L-9RVB-TAER-U88E`) |
+| Buyer pays the invoice | **Pass**, invoice `PAID`; payment id `35156309J57118646` |
+| `INVOICING.INVOICE.PAID` webhook + `verify-webhook-signature` | **Pass**, `SUCCESS` on a real event (redelivered with `POST /v1/notifications/webhooks-events/{id}/resend` after the tunnel dropped) |
+| Render Workflows: `startTask` → chained tasks → PayPal OAuth inside a task | **Pass** on the local task server (`render workflows dev`, SDK 1.3.0). The SDK method is `render.workflows.startTask`, not `runTask`. Hosted run on day 2 |
+| **Dispute create via API** | **Blocked:** `400 No permissions to set target_client_id`. PayPal's [set-up guide](https://developer.paypal.com/disputes/set-up) says the `disputes/create` scope must be added by a PayPal account manager, plus Log in with PayPal buyer consent |
+
+**Consequence for judge mode (F8):** until the scope is granted, disputes are opened by the sandbox buyer in the PayPal UI (Resolution Center). We keep a **pool of pre-opened disputes**. "Simulate a buyer dispute" claims the next one and runs everything after creation live through the API: escalate → `require-evidence` → evidence packet → `provide-evidence` → `adjudicate`. Ask for the scope through PayPal developer support and the hackathon Discord; if it arrives, switch back to API creation.
+
+**Lessons:** quick tunnels die when the laptop sleeps, so re-register the webhook after restarting one. Unapproved orders disappear after a few hours. One sandbox checkout failed with "Things don't appear to be working right now"; the retry uses `shipping_preference: GET_FROM_FILE`.
 
 ## 8. Open questions for the day-1 spike
 

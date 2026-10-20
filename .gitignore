@@ -9,3 +9,8 @@ coverage/
 playwright-report/
 test-results/
 *.log
+scripts/spikes/webhook-events.jsonl
+scripts/spikes/.webhook-id
+scripts/spikes/out/
+scripts/spikes/out-server.log
+scripts/spikes/render-wf/node_modules/
