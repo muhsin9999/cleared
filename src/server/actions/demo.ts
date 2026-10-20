@@ -22,14 +22,14 @@ export async function resetDemo() {
   redirect("/home?reset=1");
 }
 
-export async function simulateDispute() {
+export async function simulateDispute(useReal = true) {
   const seller = await requireSeller();
   const sale = await db.query.sales.findFirst({ where: and(eq(s.sales.sellerId, seller.id), eq(s.sales.status, "accepted")) });
   if (!sale) return { ok: false as const, message: "No paid and delivered sale to dispute. Reset the demo first." };
 
   // Prefer a real sandbox dispute from the stock; it then behaves exactly like one PayPal sent us.
   try {
-    const real = await claimPoolDispute(seller.id, sale.id, sale.amountCents);
+    const real = useReal ? await claimPoolDispute(seller.id, sale.id, sale.amountCents) : null;
     if (real) {
       await db
         .insert(s.events)

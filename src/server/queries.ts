@@ -1,6 +1,6 @@
 // Read models for the seller pages. Every function takes the seller id from requireSeller().
 import "server-only";
-import { and, desc, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 
 const IN_FLIGHT = ["paid", "delivered", "accepted"] as const;
@@ -71,6 +71,11 @@ export async function latestPayableInvoice(sellerId: string) {
     .orderBy(desc(s.invoices.sentAt))
     .limit(1);
   return rows[0] ?? null;
+}
+
+export async function disputeStock() {
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(s.disputePool).where(eq(s.disputePool.status, "available"));
+  return row?.n ?? 0;
 }
 
 export async function salesByIds(sellerId: string, ids: string[]) {
