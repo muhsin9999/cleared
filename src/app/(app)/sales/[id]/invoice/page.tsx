@@ -90,7 +90,7 @@ async function Invoice({ params }: { params: PageProps<"/sales/[id]/invoice">["p
               See it as the client does, on PayPal ↗
             </a>
           ) : null}
-          {invoice.sentAt ? null : <SendInvoice saleId={sale.id} clientEmail={sale.clientEmail} amount={money(sale.amountCents)} />}
+          {invoice.sentAt ? null : <SendInvoice saleId={sale.id} clientEmail={sale.clientEmail} amount={money(sale.amountCents)} sandbox={process.env.PAYPAL_ENV !== "live" && process.env.DEMO_MODE === "true"} />}
         </aside>
       </div>
     </>

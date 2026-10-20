@@ -70,6 +70,13 @@ export async function createSale(input: z.input<typeof Draft>) {
   redirect(`/sales/${sale.id}/invoice`);
 }
 
+/** In the sandbox the payer must be a sandbox account: PayPal can't take payment on an invoice
+ *  addressed to an email that isn't one (20 Oct test). Demo invoices go to the sandbox buyer. */
+function payerEmail(clientEmail: string) {
+  const sandboxBuyer = process.env.PAYPAL_SANDBOX_BUYER_EMAIL;
+  return process.env.PAYPAL_ENV !== "live" && process.env.DEMO_MODE === "true" && sandboxBuyer ? sandboxBuyer : clientEmail;
+}
+
 // Invoicing v2 create → send (F2). On a PayPal error the draft is kept and the reason is returned.
 export async function sendInvoice(saleId: string) {
   const seller = await requireSeller();
@@ -86,7 +93,7 @@ export async function sendInvoice(saleId: string) {
       saleId: sale.id,
       sellerName: seller.businessName ?? seller.name,
       clientName: sale.clientName,
-      clientEmail: sale.clientEmail,
+      clientEmail: payerEmail(sale.clientEmail),
       draft: invoice.draft as InvoiceDraft,
     });
   } catch (e) {

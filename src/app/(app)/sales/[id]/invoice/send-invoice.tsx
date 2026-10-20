@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { sendInvoice } from "@/server/actions/sales";
 
-export function SendInvoice({ saleId, clientEmail, amount }: { saleId: string; clientEmail: string; amount: string }) {
+export function SendInvoice({ saleId, clientEmail, amount, sandbox }: { saleId: string; clientEmail: string; amount: string; sandbox: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
@@ -19,6 +19,7 @@ export function SendInvoice({ saleId, clientEmail, amount }: { saleId: string; c
           <DialogTitle>Send this invoice through PayPal?</DialogTitle>
           <DialogDescription>
             PayPal emails {clientEmail} an invoice for {amount} with the items and terms shown. They pay on PayPal’s page. You can cancel the invoice in PayPal until it’s paid.
+            {sandbox ? " In this sandbox demo, PayPal delivers it to the test buyer account so it can be paid." : ""}
           </DialogDescription>
         </DialogHeader>
         {error ? <p role="alert" className="rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">{error}</p> : null}
