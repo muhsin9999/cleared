@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db, schema as s } from "@/db";
 import { readNotice, type Locker, type NoticeResult, type ResolutionCenterAnswer } from "@/lib/notice";
+import { randomUUID } from "node:crypto";
+import { MAX_FILE_BYTES } from "@/lib/evidence-files";
+import { polishReply, transcribeNotice } from "../ai/notice";
 import { requireSeller, type Seller } from "../auth";
+import { putFile } from "../storage";
 
 export type NoticeFormState = { error?: string };
 
@@ -48,17 +52,53 @@ function draftReply(seller: Seller, r: ReturnType<typeof readNotice>, locker: Lo
 
 export async function submitNotice(_prev: NoticeFormState, form: FormData): Promise<NoticeFormState> {
   const seller = await requireSeller();
-  const text = String(form.get("text") ?? "").trim();
+  let text = String(form.get("text") ?? "").trim();
   const rc = String(form.get("rc") ?? "") as ResolutionCenterAnswer;
-  if (text.length < 40) return { error: "Paste the whole email, including the “From:” line." };
+  const file = form.get("file");
   if (!["yes", "no", "unsure"].includes(rc)) return { error: "Answer the Resolution Center question first." };
+
+  // A screenshot or PDF: the AI transcribes it (sender and links exactly as shown), then the same rules run.
+  let fileKey: string | null = null;
+  let transcribed = false;
+  let senderVisible = true;
+  if (file instanceof File && file.size > 0 && !text) {
+    if (!["image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf"].includes(file.type)) return { error: "Upload a screenshot (PNG, JPG, GIF, WebP) or a PDF." };
+    if (file.size > MAX_FILE_BYTES) return { error: "That file is over 10 MB. Try a smaller screenshot." };
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    try {
+      const t = await transcribeNotice(seller.id, { type: file.type, bytes, name: file.name });
+      if (!t.isEmail) return { error: "That doesn’t look like an email or a PayPal notice. Try a clearer screenshot." };
+      text = t.text;
+      transcribed = true;
+      senderVisible = t.senderVisible;
+    } catch {
+      return { error: "Cleared couldn’t read that file. Paste the email text instead." };
+    }
+    fileKey = `notices/${seller.id}/${randomUUID()}-${file.name.replace(/[^\w.-]+/g, "-").slice(-80)}`;
+    await putFile(fileKey, bytes, file.type).catch(() => (fileKey = null));
+  }
+  if (text.length < 40) return { error: "Paste the whole email, including the “From:” line, or upload a screenshot." };
 
   const locker = await lockerCounts(seller.id);
   const r = readNotice(text, rc, locker);
-  const result: NoticeResult = { ...r, draftReply: draftReply(seller, r, locker) };
+  if (transcribed && !senderVisible && r.verdict !== "likely_phishing")
+    r.signals.push({ id: "sender-hidden", strength: "weak", text: "The screenshot doesn’t show the sender’s address. Check it in your inbox before trusting the email." });
+  const plain = draftReply(seller, r, locker);
+  let reply = plain;
+  let replySource: "ai" | "plain" = "plain";
+  if (plain) {
+    // Only facts that answer what PayPal asked for; the plain draft already carries the relevant counts.
+    const facts = { seller: seller.name, business: seller.businessName, sells: seller.sells, requested: r.requirements.map((q) => ({ item: q.label, status: q.status === "ready" ? "attached" : q.status === "you" ? "seller uploads it in PayPal" : "missing" })) };
+    const polished = await polishReply(seller.id, plain, facts).catch(() => null);
+    if (polished) {
+      reply = polished;
+      replySource = "ai";
+    }
+  }
+  const result: NoticeResult = { ...r, draftReply: reply, replySource, transcribed };
   const [row] = await db
     .insert(s.notices)
-    .values({ sellerId: seller.id, sourceText: text.slice(0, 20_000), inResolutionCenter: rc, verdict: r.verdict, result: result as unknown as Record<string, unknown> })
+    .values({ sellerId: seller.id, sourceText: text.slice(0, 20_000), fileKey, inResolutionCenter: rc, verdict: r.verdict, result: result as unknown as Record<string, unknown> })
     .returning({ id: s.notices.id });
   await db.insert(s.events).values({
     sellerId: seller.id,

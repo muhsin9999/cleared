@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { MailWarningIcon, ShieldAlertIcon, SparklesIcon } from "lucide-react";
+import { ImageUpIcon, MailWarningIcon, ShieldAlertIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
@@ -20,6 +20,7 @@ const RC: { value: ResolutionCenterAnswer; label: string }[] = [
 export function NoticeForm() {
   const [state, action, pending] = useActionState(submitNotice, {} as NoticeFormState);
   const [text, setText] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
   const [rc, setRc] = useState<ResolutionCenterAnswer | null>(null);
 
   return (
@@ -38,8 +39,17 @@ export function NoticeForm() {
           <Field>
             <FieldLabel htmlFor="notice-text">The email, as you received it</FieldLabel>
             <Textarea id="notice-text" name="text" rows={12} value={text} onChange={(e) => setText(e.target.value)} placeholder={"From: …\nSubject: …\n\nPaste the whole email, including the sender line and any links."} className="font-mono text-[0.85rem]" />
-            <FieldDescription>Paste it as text. Don’t click any links in it first.</FieldDescription>
+            <FieldDescription>Paste it as text, or upload a screenshot or PDF below. Don’t click any links in it first.</FieldDescription>
           </Field>
+
+          <label className={cn("flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm has-focus-visible:outline-2 has-focus-visible:outline-focus", fileName ? "border-cleared bg-cleared-tint/40" : "bg-paper/60 hover:bg-muted/60")}>
+            <ImageUpIcon aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1">
+              {fileName ? <span className="font-medium">{fileName}</span> : <span>Or upload a screenshot or PDF of the email</span>}
+              <span className="block text-xs text-muted-foreground">Cleared AI reads it, keeping the sender and links exactly as shown. PNG, JPG, WebP or PDF, up to 10 MB.</span>
+            </span>
+            <input type="file" name="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" className="sr-only" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)} />
+          </label>
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">Log in to PayPal yourself (type paypal.com, don’t use the email’s links). Is the same message in your Resolution Center?</legend>
@@ -60,8 +70,8 @@ export function NoticeForm() {
 
           <div className="flex flex-col-reverse items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p role="alert" className="text-sm text-risk">{state.error ?? ""}</p>
-            <Button type="submit" size="lg" disabled={pending || !text.trim() || !rc}>
-              <MailWarningIcon aria-hidden /> {pending ? "Checking…" : "Check this email"}
+            <Button type="submit" size="lg" disabled={pending || (!text.trim() && !fileName) || !rc}>
+              <MailWarningIcon aria-hidden /> {pending ? (fileName && !text.trim() ? "Reading your screenshot…" : "Checking…") : "Check this email"}
             </Button>
           </div>
         </form>

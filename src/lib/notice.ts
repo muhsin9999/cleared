@@ -110,4 +110,4 @@ export function readNotice(text: string, rc: ResolutionCenterAnswer, locker: Loc
   };
 }
 
-export type NoticeResult = ReturnType<typeof readNotice> & { draftReply: string | null };
+export type NoticeResult = ReturnType<typeof readNotice> & { draftReply: string | null; replySource?: "ai" | "plain"; transcribed?: boolean };

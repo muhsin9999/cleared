@@ -45,7 +45,7 @@ async function Notice({ params }: { params: PageProps<"/notices/[id]">["params"]
       <PageHeader
         eyebrow={<Link href="/cases" className="hover:text-foreground">Cases</Link>}
         title={phishing ? "This email is likely phishing" : TYPE_LABEL[r.type]}
-        description={`Checked ${shortDate(notice.createdAt)}${notice.doneAt ? " · marked as done" : ""}`}
+        description={`Checked ${shortDate(notice.createdAt)}${r.transcribed ? " · read from your screenshot by Cleared AI" : ""}${notice.doneAt ? " · marked as done" : ""}`}
       />
 
       <Card className={cn("gap-4 border-l-4 px-6 py-5", phishing ? "border-l-risk bg-risk-tint/50" : r.verdict === "genuine" ? "border-l-cleared bg-cleared-tint/40" : "border-l-caution bg-caution-tint/60")}>
@@ -123,7 +123,7 @@ async function Notice({ params }: { params: PageProps<"/notices/[id]">["params"]
               <Card>
                 <CardHeader>
                   <CardTitle>Draft reply</CardTitle>
-                  <CardDescription>Drafted by Cleared from your records · check before sending</CardDescription>
+                  <CardDescription>{r.replySource === "ai" ? "Written by Cleared AI using only your records · check before sending" : "Drafted by Cleared from your records · check before sending"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <pre className="max-h-80 overflow-auto rounded-md bg-paper px-3 py-2 font-sans text-sm whitespace-pre-wrap">{r.draftReply}</pre>
