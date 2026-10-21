@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db, schema as s } from "@/db";
+import { costOf } from "@/lib/ai-cost";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { requireSeller } from "@/server/auth";
@@ -24,11 +25,8 @@ const KIND: Record<string, { label: string; ai: boolean }> = {
   "paypal.dispute.provide_evidence": { label: "Sent evidence to PayPal", ai: false },
 };
 
-// Approximate list prices for gpt-5.4-mini (USD per million tokens); shown as an estimate only.
-const PRICE = { input: 0.75, cached: 0.075, output: 4.5 };
-
 type Usage = { input?: number; output?: number; cached?: number };
-type Output = { usage?: Usage; ms?: number; findings?: { title: string; source?: string }[]; recommendation?: string; claims?: { text: string }[]; reply?: string; introduced?: string[]; files?: string[]; paypalStatus?: string; number?: string };
+type Output = { usage?: Usage; promptVersion?: string; ms?: number; findings?: { title: string; source?: string }[]; recommendation?: string; claims?: { text: string }[]; reply?: string; introduced?: string[]; files?: string[]; paypalStatus?: string; number?: string };
 
 export default function AuditPage({ searchParams }: PageProps<"/settings/audit">) {
   return (
@@ -65,7 +63,7 @@ async function Audit({ searchParams }: { searchParams: PageProps<"/settings/audi
         const out = (row.output ?? {}) as Output;
         const checker = row.checker as { kept?: number; removed?: { text: string; reasons: string[] }[]; accepted?: boolean } | null;
         const u = out.usage;
-        const cost = u ? ((u.input ?? 0) - (u.cached ?? 0)) * PRICE.input / 1e6 + (u.cached ?? 0) * PRICE.cached / 1e6 + (u.output ?? 0) * PRICE.output / 1e6 : null;
+        const cost = costOf(u, row.model ?? undefined);
         return (
           <li key={row.id}>
             <Card className="gap-3 px-5 py-4">
@@ -75,7 +73,7 @@ async function Audit({ searchParams }: { searchParams: PageProps<"/settings/audi
                   <p className="font-medium">{k.label}</p>
                   <p className="text-xs text-muted-foreground">
                     {relativeTime(row.createdAt, now)}
-                    {row.model ? ` · ${row.model}${row.effort ? ` (${row.effort} effort)` : ""}` : ""}
+                    {row.model ? ` · ${row.model}${row.effort ? ` (${row.effort} effort)` : ""}` : ""}{out.promptVersion ? ` · prompt ${out.promptVersion}` : ""}
                     {out.ms ? ` · ${(out.ms / 1000).toFixed(1)} s` : ""}
                     {u ? ` · ${(u.input ?? 0).toLocaleString()} tokens in, ${(u.output ?? 0).toLocaleString()} out` : ""}
                     {cost !== null ? ` · ≈ $${cost.toFixed(4)}` : ""}

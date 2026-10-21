@@ -1,0 +1,1 @@
+ALTER TABLE "packets" ADD COLUMN "ignored_instructions" jsonb;

@@ -4,7 +4,7 @@ import { AnimatePresence, m } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { BotIcon, CheckIcon, CircleSlashIcon, FileIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
+import { BotIcon, CheckIcon, CircleSlashIcon, ShieldAlertIcon, FileIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { StampMark } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ type Packet = {
   claims: { text: string; exhibitIds: string[] }[];
   removed: { text: string; reasons: string[] }[];
   missing: string[];
+  ignored: string[];
   trace: { tool: string; label: string; at: string }[];
   error: string | null;
 };
@@ -87,7 +88,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
             <AnimatePresence initial={false}>
               {steps.map((st, i) => (
                 <m.li key={`${st.at}-${i}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={cn("flex items-center gap-2.5 text-sm", st.tool === "fallback" && "text-caution")}>
-                  {st.tool === "check_claims" ? <ShieldCheckIcon aria-hidden className="size-4 shrink-0 text-cleared" /> : <CheckIcon aria-hidden className="size-4 shrink-0 text-cleared" />}
+                  {st.tool === "guardrail" ? <ShieldAlertIcon aria-hidden className="size-4 shrink-0 text-risk" /> : st.tool === "check_claims" ? <ShieldCheckIcon aria-hidden className="size-4 shrink-0 text-cleared" /> : <CheckIcon aria-hidden className="size-4 shrink-0 text-cleared" />}
                   {st.label}
                 </m.li>
               ))}
@@ -159,6 +160,13 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                     <li key={r.text}><span className="text-muted-foreground line-through">{r.text}</span> <span className="text-risk">· {r.reasons.join("; ")}</span></li>
                   ))}
                 </ul>
+              </section>
+            ) : null}
+            {packet!.ignored.length ? (
+              <section aria-label="Instructions the agent ignored" className="rounded-lg border border-risk/25 bg-risk-tint/40 px-4 py-3">
+                <h3 className="mb-1 flex items-center gap-2 text-sm font-medium"><ShieldAlertIcon aria-hidden className="size-4 text-risk" /> Ignored an instruction hidden in the case</h3>
+                <p className="text-sm text-muted-foreground">Someone wrote text meant to steer the AI. Cleared treated it as evidence, not as an order:</p>
+                <ul className="mt-1.5 space-y-1 text-sm">{packet!.ignored.map((x) => <li key={x} className="font-mono text-[0.8rem] text-risk">“{x.replace(/^[“"]|[”"]$/g, "")}”</li>)}</ul>
               </section>
             ) : null}
             {packet!.missing.length ? (

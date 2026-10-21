@@ -168,6 +168,8 @@ export const packets = pgTable("packets", {
   claims: jsonb("claims"),
   removedClaims: jsonb("removed_claims"),
   missingEvidence: jsonb("missing_evidence"),
+  // Instructions the agent found in the buyer's message or an exhibit and refused to follow.
+  ignoredInstructions: jsonb("ignored_instructions").$type<string[]>(),
   coverLetter: text("cover_letter"),
   workflowRunId: text("workflow_run_id"),
   // "ai" (the investigator agent) or "template" (built from the locker when the AI is unavailable).

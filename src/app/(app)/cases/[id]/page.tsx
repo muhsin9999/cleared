@@ -92,6 +92,7 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
                   claims: (latest.claims as { text: string; exhibitIds: string[] }[] | null) ?? [],
                   removed: (latest.removedClaims as { text: string; reasons: string[] }[] | null) ?? [],
                   missing: (latest.missingEvidence as string[] | null) ?? [],
+                  ignored: latest.ignoredInstructions ?? [],
                   trace: latest.trace ?? [],
                   error: latest.error,
                 }
