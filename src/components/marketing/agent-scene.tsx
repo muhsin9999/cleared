@@ -356,7 +356,7 @@ function StruckClaim({ children }: { children?: ReactNode }) {
 function ApproveButton() {
   return (
     <>
-      <span className="inline-flex items-center rounded-[0.4em] px-[1.1em] py-[0.65em] text-[0.82em] font-semibold text-white" style={{ background: INK }}>
+      <span className="inline-flex items-center rounded-[0.4em] bg-cleared px-[1.1em] py-[0.65em] text-[0.82em] font-semibold text-white">
         Approve &amp; send to PayPal
       </span>
       <p className="mt-[0.55em] flex items-center gap-[0.35em] text-[0.72em] font-medium" style={{ color: GREEN }}>
@@ -607,14 +607,19 @@ function Stack() {
   );
 }
 
-/** Plays the four beats once the scene is in view; people who ask for less motion see the final frame. */
+/** Plays the four beats whenever the scene is in view; people who ask for less motion see the final frame. */
 function useBeats(ref: React.RefObject<HTMLElement | null>) {
   const reduce = useReducedMotion();
-  const inView = useInView(ref, { once: true, amount: 0.35 });
+  // Plays every time the scene comes into view, and resets once it has scrolled away.
+  const inView = useInView(ref, { amount: 0.35 });
   const [beat, setBeat] = useState(0);
   const [run, setRun] = useState(0);
   useEffect(() => {
-    if (reduce || !inView) return;
+    if (reduce) return;
+    if (!inView) {
+      const t = setTimeout(() => setBeat(0), 0);
+      return () => clearTimeout(t);
+    }
     const timers = BEAT_AT.slice(1).map((ms, i) => setTimeout(() => setBeat(i + 1), ms));
     return () => timers.forEach(clearTimeout);
   }, [reduce, inView, run]);
@@ -661,7 +666,7 @@ export function AgentSection({ githubUrl }: { githubUrl: string }) {
         <p className="mt-4 max-w-xl text-[1.1rem] leading-relaxed text-ink/70">It reads your files, ties every claim to proof, and stops for your OK.</p>
       </div>
       <div className="mx-auto w-full max-w-[1440px] lg:px-8">
-        <div className="overflow-hidden lg:rounded-[1.25rem]">
+        <div className="overflow-hidden lg:rounded-lg">
           <AgentScene />
         </div>
       </div>
