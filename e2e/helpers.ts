@@ -5,7 +5,7 @@ export async function enterDemo(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: /try the live demo/i }).first().click();
   await page.waitForURL("**/home", { timeout: 60_000 });
-  await expect(page.getByText("Good to see you")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Good to see you/ })).toBeVisible();
 }
 
 /** Opens the sandbox controls with the real-dispute switch off, so tests never use up the judges' stock. */
