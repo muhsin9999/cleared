@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db, schema as s } from "@/db";
+import { PayPalError } from "@/server/paypal/client";
 import { ensureDraft } from "@/server/workflows";
 import { ingest, verifySignature, type WebhookEvent } from "@/server/paypal/webhooks";
 
@@ -21,6 +22,11 @@ export async function POST(request: Request) {
   try {
     ({ status: verification, reason } = await verifySignature(request.headers, event));
   } catch (e) {
+    // PayPal refused the verification request itself (forged or malformed headers): reject, don't retry.
+    if (e instanceof PayPalError && e.status >= 400 && e.status < 500) {
+      await log(event, "FAILURE", "rejected", `PayPal refused the verification request (${e.status})`);
+      return Response.json({ ok: false }, { status: 400 });
+    }
     // PayPal itself didn't answer: ask it to retry later rather than drop the event.
     await log(event, "ERROR", "retry", (e as Error).message);
     return Response.json({ ok: false }, { status: 503 });

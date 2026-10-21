@@ -20,3 +20,6 @@ scripts/spikes/render-wf/node_modules/
 *.tsbuildinfo
 .vercel
 .render-webhook-id
+
+/test-results/
+/playwright-report/

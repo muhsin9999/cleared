@@ -91,15 +91,18 @@ export function NewSaleFlow({ history }: { history: History }) {
               <Field>
                 <FieldLabel htmlFor="title">What is it?</FieldLabel>
                 <Input id="title" value={draft.title} onChange={(e) => set("title", e.target.value)} placeholder="Album cover" />
+                <FieldError errors={errors.title?.map((message) => ({ message }))} />
               </Field>
               <Field>
                 <FieldLabel htmlFor="amount">Total price (USD)</FieldLabel>
                 <Input id="amount" inputMode="decimal" value={draft.amountCents ? String(draft.amountCents / 100) : ""} onChange={(e) => set("amountCents", Math.round(Number(e.target.value.replace(/[^0-9.]/g, "")) * 100) || 0)} placeholder="400" />
+                <FieldError errors={errors.amountCents?.map((message) => ({ message }))} />
               </Field>
             </div>
             <Field>
               <FieldLabel htmlFor="description">What are you delivering?</FieldLabel>
               <Textarea id="description" rows={3} value={draft.description} onChange={(e) => set("description", e.target.value)} placeholder="Files, sizes, number of revisions, anything the client is expecting" />
+                <FieldError errors={errors.description?.map((message) => ({ message }))} />
             </Field>
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">Kind of sale</legend>
@@ -111,7 +114,8 @@ export function NewSaleFlow({ history }: { history: History }) {
                 ))}
               </div>
             </fieldset>
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-3">
+              {!draft.title || !draft.amountCents ? <p className="text-sm text-muted-foreground">Add what it is and the price to check it.</p> : null}
               <Button size="lg" disabled={!draft.title || !draft.amountCents} onClick={() => { setInitial(preflight(draft, history).findings); setAi([]); askAi(draft); setStep("scan"); }}>Check this sale</Button>
             </div>
           </CardContent>
