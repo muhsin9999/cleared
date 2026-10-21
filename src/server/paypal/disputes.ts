@@ -76,10 +76,11 @@ export async function upsertDispute(d: PayPalDispute) {
 export async function syncDisputes() {
   const list = await paypal<{ items?: { dispute_id: string; update_time?: string }[] }>("GET", "/v1/customer/disputes?page_size=20");
   const ids = (list.items ?? []).map((i) => i.dispute_id);
-  if (!ids.length) return { seen: 0, matched: 0, created: 0 };
+  if (!ids.length) return { seen: 0, matched: 0, created: 0, createdIds: [] as string[] };
   const known = new Map((await db.query.disputes.findMany({ where: or(...ids.map((id) => eq(s.disputes.paypalDisputeId, id))) })).map((d) => [d.paypalDisputeId, d]));
   let matched = 0;
   let created = 0;
+  const createdIds: string[] = [];
   for (const id of ids) {
     const detail = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${id}`);
     const before = known.get(id);
@@ -88,6 +89,7 @@ export async function syncDisputes() {
     matched++;
     if (!before) {
       created++;
+      createdIds.push(row.id);
       const sale = row.saleId ? await db.query.sales.findFirst({ where: eq(s.sales.id, row.saleId) }) : null;
       await db
         .insert(s.events)
@@ -95,7 +97,7 @@ export async function syncDisputes() {
         .onConflictDoNothing({ target: s.events.paypalEventId });
     }
   }
-  return { seen: ids.length, matched, created };
+  return { seen: ids.length, matched, created, createdIds };
 }
 
 /** Adds open, unused sandbox disputes to the judge-mode stock and retires ones PayPal no longer accepts evidence on. */

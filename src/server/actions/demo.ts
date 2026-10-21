@@ -9,6 +9,7 @@ import { reasonText } from "@/lib/paypal-events";
 import { requireSeller } from "../auth";
 import { adjudicate, claimPoolDispute } from "../paypal/disputes";
 import { createSession } from "../session";
+import { ensureDraft } from "../workflows";
 
 // Demo panel actions. Until judge mode is wired to the sandbox (PLAN day 9) the dispute buttons
 // create clearly labelled simulated records so the flow can be clicked through end to end.
@@ -35,6 +36,7 @@ export async function simulateDispute(useReal = true) {
         .insert(s.events)
         .values({ sellerId: seller.id, saleId: sale.id, paypalEventId: `pool:${real.paypalDisputeId}:claimed`, type: "CUSTOMER.DISPUTE.CREATED", summary: `${sale.clientName} opened a dispute: ${reasonText(real.reason)}`, verified: true, payload: { dispute_id: real.paypalDisputeId, via: "sandbox stock" } })
         .onConflictDoNothing({ target: s.events.paypalEventId });
+      await ensureDraft(real.id);
       revalidatePath("/", "layout");
       return { ok: true as const, disputeId: real.id };
     }
@@ -60,6 +62,7 @@ export async function simulateDispute(useReal = true) {
     .returning();
   await db.update(s.sales).set({ status: "disputed" }).where(eq(s.sales.id, sale.id));
   await db.insert(s.events).values({ sellerId: seller.id, saleId: sale.id, type: "CUSTOMER.DISPUTE.CREATED", summary: `${sale.clientName} opened a dispute: “not received”`, simulated: true, verified: false, payload: { dispute_id: dispute.paypalDisputeId } });
+  await ensureDraft(dispute.id);
   revalidatePath("/", "layout");
   return { ok: true as const, disputeId: dispute.id };
 }

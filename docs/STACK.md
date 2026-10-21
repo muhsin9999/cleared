@@ -21,7 +21,7 @@ Each choice is judged against four tests:
 | PayPal (Orders, capture, tracking) | **`@paypal/paypal-server-sdk`**, written with the **APIMatic Context Plugin** | The SDK covers Orders, including `createOrderTracking`. The plugin is the APIMatic prize requirement. | — |
 | PayPal (Invoicing, Disputes, Webhooks) | **Typed REST client** (fetch + Zod) | The Server SDK has no Invoicing or Disputes. The Agent Toolkit has no `provide-evidence`, and its tracking tool calls a deprecated endpoint. | Agent Toolkit on the runtime path: it depends on `ai@^4`, and the sandbox MCP `create_invoice` has been failing since 6 Oct |
 | PayPal Agent Toolkit / MCP | **Nice-to-have N1 only** (read-only "Ask Cleared") | Shows DevRel judges we know the toolkit, without risking the core demo | — |
-| AI | **`openai` SDK, `gpt-5-mini`** (model set by `AI_MODEL`) | Cheap enough to run every eval and every judge click. Strict structured outputs, image/PDF input, function tools, automatic prompt caching. A stronger GPT model can replace it per job. See [AI.md](AI.md). | Claude Opus (stronger, but about 15× the cost); OpenRouter models (cheaper, but structured-output and tool support varies by provider; kept as a `baseURL` swap); Vercel AI SDK (adds little; version clash with the toolkit) |
+| AI | **`openai` SDK, `gpt-5.4-mini`** (model set by `AI_MODEL`) | Cheap enough to run every eval and every judge click. Strict structured outputs, image/PDF input, function tools, automatic prompt caching. A stronger GPT model can replace it per job. See [AI.md](AI.md). | Claude Opus (stronger, but about 15× the cost); OpenRouter models (cheaper, but structured-output and tool support varies by provider; kept as a `baseURL` swap); Vercel AI SDK (adds little; version clash with the toolkit) |
 | Validation | **Zod** | One schema for each PayPal payload, AI output and form | — |
 | UI | **shadcn/ui (Base UI) + Tailwind v4 + Motion + Magic UI + Cult UI + NumberFlow + Sonner** | See [DESIGN.md](DESIGN.md) | Aceternity (licence), Origin/coss (AGPL), HeroUI (would mix two paradigms) |
 | Auth | **Seeded demo accounts + signed session cookie** ("Enter as Ada") | Judges need instant, keyless access. Magic links need an inbox. | Auth.js providers, Clerk |
@@ -46,7 +46,7 @@ Each choice is judged against four tests:
                                          ▲            │                     │
                                          └────────────┘                     ├──▶ PayPal sandbox REST
                                Render Cron "cleared-cron" (nightly) ──▶ holdWatcher task
-                                                                            ├──▶ OpenAI API (gpt-5-mini)
+                                                                            ├──▶ OpenAI API (gpt-5.4-mini)
  PayPal sandbox ──webhooks──▶ cleared-web                                   └──▶ Cloudflare R2 (proof files)
 ```
 
@@ -79,7 +79,7 @@ cleared/
 ```
 PAYPAL_CLIENT_ID=  PAYPAL_CLIENT_SECRET=  PAYPAL_WEBHOOK_ID=  PAYPAL_ENV=sandbox
 PAYPAL_SANDBOX_BUYER_EMAIL=            # used only by judge-mode dispute simulation
-OPENAI_API_KEY=  AI_MODEL=gpt-5-mini  AI_FALLBACK_MODEL=
+OPENAI_API_KEY=  AI_MODEL=gpt-5.4-mini  AI_FALLBACK_MODEL=
 DATABASE_URL=
 R2_ACCOUNT_ID= R2_ACCESS_KEY_ID= R2_SECRET_ACCESS_KEY= R2_BUCKET=
 RENDER_API_KEY=  WORKFLOW_SLUG=cleared-wf

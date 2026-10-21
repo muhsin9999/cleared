@@ -25,7 +25,9 @@ export async function submitEvidence(packetId: string) {
   }
 
   const draft = templatePacket(sale, sale.proofs, dispute.reason);
-  const claims = (packet.claims as typeof draft.claims | null) ?? draft.claims;
+  // Exactly the claims the seller approved (AI-drafted and checked, or the template fallback).
+  const claims = (packet.claims as typeof draft.claims | null) ?? [];
+  if (!claims.length) throw new Error("The approved packet has no claims");
   const pdf = await evidencePdf({
     sellerName: dispute.seller.businessName ?? dispute.seller.name,
     clientName: sale.clientName,

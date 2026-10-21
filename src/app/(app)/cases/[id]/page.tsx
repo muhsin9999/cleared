@@ -13,7 +13,6 @@ import { and, eq, desc } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { requireSeller } from "@/server/auth";
 import { requestNow } from "@/server/time";
-import { templatePacket } from "@/server/packet";
 import { CaseRoom } from "./case-room";
 
 export const metadata = { title: "Case" };
@@ -38,10 +37,9 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
   });
   if (!dispute?.sale) notFound();
   const sale = dispute.sale;
-  const packet = templatePacket(sale, sale.proofs, dispute.reason);
+  const exhibits = sale.proofs.map((p, i) => ({ id: p.id, letter: String.fromCharCode(65 + i), label: p.fileName ?? p.label, kind: p.kind }));
   const due = daysUntil(dispute.responseDueAt, now);
   const latest = dispute.packets[0];
-  const submitted = latest?.status === "submitted";
 
   return (
     <>
@@ -78,12 +76,25 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
         <CaseRoom
           disputeId={dispute.id}
           canSubmit={!!dispute.allowedActions?.includes("provide_evidence")}
-          submitted={submitted}
-          sending={latest?.status === "submitting"}
-          failure={latest?.status === "failed" ? latest.error : null}
+          resolved={dispute.status.startsWith("resolved") || dispute.status === "closed"}
           real={!dispute.paypalDisputeId.startsWith("SIM-")}
-          resolved={dispute.status.startsWith("resolved")}
-          packet={{ ...packet, exhibits: packet.exhibits.map((e) => ({ ...e, date: e.date.toISOString() })) }}
+          exhibits={exhibits}
+          packet={
+            latest
+              ? {
+                  status: latest.status,
+                  source: latest.source,
+                  model: latest.model,
+                  recommendation: latest.recommendation,
+                  rationale: latest.rationale,
+                  claims: (latest.claims as { text: string; exhibitIds: string[] }[] | null) ?? [],
+                  removed: (latest.removedClaims as { text: string; reasons: string[] }[] | null) ?? [],
+                  missing: (latest.missingEvidence as string[] | null) ?? [],
+                  trace: latest.trace ?? [],
+                  error: latest.error,
+                }
+              : null
+          }
         />
       </div>
     </>

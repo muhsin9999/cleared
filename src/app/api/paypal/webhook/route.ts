@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 import { db, schema as s } from "@/db";
+import { ensureDraft } from "@/server/workflows";
 import { ingest, verifySignature, type WebhookEvent } from "@/server/paypal/webhooks";
 
 // PayPal webhook receiver. Every delivery is checked with PayPal's verify-webhook-signature before it is
@@ -30,6 +32,11 @@ export async function POST(request: Request) {
 
   const outcome = await ingest(event);
   await log(event, verification, outcome, null);
+  if (outcome === "stored" && event.event_type === "CUSTOMER.DISPUTE.CREATED") {
+    const id = (event.resource as { dispute_id?: string }).dispute_id;
+    const dispute = id ? await db.query.disputes.findFirst({ where: eq(s.disputes.paypalDisputeId, id), columns: { id: true } }) : null;
+    if (dispute) await ensureDraft(dispute.id);
+  }
   if (outcome === "stored") revalidatePath("/", "layout");
   return Response.json({ ok: true, outcome });
 }

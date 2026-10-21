@@ -5,7 +5,7 @@
 ## Model and SDK
 
 - **SDK:** the official `openai` npm package (TypeScript, Responses API), called **only from Render Workflow tasks**, never in a web request.
-- **Model:** **`gpt-5-mini`**, read from the `AI_MODEL` env var. About $0.25 / $2 per million tokens (third-party listings, Oct 2026; re-check OpenAI's pricing page). 400k context, image and PDF input, function tools.
+- **Model:** **`gpt-5.4-mini`**, read from the `AI_MODEL` env var. Chosen 21 Oct: `gpt-5-mini` and `gpt-5` require OpenAI organization verification on this account, while `gpt-5.4-mini` (newer) works without it and made correct strict tool calls in under a second. Listed at about $0.75 / $4.50 per million tokens (third-party listings; re-check OpenAI's pricing page). Cheaper `gpt-5.6-luna` / `gpt-6-luna` also work and will be compared on the evals. 400k context, image and PDF input, function tools.
   - Reasoning depth is set per job with `reasoning: { effort }`: `low` for pre-flight and invoice writing, `medium` for notice parsing and evidence packets.
   - **Upgrade path:** each job reads its own model from env (`AI_MODEL_PACKET`, falling back to `AI_MODEL`). If the packet eval shows weak citations, only J4 moves to a stronger GPT model.
   - **Escape hatch:** because the code uses the OpenAI SDK, OpenRouter is a drop-in by changing `baseURL` and the key.
@@ -25,7 +25,7 @@
 
 **Why a structured workflow and not a free-roaming agent:** every step of Cleared is known in advance and the cost of an error is high, because it involves money and PayPal's view of the seller. Code orchestrates the steps inside a Render Workflow; the model is used where judgement is needed. That is more reliable and easier to demo than an open loop.
 
-**The one agentic part, J4:** the dispute investigator. It runs as a short tool loop (at most 8 turns) with strict function tools, all **read-only**:
+**The one agentic part, J4:** the dispute investigator (`src/server/ai/investigator.ts`, Render Workflow task `draftPacket`). It runs as a short tool loop (at most 8 turns, several tools per turn) with strict function tools, all **read-only**, at reasoning effort `low` (21 Oct test: 21–23 s with the same quality as `medium` at 28–35 s). Its steps are stored and shown live in the case room; if it fails, the template packet is used and labelled. Verified: it ignores instructions planted in the buyer's message, and the claim checker strikes claims whose dates, amounts or file names its exhibits don't support:
 - `get_dispute`
 - `get_invoice`
 - `list_locker_items`

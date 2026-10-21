@@ -59,6 +59,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: USE_RENDER_WORKFLOWS
+        value: "true"
       - fromGroup: cleared-secrets
 
 envVarGroups:
@@ -89,6 +91,6 @@ envVarGroups:
       - key: R2_BUCKET
         value: cleared-proofs
       - key: AI_MODEL
-        value: gpt-5-mini
+        value: gpt-5.4-mini
       - key: RENDER_API_KEY
         sync: false

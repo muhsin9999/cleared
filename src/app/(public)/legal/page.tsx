@@ -85,7 +85,7 @@ export default function LegalPage() {
               <section aria-labelledby="ai">
                 <h2 id="ai">How the AI is used</h2>
                 <p className="mt-3">
-                  Cleared uses OpenAI&apos;s <span className="font-mono text-[0.9em]">gpt-5-mini</span> model to read a sale description, a
+                  Cleared uses OpenAI&apos;s <span className="font-mono text-[0.9em]">gpt-5.4-mini</span> model to read a sale description, a
                   PayPal notice or a dispute, and to draft suggestions, invoice wording and evidence packets.
                 </p>
                 <ul>

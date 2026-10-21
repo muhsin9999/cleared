@@ -170,6 +170,11 @@ export const packets = pgTable("packets", {
   missingEvidence: jsonb("missing_evidence"),
   coverLetter: text("cover_letter"),
   workflowRunId: text("workflow_run_id"),
+  // "ai" (the investigator agent) or "template" (built from the locker when the AI is unavailable).
+  source: text("source").notNull().default("template"),
+  model: text("model"),
+  // The agent's steps, shown live in the case room: [{ tool, label, at }].
+  trace: jsonb("trace").$type<{ tool: string; label: string; at: string }[]>(),
   error: text("error"),
   createdAt: createdAt(),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
