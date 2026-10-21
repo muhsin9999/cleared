@@ -7,13 +7,14 @@ import { money } from "@/lib/format";
 import { REASON_LABEL } from "@/lib/labels";
 import { MAX_CASE_BYTES, MAX_FILE_BYTES } from "@/lib/evidence-files";
 import { evidencePdf } from "../evidence-pdf";
+import { exhibitsFor } from "../exhibits";
 import { templatePacket } from "../packet";
 import { readFile } from "../storage";
 import { paypal, paypalMultipart } from "./client";
 import { upsertDispute, type PayPalDispute } from "./disputes";
 
 export async function submitEvidence(packetId: string) {
-  const packet = await db.query.packets.findFirst({ where: eq(s.packets.id, packetId), with: { dispute: { with: { sale: { with: { proofs: { orderBy: s.proofs.occurredAt } } }, seller: true } } } });
+  const packet = await db.query.packets.findFirst({ where: eq(s.packets.id, packetId), with: { dispute: { with: { sale: { with: { proofs: { orderBy: s.proofs.occurredAt }, invoices: true } }, seller: true } } } });
   if (!packet?.dispute.sale) throw new Error("Packet or sale not found");
   const { dispute } = packet;
   const sale = dispute.sale!;
@@ -36,7 +37,7 @@ export async function submitEvidence(packetId: string) {
     disputeId: dispute.paypalDisputeId,
     reason: REASON_LABEL[dispute.reason] ?? dispute.reason,
     claims,
-    exhibits: draft.exhibits,
+    exhibits: exhibitsFor(sale).map((e) => ({ id: e.id, number: e.letter, label: e.label, kind: e.kind, date: new Date(e.date) })),
     coverLetter: packet.coverLetter ?? draft.coverLetter,
   });
 

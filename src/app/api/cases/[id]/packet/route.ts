@@ -11,7 +11,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/cases/[id]/
   if (!dispute) return Response.json({ error: "Not found" }, { status: 404 });
   const p = await db.query.packets.findFirst({ where: eq(s.packets.disputeId, dispute.id), orderBy: desc(s.packets.createdAt) });
   const packet = p
-    ? { status: p.status, source: p.source, model: p.model, recommendation: p.recommendation, rationale: p.rationale, claims: p.claims ?? [], removed: p.removedClaims ?? [], missing: p.missingEvidence ?? [], trace: p.trace ?? [], error: p.error }
+    ? { id: p.id, status: p.status, source: p.source, model: p.model, recommendation: p.recommendation, rationale: p.rationale, claims: p.claims ?? [], removed: p.removedClaims ?? [], missing: p.missingEvidence ?? [], trace: p.trace ?? [], error: p.error }
     : null;
   return Response.json({ packet }, { headers: { "Cache-Control": "no-store" } });
 }

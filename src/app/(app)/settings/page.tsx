@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { BotIcon, InfoIcon, PlugZapIcon, RotateCcwIcon } from "lucide-react";
 import { WebhookHealth } from "@/components/app/webhook-health";
@@ -28,7 +29,6 @@ async function Settings() {
   const seller = await requireSeller();
   const rows = [
     { icon: PlugZapIcon, title: "PayPal connection", body: "Sandbox business account · Invoicing, Orders, Tracking and Disputes enabled", badge: "Sandbox" },
-    { icon: BotIcon, title: "AI audit log", body: "Every AI draft, the model that wrote it, the claim checker’s result and who approved it.", badge: "From day 7" },
   ];
   return (
     <div className="space-y-4">
@@ -39,6 +39,13 @@ async function Settings() {
           <Badge variant="outline">{r.badge}</Badge>
         </Card>
       ))}
+      <Link href="/settings/audit" className="block rounded-[10px] focus-visible:outline-2 focus-visible:outline-focus">
+        <Card className="flex-row items-start gap-4 px-5 py-4 transition-colors hover:bg-muted/40">
+          <BotIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-cleared" />
+          <div className="min-w-0 flex-1"><p className="font-medium">AI audit log</p><p className="text-sm text-muted-foreground">Every AI decision, the model that made it, what the claim checker removed, and who approved it.</p></div>
+          <span className="text-sm text-muted-foreground">Open →</span>
+        </Card>
+      </Link>
       <WebhookHealth now={now} />
       {seller.isDemo ? (
         <Card>

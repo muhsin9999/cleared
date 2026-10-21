@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, m } from "motion/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { BotIcon, CheckIcon, CircleSlashIcon, FileIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
+import { BotIcon, CheckIcon, CircleSlashIcon, FileIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { StampMark } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import { approveAndSubmit, startDraft } from "@/server/actions/cases";
 
 type Exhibit = { id: string; letter: string; label: string; kind: string };
 type Packet = {
+  id?: string;
   status: string;
   source: string;
   model: string | null;
@@ -27,7 +29,7 @@ type Packet = {
   error: string | null;
 };
 
-const KIND_ICON = { file: FileIcon, message: MessageSquareTextIcon, acceptance: UserCheckIcon, tracking: PackageIcon } as const;
+const KIND_ICON = { file: FileIcon, message: MessageSquareTextIcon, acceptance: UserCheckIcon, tracking: PackageIcon, invoice: ReceiptTextIcon } as const;
 const WORKING = new Set(["gathering", "drafting", "checking", "submitting"]);
 const RECOMMENDATION = { fight: "Recommended: respond with evidence", offer: "Recommended: offer a partial refund", accept: "Recommended: accept and refund" } as Record<string, string>;
 
@@ -97,7 +99,10 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
               </li>
             ) : null}
           </ol>
-          <p className="mt-3 text-xs text-muted-foreground">The AI can only read: the dispute, the sale, the invoice, the proof locker and PayPal’s rules. It can’t send anything.</p>
+          <p className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>The AI can only read: the dispute, the sale, the invoice, the proof locker and PayPal’s rules. It can’t send anything.</span>
+            {packet?.id && drafted ? <Link href={`/settings/audit?subject=${packet.id}`} className="font-medium text-foreground underline-offset-2 hover:underline">Why did Cleared say this?</Link> : null}
+          </p>
         </CardContent>
       </Card>
 

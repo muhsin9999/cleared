@@ -13,6 +13,7 @@ import { and, eq, desc } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { requireSeller } from "@/server/auth";
 import { requestNow } from "@/server/time";
+import { exhibitsFor } from "@/server/exhibits";
 import { CaseRoom } from "./case-room";
 
 export const metadata = { title: "Case" };
@@ -33,11 +34,11 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
   const seller = await requireSeller();
   const dispute = await db.query.disputes.findFirst({
     where: and(eq(s.disputes.sellerId, seller.id), eq(s.disputes.id, id)),
-    with: { sale: { with: { proofs: { orderBy: s.proofs.occurredAt }, events: { orderBy: desc(s.events.occurredAt), limit: 6 } } }, packets: { orderBy: desc(s.packets.createdAt), limit: 1 } },
+    with: { sale: { with: { proofs: { orderBy: s.proofs.occurredAt }, invoices: true, events: { orderBy: desc(s.events.occurredAt), limit: 6 } } }, packets: { orderBy: desc(s.packets.createdAt), limit: 1 } },
   });
   if (!dispute?.sale) notFound();
   const sale = dispute.sale;
-  const exhibits = sale.proofs.map((p, i) => ({ id: p.id, letter: String.fromCharCode(65 + i), label: p.fileName ?? p.label, kind: p.kind }));
+  const exhibits = exhibitsFor(sale).map((e) => ({ id: e.id, letter: e.letter, label: e.label, kind: e.kind }));
   const due = daysUntil(dispute.responseDueAt, now);
   const latest = dispute.packets[0];
 
@@ -82,6 +83,7 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
           packet={
             latest
               ? {
+                  id: latest.id,
                   status: latest.status,
                   source: latest.source,
                   model: latest.model,
