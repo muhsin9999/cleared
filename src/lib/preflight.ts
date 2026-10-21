@@ -23,7 +23,18 @@ export type Finding = {
   ruleRef: string;
   fix?: { label: string; patch: Partial<SaleDraft> };
   weight: number;
+  /** "ai" for findings suggested by the model on top of the rules. */
+  source?: "rules" | "ai";
 };
+
+/** Weight of an AI finding in the readiness score (rules stay the main signal). */
+export const AI_WEIGHT = { risk: 12, caution: 6, info: 0 } as const;
+
+/** Score with AI findings counted until their fix is applied. */
+export function scoreWith(base: { score: number; findings: Finding[] }, ai: Finding[], draft: SaleDraft) {
+  const open = ai.filter((f) => !(f.fix && Object.entries(f.fix.patch).every(([k, v]) => draft[k as keyof SaleDraft] === v)));
+  return Math.max(0, base.score - open.reduce((sum, f) => sum + f.weight, 0));
+}
 
 const DELIVERABLE_WORDS = /\b(png|jpe?g|pdf|psd|svg|file|files|px|pages?|revisions?|rounds?|illustrations?|logo|cover|portrait|video|minutes|hours|session|delivered|ship|shipping)\b/i;
 

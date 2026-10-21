@@ -5,8 +5,9 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema as s } from "@/db";
-import { preflight } from "@/lib/preflight";
+import { type Finding, preflight, scoreWith } from "@/lib/preflight";
 import { requireSeller } from "../auth";
+import { aiPreflight } from "../ai/preflight";
 import { PayPalError } from "../paypal/client";
 import { createAndSendInvoice, type InvoiceDraft } from "../paypal/invoicing";
 
@@ -32,12 +33,14 @@ export async function sellerHistory() {
   };
 }
 
-export async function createSale(input: z.input<typeof Draft>) {
+export async function createSale(input: z.input<typeof Draft>, aiFindings: Finding[] = []) {
   const seller = await requireSeller();
   const parsed = Draft.safeParse(input);
   if (!parsed.success) return { ok: false as const, errors: z.flattenError(parsed.error).fieldErrors };
   const d = parsed.data;
-  const result = preflight(d, await sellerHistory());
+  const base = preflight(d, await sellerHistory());
+  const ai = aiFindings.filter((f) => f.source === "ai").slice(0, 3);
+  const result = { score: scoreWith(base, ai, d), findings: [...base.findings, ...ai] };
   const chargedCents = d.depositPercent ? Math.round((d.amountCents * d.depositPercent) / 100) : d.amountCents;
 
   const [sale] = await db
@@ -106,4 +109,21 @@ export async function sendInvoice(saleId: string) {
   await db.insert(s.events).values({ sellerId: seller.id, saleId: sale.id, source: "cleared", type: "INVOICING.INVOICE.SENT", summary: `Invoice #${sent.number} sent to ${sale.clientName} through PayPal`, verified: true, payload: { invoice_id: sent.id } });
   await db.insert(s.audit).values({ sellerId: seller.id, kind: "paypal.invoice.send", subjectType: "invoice", subjectId: invoice.id, output: { paypalInvoiceId: sent.id, number: sent.number }, approvedBy: seller.id });
   redirect(`/sales/${sale.id}?sent=1`);
+}
+
+// AI pre-flight suggestions for the "Check" step. Never blocks the sale: on failure the UI says so and the
+// rule-based findings remain.
+export async function suggestFindings(input: z.input<typeof Draft>) {
+  const seller = await requireSeller();
+  const parsed = Draft.partial({ clientName: true, clientEmail: true }).safeParse(input);
+  if (!parsed.success) return { ok: false as const, findings: [] };
+  const draft = { clientName: "", clientEmail: "", ...parsed.data } as z.infer<typeof Draft>;
+  try {
+    const history = await sellerHistory();
+    const findings = await aiPreflight(seller.id, draft, history, preflight(draft, history).findings);
+    return { ok: true as const, findings };
+  } catch (e) {
+    console.warn("AI pre-flight unavailable:", (e as Error).message);
+    return { ok: false as const, findings: [] };
+  }
 }

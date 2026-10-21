@@ -11,9 +11,9 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { money } from "@/lib/format";
-import { type Finding, type History, preflight, type SaleDraft } from "@/lib/preflight";
+import { type Finding, type History, preflight, type SaleDraft, scoreWith } from "@/lib/preflight";
 import { cn } from "@/lib/utils";
-import { createSale } from "@/server/actions/sales";
+import { createSale, suggestFindings } from "@/server/actions/sales";
 
 const SAMPLE: SaleDraft = {
   clientName: "Northwind Games",
@@ -41,9 +41,19 @@ export function NewSaleFlow({ history }: { history: History }) {
   const [step, setStep] = useState<"describe" | "scan" | "fix">("describe");
   const [draft, setDraft] = useState<SaleDraft>(EMPTY);
   const [initial, setInitial] = useState<Finding[]>([]);
+  const [ai, setAi] = useState<Finding[]>([]);
+  const [aiStatus, setAiStatus] = useState<"idle" | "loading" | "done" | "failed">("idle");
+  const askAi = (d: SaleDraft) => {
+    setAiStatus("loading");
+    suggestFindings(d).then((r) => {
+      setAi(r.findings);
+      setAiStatus(r.ok ? "done" : "failed");
+    });
+  };
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const [pending, start] = useTransition();
   const result = useMemo(() => preflight(draft, history), [draft, history]);
+  const score = scoreWith(result, ai, draft);
   const set = <K extends keyof SaleDraft>(k: K, v: SaleDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   return (
@@ -102,30 +112,36 @@ export function NewSaleFlow({ history }: { history: History }) {
               </div>
             </fieldset>
             <div className="flex justify-end">
-              <Button size="lg" disabled={!draft.title || !draft.amountCents} onClick={() => { setInitial(preflight(draft, history).findings); setStep("scan"); }}>Check this sale</Button>
+              <Button size="lg" disabled={!draft.title || !draft.amountCents} onClick={() => { setInitial(preflight(draft, history).findings); setAi([]); askAi(draft); setStep("scan"); }}>Check this sale</Button>
             </div>
           </CardContent>
         </Card>
       ) : null}
 
-      {step === "scan" ? <Scan findings={result.findings} onDone={() => setStep("fix")} /> : null}
+      {step === "scan" ? <Scan findings={result.findings} waiting={aiStatus === "loading"} onDone={() => setStep("fix")} /> : null}
 
       {step === "fix" ? (
         <div className="grid gap-6 lg:grid-cols-[16rem_1fr]">
           <Card className="items-center gap-3 px-6 py-6 text-center lg:sticky lg:top-20 lg:self-start">
-            <ReadinessRing score={result.score} />
+            <ReadinessRing score={score} />
             <p className="text-sm text-muted-foreground" aria-live="polite">
-              {result.score >= 85 ? "Ready to invoice." : "Accept the fixes to protect this payment."}
+              {score >= 85 ? "Ready to invoice." : "Accept the fixes to protect this payment."}
             </p>
             <p className="text-xs text-muted-foreground">
               Compared with your {history.pastSales} past sales{history.averageCents ? ` (avg ${money(history.averageCents)})` : ""}.
             </p>
           </Card>
           <div className="space-y-3">
-            {initial.map((first) => {
-              const f = result.findings.find((x) => x.id === first.id) ?? first;
+            {aiStatus === "failed" ? (
+              <p className="flex items-center justify-between gap-3 rounded-lg border border-dashed px-4 py-2.5 text-sm text-muted-foreground">
+                AI suggestions are unavailable right now. The rule checks below still apply.
+                <Button variant="ghost" size="sm" onClick={() => askAi(draft)}>Retry</Button>
+              </p>
+            ) : null}
+            {[...initial, ...ai].map((first) => {
+              const f = first.source === "ai" ? first : (result.findings.find((x) => x.id === first.id) ?? first);
               const sev = SEVERITY[f.severity];
-              const done = !result.findings.some((x) => x.id === first.id) || applied(draft, f);
+              const done = f.source === "ai" ? applied(draft, f) : !result.findings.some((x) => x.id === first.id) || applied(draft, f);
               return (
                 <Card key={f.id} className={cn("gap-3 px-5 py-4 transition-colors", done && "border-cleared/30 bg-cleared-tint/40")}>
                   <div className="flex items-start gap-3">
@@ -135,6 +151,7 @@ export function NewSaleFlow({ history }: { history: History }) {
                         <p className="font-medium">{f.title}</p>
                         <span className={cn("rounded px-1.5 py-0.5 text-[0.7rem] font-medium", done ? "bg-cleared-tint text-cleared-strong" : sev.chip)}>{done ? "Fixed" : sev.label}</span>
                         <Badge variant="outline" className="font-mono text-[0.65rem]">PayPal rule {f.ruleRef}</Badge>
+                        {f.source === "ai" ? <Badge variant="outline" className="gap-1 border-cleared/30 text-[0.65rem] text-cleared-strong"><SparklesIcon aria-hidden className="size-3" /> Cleared AI</Badge> : null}
                       </div>
                       <p className="text-sm text-muted-foreground text-pretty">{f.reason}</p>
                     </div>
@@ -154,7 +171,7 @@ export function NewSaleFlow({ history }: { history: History }) {
                 disabled={pending}
                 onClick={() =>
                   start(async () => {
-                    const r = await createSale(draft);
+                    const r = await createSale(draft, ai);
                     if (r && !r.ok) {
                       setErrors(r.errors);
                       setStep("describe");
@@ -172,17 +189,18 @@ export function NewSaleFlow({ history }: { history: History }) {
   );
 }
 
-function Scan({ findings, onDone }: { findings: Finding[]; onDone: () => void }) {
-  const checks = useMemo(() => ["Comparing with your sales history", "Reading PayPal’s hold and limitation rules", ...findings.map((f) => f.title), "Planning the proof you’ll need"], [findings]);
+function Scan({ findings, waiting, onDone }: { findings: Finding[]; waiting: boolean; onDone: () => void }) {
+  const checks = useMemo(() => ["Comparing with your sales history", "Reading PayPal’s hold and limitation rules", ...findings.map((f) => f.title), "Reading the sale like a PayPal reviewer would", "Planning the proof you’ll need"], [findings]);
   const [shown, setShown] = useState(0);
   useEffect(() => {
     if (shown >= checks.length) {
+      if (waiting) return; // the AI pass is still running; finish when it does
       const t = setTimeout(onDone, 600);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setShown((n) => n + 1), 650);
     return () => clearTimeout(t);
-  }, [shown, checks.length, onDone]);
+  }, [shown, checks.length, onDone, waiting]);
 
   return (
     <Card className="relative overflow-hidden px-6 py-6">

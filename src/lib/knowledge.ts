@@ -11,6 +11,7 @@ export const RULES = [
   { id: "K13", topic: "reserves factors", text: "Reserves weigh processing history, claim and dispute volume, preselling and extended delivery timeframes.", url: "https://www.paypal.com/us/brc/article/account-reserves" },
   { id: "K14", topic: "reserves advice", text: "PayPal advises shipping promptly with valid tracking, communicating early, keeping complaints under 1% of sales and refunding promptly.", url: "https://www.paypal.com/us/brc/article/account-reserves" },
   { id: "K15", topic: "dispute deadline", text: "Respond to a dispute within 10 days of creation, or an escalated claim may be decided for the buyer; the dispute's own response due date is the real deadline.", url: "https://developer.paypal.com/docs/disputes/" },
+  { id: "K18", topic: "acceptable use restricted prohibited items categories", text: "PayPal's Acceptable Use Policy prohibits or restricts some products and services; selling them can lead to limitation or account closure.", url: "https://www.paypal.com/us/legalhub/paypal/acceptableuse-full" },
   { id: "K16", topic: "seller protection intangible services", text: "US Seller Protection covers tangible goods shipped to the transaction address; digital goods and services are generally not covered, so for services the proof is everything.", url: "https://www.paypal.com/us/legalhub/paypal/useragreement-full" },
 ] as const;
 
