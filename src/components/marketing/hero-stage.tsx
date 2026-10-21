@@ -205,7 +205,7 @@ function SaleCard({ phase, onReplay, canReplay, className }: { phase: number; on
 }
 
 /** The CLEARED stamp pressed onto the invoice, with a slightly uneven ink. */
-export function InkStamp({ className, pressed = true }: { className?: string; pressed?: boolean }) {
+export function InkStamp({ className, pressed = true, label = "READY TO INVOICE" }: { className?: string; pressed?: boolean; label?: string }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   return (
     <m.div
@@ -238,7 +238,7 @@ export function InkStamp({ className, pressed = true }: { className?: string; pr
           </text>
           <text fill="currentColor" stroke="none" fontSize="8.5" fontWeight="600" letterSpacing="2.4" style={{ fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}>
             <textPath href={`#${id}-bottom`} startOffset="50%" textAnchor="middle">
-              READY TO INVOICE
+              {label}
             </textPath>
           </text>
           <circle cx="18.5" cy="60" r="1.8" fill="currentColor" stroke="none" />
