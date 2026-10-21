@@ -4,7 +4,7 @@
 
 ## Model and SDK
 
-- **SDK:** the official `openai` npm package (TypeScript, Responses API), called **only from Render Workflow tasks**, never in a web request.
+- **SDK:** the official `openai` npm package (TypeScript, Responses API). The dispute investigator (J4) runs **only in the Render Workflow task `draftPacket`**. The interactive jobs, pre-flight (J1, `src/server/ai/preflight.ts`) and the notice reader (J3, `src/server/ai/notice.ts`), run directly in the request because they take 3–8 s and the seller is waiting; each has a 25 s timeout and a rule-based fallback, and every call is written to the audit log (Settings → AI audit log).
 - **Model:** **`gpt-5.4-mini`**, read from the `AI_MODEL` env var. Chosen 21 Oct: `gpt-5-mini` and `gpt-5` require OpenAI organization verification on this account, while `gpt-5.4-mini` (newer) works without it and made correct strict tool calls in under a second. Listed at about $0.75 / $4.50 per million tokens (third-party listings; re-check OpenAI's pricing page). Cheaper `gpt-5.6-luna` / `gpt-6-luna` also work and will be compared on the evals. 400k context, image and PDF input, function tools.
   - Reasoning depth is set per job with `reasoning: { effort }`: `low` for pre-flight and invoice writing, `medium` for notice parsing and evidence packets.
   - **Upgrade path:** each job reads its own model from env (`AI_MODEL_PACKET`, falling back to `AI_MODEL`). If the packet eval shows weak citations, only J4 moves to a stronger GPT model.
