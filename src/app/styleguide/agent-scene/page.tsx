@@ -1,40 +1,32 @@
+import { ArrowUpRight } from "lucide-react";
 import { AgentScene } from "@/components/marketing/agent-scene";
+import { GITHUB_URL } from "@/components/marketing/site-chrome";
 
 export const metadata = { title: "Agent scene (mock)", robots: { index: false } };
 
-// Design mock of the landing section "Watch the agent build the case" (two static frames).
+// Design mock of the landing section "A buyer disputes. Cleared builds your case." (final frame).
 export default function AgentSceneMock() {
   return (
-    <main className="min-h-svh bg-paper-deep">
-      {(["investigating", "done"] as const).map((frame) => (
-        <section key={frame} id={frame} className="mx-auto w-full max-w-[1280px] px-5 py-16 sm:px-8">
-          <p className="text-sm font-medium text-cleared-strong">When a buyer disputes</p>
-          <h2 className="mt-2 max-w-3xl text-[2.2rem] leading-tight font-semibold tracking-[-0.035em] text-balance text-ink sm:text-[3rem]">
-            An AI agent builds your case. You make the call.
+    <main className="min-h-svh bg-paper">
+      <section className="border-t border-line">
+        <div className="mx-auto w-full max-w-[1280px] px-5 pt-20 pb-10 sm:px-8 lg:pt-28">
+          <h2 className="max-w-3xl text-[2.2rem] leading-[1.05] font-semibold tracking-[-0.04em] text-balance text-ink sm:text-[3.2rem]">
+            A buyer disputes. Cleared builds your case.
           </h2>
-          <div className="mt-10">
-            <AgentScene frame={frame} />
+          <p className="mt-4 max-w-xl text-[1.1rem] leading-relaxed text-ink/70">It reads your files, ties every claim to proof, and waits for your OK.</p>
+        </div>
+        <div className="mx-auto w-full max-w-[1440px] lg:px-8">
+          <div className="overflow-hidden lg:rounded-[1.25rem]">
+            <AgentScene />
           </div>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {[
-              ["It only reads", "Seven read-only tools. It can open the case, never send to PayPal."],
-              ["Code checks every claim", "Dates, amounts and files must be in the exhibit cited, or the claim is struck."],
-              ["You approve", "Nothing reaches PayPal until you press the button."],
-            ].map(([t, d]) => (
-              <div key={t} className="border-t border-ink/15 pt-4">
-                <p className="font-semibold text-ink">{t}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 flex flex-wrap gap-x-8 gap-y-2 font-mono text-sm text-ink/80">
-            <span><b className="text-ink">36/36</b> right calls</span>
-            <span><b className="text-ink">6/6</b> hidden instructions ignored</span>
-            <span><b className="text-ink">&lt;1¢</b> per case</span>
-            <span className="text-muted-foreground">12 scenarios × 3 runs · evals/README.md</span>
-          </div>
-        </section>
-      ))}
+        </div>
+        <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-20 text-sm text-muted-foreground sm:px-8">
+          <p>An example case. Every mark is a check Cleared runs on real disputes.</p>
+          <a href={`${GITHUB_URL}/tree/main/evals`} className="inline-flex items-center gap-1 underline decoration-ink/25 underline-offset-4 hover:text-ink">
+            See the evals <ArrowUpRight className="size-3.5" aria-hidden />
+          </a>
+        </div>
+      </section>
     </main>
   );
 }
