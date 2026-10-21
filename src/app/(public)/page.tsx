@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClosingCta, ForJudges, Hero, HowItWorks, SellersWords, TheNumbers } from "@/components/marketing/landing";
-import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
+import { AgentSection } from "@/components/marketing/agent-scene";
+import { GITHUB_URL, SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 
 export const metadata: Metadata = {
   title: { absolute: "cleared: get paid, and stay paid" },
@@ -15,6 +16,7 @@ export default function LandingPage() {
       <SiteHeader overlay />
       <main id="main" className="flex-1">
         <Hero />
+        <AgentSection githubUrl={GITHUB_URL} />
         <TheNumbers />
         <HowItWorks />
         <SellersWords />

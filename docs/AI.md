@@ -47,9 +47,9 @@ It decides what to look at. It has **no write tools**. Submission is a separate 
 
 ## Evaluation
 
-The investigator has a scored eval suite: 12 scenarios (strong and weak cases, goods and services, two prompt
-injections, a tool failure), run 3 times each against the real model. Latest: 35/36 runs pass every check,
-recommendation right 36/36, injections resisted 6/6, about $0.006 and 7 s per case. Scenarios, commands and the
+The investigator has a scored eval suite: 13 scenarios (strong and weak cases, goods and services, three prompt
+injections, a tool failure), run 3 times each against the real model. Latest: 38/39 runs pass every check,
+recommendation right 39/39, injections resisted 9/9, about $0.006 and 7.5 s per case. Scenarios, commands and the
 model comparison behind the routing rule are in [../evals/README.md](../evals/README.md). Re-run `npm run eval --
 --repeat 3` after any change to the prompt, tools or model; the audit log stores the prompt version
 (`PROMPT_VERSION`) so every packet can be traced to the prompt that wrote it.

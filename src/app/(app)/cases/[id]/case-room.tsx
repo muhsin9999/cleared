@@ -4,9 +4,10 @@ import { AnimatePresence, m } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { BotIcon, CheckIcon, CircleSlashIcon, ShieldAlertIcon, FileIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
+import { CheckIcon, ShieldAlertIcon, FileIcon, LockKeyholeIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { StampMark } from "@/components/brand/logo";
+import { AgentTag, markerStrike } from "@/components/brand/marks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,8 @@ type Packet = {
   error: string | null;
 };
 
+// The marker colour is baked into an SVG, so it can’t follow the theme tokens; this red reads on both.
+const STRIKE = "#C0341D";
 const KIND_ICON = { file: FileIcon, message: MessageSquareTextIcon, acceptance: UserCheckIcon, tracking: PackageIcon, invoice: ReceiptTextIcon } as const;
 const WORKING = new Set(["gathering", "drafting", "checking", "submitting"]);
 const RECOMMENDATION = { fight: "Recommended: respond with evidence", offer: "Recommended: offer a partial refund", accept: "Recommended: accept and refund" } as Record<string, string>;
@@ -80,7 +83,10 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
     <div className="space-y-4">
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base"><BotIcon aria-hidden className="size-4" /> Investigation</CardTitle>
+          <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+            <AgentTag className="text-[0.85rem]">Cleared AI agent</AgentTag>
+            <span className="font-normal text-muted-foreground">{working ? "is investigating" : "investigated this case"}</span>
+          </CardTitle>
           {packet?.model && packet.source === "ai" ? <Badge variant="outline" className="font-mono text-[0.7rem]">{packet.model}</Badge> : null}
         </CardHeader>
         <CardContent>
@@ -153,20 +159,21 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
               </ol>
             </section>
             {packet!.removed.length ? (
-              <section aria-label="Removed by the checker" className="rounded-lg border border-dashed px-4 py-3">
-                <h3 className="mb-1 flex items-center gap-2 text-sm font-medium"><CircleSlashIcon aria-hidden className="size-4 text-risk" /> Removed by the claim checker</h3>
-                <ul className="space-y-1.5 text-sm">
+              <section aria-label="Struck by the claim checker" className="rounded-lg border border-dashed border-risk/30 px-4 py-3">
+                <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold text-risk"><AgentTag className="text-[0.72rem]">Claim checker</AgentTag> Struck</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Code checks every claim against the files, not the AI. These won’t be sent:</p>
+                <ul className="mt-1.5 space-y-1.5 text-sm">
                   {packet!.removed.map((r) => (
-                    <li key={r.text}><span className="text-muted-foreground line-through">{r.text}</span> <span className="text-risk">· {r.reasons.join("; ")}</span></li>
+                    <li key={r.text}><span className="text-muted-foreground" style={markerStrike(STRIKE)}>{r.text}</span> <span className="text-risk">· {r.reasons.join("; ")}</span></li>
                   ))}
                 </ul>
               </section>
             ) : null}
             {packet!.ignored.length ? (
               <section aria-label="Instructions the agent ignored" className="rounded-lg border border-risk/25 bg-risk-tint/40 px-4 py-3">
-                <h3 className="mb-1 flex items-center gap-2 text-sm font-medium"><ShieldAlertIcon aria-hidden className="size-4 text-risk" /> Ignored an instruction hidden in the case</h3>
-                <p className="text-sm text-muted-foreground">Someone wrote text meant to steer the AI. Cleared treated it as evidence, not as an order:</p>
-                <ul className="mt-1.5 space-y-1 text-sm">{packet!.ignored.map((x) => <li key={x} className="font-mono text-[0.8rem] text-risk">“{x.replace(/^[“"]|[”"]$/g, "")}”</li>)}</ul>
+                <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold text-risk"><AgentTag className="text-[0.72rem]" /> Caught an instruction hidden in the case</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Someone wrote text meant to steer the AI. It was treated as evidence, never obeyed:</p>
+                <ul className="mt-1.5 space-y-1 text-sm">{packet!.ignored.map((x) => <li key={x} className="font-mono text-[0.8rem] text-ink/70">“<span style={markerStrike(STRIKE)}>{x.replace(/^[“"]|[”"]$/g, "")}</span>”</li>)}</ul>
               </section>
             ) : null}
             {packet!.missing.length ? (
@@ -200,7 +207,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                     : !packet!.claims.length
                       ? "There’s nothing to submit yet. Add proof to the sale, or refund the client in PayPal."
                       : canSubmit
-                        ? "Nothing is sent to PayPal until you approve."
+                        ? <span className="inline-flex items-center gap-1.5 font-medium text-cleared-strong"><LockKeyholeIcon aria-hidden className="size-4" /> The AI can’t press this. Only you can.</span>
                         : "PayPal isn’t accepting evidence on this case right now."}
           </p>
           {!submitted && !resolved && packet!.status !== "submitting" ? (
