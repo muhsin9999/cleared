@@ -18,10 +18,11 @@ export async function WebhookHealth({ now }: { now: number }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><RadioTowerIcon aria-hidden className="size-4" /> Webhook health</CardTitle>
+        <CardTitle className="flex items-center gap-2"><RadioTowerIcon aria-hidden className="size-4" /> PayPal webhooks</CardTitle>
         <CardDescription>
-          {recent[0] ? `Last event ${relativeTime(recent[0].receivedAt, now)}. ` : "No events received yet. "}
-          {totals.total} in the last 7 days: {totals.verified} verified by PayPal{rejected ? `, ${rejected} rejected` : ""}.
+          Before Cleared uses an event, it asks PayPal to confirm the signature. Events PayPal won’t confirm, such as ones from the webhook simulator or a forged request, are dropped and never reach a seller’s timeline.{" "}
+          {recent[0] ? `Last delivery ${relativeTime(recent[0].receivedAt, now)}. ` : "No deliveries yet. "}
+          {totals.total} in the last 7 days: {totals.verified} confirmed{rejected ? `, ${rejected} dropped` : ""}.
         </CardDescription>
       </CardHeader>
       {recent.length ? (
@@ -33,7 +34,7 @@ export async function WebhookHealth({ now }: { now: number }) {
                 <li key={d.id} className="flex items-center gap-3 py-2">
                   {ok ? <CheckCircle2Icon aria-hidden className="size-4 shrink-0 text-cleared" /> : <CircleAlertIcon aria-hidden className="size-4 shrink-0 text-risk" />}
                   <code className="min-w-0 flex-1 truncate font-mono text-xs">{d.type ?? "unknown"}</code>
-                  <span className={cn("text-xs", ok ? "text-muted-foreground" : "text-risk")}>{ok ? d.outcome : `${d.verification.toLowerCase()} · ${d.error ?? ""}`}</span>
+                  <span className={cn("text-xs", ok ? "text-muted-foreground" : "text-risk")}>{ok ? d.outcome : `dropped · ${d.error ?? d.verification.toLowerCase()}`}</span>
                   <time className="w-20 text-right text-xs text-muted-foreground" dateTime={d.receivedAt.toISOString()}>{relativeTime(d.receivedAt, now)}</time>
                 </li>
               );

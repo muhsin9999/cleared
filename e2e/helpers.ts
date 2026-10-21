@@ -8,9 +8,9 @@ export async function enterDemo(page: Page) {
   await expect(page.getByRole("heading", { name: /Good to see you/ })).toBeVisible();
 }
 
-/** Opens the sandbox controls with the real-dispute switch off, so tests never use up the judges' stock. */
+/** Opens the "Play the client" panel with the real-dispute switch off, so tests never use up the judges' stock. */
 export async function sandboxControls(page: Page) {
-  await page.getByRole("button", { name: /sandbox controls/i }).click();
+  await page.getByRole("button", { name: /play the client|^client$/i }).click();
   const sw = page.getByRole("dialog").getByRole("switch");
   if ((await sw.count()) && (await sw.getAttribute("aria-checked")) === "true") await sw.click();
   return page.getByRole("dialog");

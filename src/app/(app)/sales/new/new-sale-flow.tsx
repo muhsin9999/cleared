@@ -3,6 +3,7 @@
 import { AnimatePresence, m } from "motion/react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { CheckIcon, CircleAlertIcon, InfoIcon, SparklesIcon, TriangleAlertIcon, WandSparklesIcon } from "lucide-react";
+import { AgentTag } from "@/components/brand/marks";
 import { ReadinessRing } from "@/components/brand/readiness-ring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,9 +38,9 @@ const SEVERITY = {
 
 const applied = (draft: SaleDraft, f: Finding) => !!f.fix && Object.entries(f.fix.patch).every(([k, v]) => draft[k as keyof SaleDraft] === v);
 
-export function NewSaleFlow({ history }: { history: History }) {
+export function NewSaleFlow({ history, sample = false }: { history: History; sample?: boolean }) {
   const [step, setStep] = useState<"describe" | "scan" | "fix">("describe");
-  const [draft, setDraft] = useState<SaleDraft>(EMPTY);
+  const [draft, setDraft] = useState<SaleDraft>(sample ? SAMPLE : EMPTY);
   const [initial, setInitial] = useState<Finding[]>([]);
   const [ai, setAi] = useState<Finding[]>([]);
   const [aiStatus, setAiStatus] = useState<"idle" | "loading" | "done" | "failed">("idle");
@@ -155,7 +156,7 @@ export function NewSaleFlow({ history }: { history: History }) {
                         <p className="font-medium">{f.title}</p>
                         <span className={cn("rounded px-1.5 py-0.5 text-[0.7rem] font-medium", done ? "bg-cleared-tint text-cleared-strong" : sev.chip)}>{done ? "Fixed" : sev.label}</span>
                         <Badge variant="outline" className="font-mono text-[0.65rem]">PayPal rule {f.ruleRef}</Badge>
-                        {f.source === "ai" ? <Badge variant="outline" className="gap-1 border-cleared/30 text-[0.65rem] text-cleared-strong"><SparklesIcon aria-hidden className="size-3" /> Cleared AI</Badge> : null}
+                        {f.source === "ai" ? <AgentTag className="text-[0.7rem]" /> : null}
                       </div>
                       <p className="text-sm text-muted-foreground text-pretty">{f.reason}</p>
                     </div>
@@ -208,10 +209,9 @@ function Scan({ findings, waiting, onDone }: { findings: Finding[]; waiting: boo
 
   return (
     <Card className="relative overflow-hidden px-6 py-6">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden">
-        <m.div className="h-full w-1/3 bg-gradient-to-r from-transparent via-cleared to-transparent" animate={{ x: ["-100%", "300%"] }} transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }} />
-      </div>
-      <p className="mb-4 text-sm text-muted-foreground">Checking against your history and PayPal’s published rules…</p>
+      <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <AgentTag className="text-[0.8rem]" /> is checking this sale against your history and PayPal’s published rules…
+      </p>
       <ul className="space-y-2.5" aria-live="polite">
         <AnimatePresence initial={false}>
           {checks.slice(0, shown).map((c) => (

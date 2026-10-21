@@ -86,3 +86,15 @@ export async function resolveLatestDispute() {
   revalidatePath("/", "layout");
   return { ok: true as const, disputeId: dispute.id };
 }
+
+/** "Start here", step 1: brings in a dispute on Ada's delivered album cover and opens the case room. */
+export async function startDisputeTour() {
+  const seller = await requireSeller();
+  if (!seller.isDemo) throw new Error("Only demo workspaces have the tour");
+  const existing = await db.query.disputes.findFirst({ where: eq(s.disputes.sellerId, seller.id), columns: { id: true } });
+  if (existing) redirect(`/cases/${existing.id}`);
+  // Local runs and e2e set DEMO_TEST_DISPUTES so they never use up the real sandbox disputes kept for judges.
+  const r = await simulateDispute(process.env.DEMO_TEST_DISPUTES !== "true");
+  if (!r.ok) redirect("/cases");
+  redirect(`/cases/${r.disputeId}`);
+}

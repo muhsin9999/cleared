@@ -10,17 +10,19 @@ export function SubmitButton({
   children,
   pendingLabel,
   variant = "default",
+  size,
   className,
 }: {
   children: React.ReactNode;
   pendingLabel: string;
   variant?: "default" | "outline" | "secondary" | "ghost";
+  size?: "default" | "sm" | "lg";
   className?: string;
 }) {
   const { pending } = useFormStatus();
   return (
     <>
-      <Button type="submit" variant={variant} disabled={pending} aria-disabled={pending} className={cn(className)}>
+      <Button type="submit" variant={variant} size={size} disabled={pending} aria-disabled={pending} className={cn(className)}>
         {pending ? <Spinner aria-hidden /> : null}
         {pending ? pendingLabel : children}
       </Button>

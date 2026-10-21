@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CalendarClockIcon, QuoteIcon } from "lucide-react";
@@ -45,7 +44,7 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
   return (
     <>
       <PageHeader
-        eyebrow={<Link href="/cases" className="hover:text-foreground">Cases</Link>}
+        back={{ href: "/cases", label: "All cases" }}
         title={`${sale.clientName} opened a dispute`}
         description={`${sale.title} · ${money(dispute.amountCents)} · PayPal case ${dispute.paypalDisputeId}`}
         actions={<Badge variant="secondary" className="h-7 px-3">{DISPUTE_LABEL[dispute.status]}</Badge>}
@@ -79,6 +78,7 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
           canSubmit={!!dispute.allowedActions?.includes("provide_evidence")}
           resolved={dispute.status.startsWith("resolved") || dispute.status === "closed"}
           real={!dispute.paypalDisputeId.startsWith("SIM-")}
+          demo={seller.isDemo}
           exhibits={exhibits}
           packet={
             latest

@@ -155,62 +155,32 @@ export function SellersWords() {
   );
 }
 
-const JUDGE_PATH = [
-  { t: "0:00", title: "Try the live demo", body: "You’re Ada Okafor. No account, no keys." },
-  { t: "0:30", title: "Check the Northwind sale", body: "Use the $400 sample, accept the fixes: 38 to 94." },
-  { t: "1:30", title: "Open a test dispute", body: "Sandbox controls: “not received” on the Harmattan cover." },
-  { t: "2:30", title: "Review and approve", body: "Read the drafted reply and exhibits, edit, approve." },
+// The same three jobs, in the same order, as the "Start here" card the demo opens on.
+const DEMO_PATH = [
+  { n: "1", title: "A client disputes $250", body: "Watch Cleared’s AI agent read the dispute, match Ada’s files and draft her reply." },
+  { n: "2", title: "A $400 job, before it’s invoiced", body: "The AI flags what would lose a dispute and fixes it in one tap. Then a real PayPal invoice goes out." },
+  { n: "3", title: "“Your account has been limited”", body: "Cleared checks a scary email for phishing before Ada clicks anything." },
 ];
 
-export function ForJudges() {
-  return (
-    <section id="for-judges" className="scroll-mt-6 border-t border-line bg-paper-deep" aria-labelledby="judges-title">
-      <div className="mx-auto w-full max-w-[1280px] px-5 py-20 sm:px-8 lg:py-24">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <h2 id="judges-title" className="max-w-xl text-[2rem] leading-tight font-semibold tracking-[-0.035em] text-balance text-ink sm:text-[2.6rem]">
-            For judges: try it as Ada, in about three minutes.
-          </h2>
-          <p className="max-w-sm text-[0.92rem] leading-relaxed text-muted-foreground">
-            PayPal Invoicing, Orders, Tracking, Disputes and Webhooks APIs, sandbox only. The AI only drafts.
-          </p>
-        </div>
-        <ol className="mt-10 grid gap-px overflow-hidden rounded-[14px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-          {JUDGE_PATH.map((s) => (
-            <li key={s.t} className="bg-surface p-5">
-              <span className="text-[0.85rem] font-medium text-cleared-strong tabular-nums">{s.t}</span>
-              <h3 className="mt-1.5 text-[1.02rem] font-semibold tracking-[-0.01em] text-ink">{s.title}</h3>
-              <p className="mt-1 text-[0.88rem] leading-snug text-muted-foreground">{s.body}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-10 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-6">
-          <DemoButton />
-          <NewSellerLink className="text-center sm:text-left" />
-          <SourceLink href={GITHUB_URL} className="text-[0.95rem] text-ink/75 decoration-ink/25 hover:text-ink hover:decoration-ink sm:ml-auto">
-            Read the code on GitHub
-          </SourceLink>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /**
- * The only dark band on the page: one line, one sub-line, the demo button, and a corner of the desk
- * photo (the top sheet and the pen) in a frame with the stamp pressed on it.
+ * The only dark band on the page, and the one place it asks for the demo: one line, the button, the three
+ * jobs the demo opens on, and a corner of the desk photo with the stamp pressed on it.
  */
 export function ClosingCta() {
   return (
-    <section className="bg-ink text-paper" aria-labelledby="cta-title">
+    <section id="for-judges" className="scroll-mt-6 bg-ink text-paper" aria-labelledby="cta-title">
       <div className="mx-auto grid w-full max-w-[1280px] items-center gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-28">
         <div>
           <h2 id="cta-title" className="max-w-[14ch] text-[clamp(2.5rem,5vw,4.25rem)] leading-[0.98] font-bold tracking-[-0.045em] text-balance">
             Your next commission should stay paid.
           </h2>
-          <p className="mt-6 max-w-md text-[1.12rem] leading-relaxed text-paper/75">Try it as Ada on the PayPal sandbox. No sign-up.</p>
-          <DemoButton className="mt-9" />
+          <p className="mt-6 max-w-md text-[1.12rem] leading-relaxed text-paper/75">Try it as Ada Okafor, an illustrator, on the PayPal sandbox. About three minutes, no sign-up, no keys.</p>
+          <div className="mt-9 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <DemoButton />
+            <NewSellerLink className="text-center sm:text-left" linkClassName="text-paper/75 decoration-paper/30 hover:text-paper hover:decoration-paper" />
+          </div>
         </div>
-        <div className="relative aspect-[5/4] overflow-hidden rounded-[16px] bg-[#EAE3D6] ring-1 ring-white/10">
+        <div className="relative aspect-[5/4] overflow-hidden rounded-[10px] bg-[#EAE3D6] ring-1 ring-white/10">
           {/* desk-wide.png cropped to its top-right corner: the top sheet and the fountain pen. */}
           <Image
             src="/landing/desk-wide.png"
@@ -225,6 +195,22 @@ export function ClosingCta() {
             detail="full"
             className="absolute top-[30%] left-[24%] size-[38%] -rotate-12 text-cleared opacity-90 mix-blend-multiply"
           />
+        </div>
+        <div className="lg:col-span-2">
+          <p className="text-[0.9rem] font-medium text-paper/60">The demo opens on three jobs:</p>
+          <ol className="mt-4 grid gap-px overflow-hidden rounded-[10px] bg-white/10 ring-1 ring-white/10 sm:grid-cols-3">
+            {DEMO_PATH.map((s) => (
+              <li key={s.n} className="bg-ink p-5">
+                <span className="grid size-7 place-items-center rounded-full border border-white/20 text-[0.85rem] font-semibold tabular-nums">{s.n}</span>
+                <h3 className="mt-3 text-[1.02rem] font-semibold tracking-[-0.01em]">{s.title}</h3>
+                <p className="mt-1 text-[0.9rem] leading-snug text-paper/70">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-6 flex flex-col gap-2 text-[0.88rem] text-paper/60 sm:flex-row sm:items-center sm:justify-between">
+            <span>PayPal Invoicing, Orders, Tracking, Disputes and Webhooks APIs, sandbox only. The AI only drafts; Ada approves.</span>
+            <SourceLink href={GITHUB_URL} className="text-paper/75 decoration-paper/30 hover:text-paper hover:decoration-paper">Read the code on GitHub</SourceLink>
+          </p>
         </div>
       </div>
     </section>

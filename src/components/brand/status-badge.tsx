@@ -7,7 +7,7 @@ export type SaleStatus = keyof typeof SALE_STATUS_LABEL;
 // Every status pairs an icon with its word, so it never relies on colour alone.
 const STATUS_STYLE: Record<SaleStatus, { icon: LucideIcon; className: string }> = {
   draft: { icon: PencilLine, className: "border-line bg-secondary text-muted-foreground" },
-  sent: { icon: Send, className: "border-line bg-surface text-ink" },
+  sent: { icon: Send, className: "border-ink/15 bg-ink/[0.06] text-ink" },
   paid: { icon: Banknote, className: "border-cleared/20 bg-surface text-cleared-strong" },
   delivered: { icon: PackageCheck, className: "border-cleared/20 bg-cleared-tint/60 text-cleared-strong" },
   accepted: { icon: BadgeCheck, className: "border-cleared/25 bg-cleared-tint text-cleared-strong" },
@@ -22,12 +22,12 @@ export function SaleStatusBadge({ status, className }: { status: SaleStatus; cla
     <span
       data-status={status}
       className={cn(
-        "inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-xs font-medium whitespace-nowrap",
+        "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[0.8rem] font-medium whitespace-nowrap",
         tone,
         className,
       )}
     >
-      <Icon className="size-3.5" aria-hidden />
+      <Icon className="size-4" aria-hidden />
       {SALE_STATUS_LABEL[status]}
     </span>
   );

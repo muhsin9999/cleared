@@ -41,7 +41,7 @@ SELLER APP  (requires session; redirect to / if none)
 /settings                 PayPal connection · webhook health · demo reset · AI audit log
 
 ALWAYS AVAILABLE IN DEMO MODE
-Demo panel (drawer, bottom-right "Sandbox controls")
+Demo panel (drawer from the top bar, "Play the client"; the Start here card on Home is the guided way in)
 ```
 
 ## 3. Navigation

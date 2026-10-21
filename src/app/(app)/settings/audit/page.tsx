@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { and, desc, eq } from "drizzle-orm";
 import { BotIcon, CheckCircle2Icon, CircleSlashIcon, SendIcon, UserCheckIcon } from "lucide-react";
 import { PageBody, PageHeader } from "@/components/app/page-header";
+import { WebhookHealth } from "@/components/app/webhook-health";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,15 +33,22 @@ export default function AuditPage({ searchParams }: PageProps<"/settings/audit">
   return (
     <PageBody className="max-w-4xl">
       <PageHeader
-        eyebrow={<Link href="/settings" className="hover:text-foreground">Settings</Link>}
+        back={{ href: "/settings", label: "Settings" }}
         title="AI audit log"
         description="Every decision Cleared’s AI made and every action Cleared took in PayPal, with what was checked and who approved it."
       />
       <Suspense fallback={<Skeleton className="h-96" />}>
         <Audit searchParams={searchParams} />
       </Suspense>
+      <Suspense fallback={<Skeleton className="h-48" />}>
+        <Webhooks />
+      </Suspense>
     </PageBody>
   );
+}
+
+async function Webhooks() {
+  return <WebhookHealth now={await requestNow()} />;
 }
 
 async function Audit({ searchParams }: { searchParams: PageProps<"/settings/audit">["searchParams"] }) {

@@ -22,7 +22,7 @@ import { isActive, NAV } from "./nav";
 export function AppSidebar({ footer }: { footer?: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <Sidebar collapsible="none" className="sticky top-0 hidden h-svh w-60 border-r border-sidebar-border md:flex">
+    <Sidebar collapsible="none" className="sticky top-0 hidden h-svh max-h-svh w-60 overflow-y-auto overscroll-contain border-r border-sidebar-border md:flex">
       <SidebarHeader className="gap-5 px-4 pt-5">
         <Link href="/home" aria-label="cleared home" className="rounded-md">
           <Logo />
@@ -31,7 +31,7 @@ export function AppSidebar({ footer }: { footer?: React.ReactNode }) {
           <PlusIcon aria-hidden /> New sale
         </Link>
       </SidebarHeader>
-      <SidebarContent className="px-2 pt-3">
+      <SidebarContent className="min-h-fit flex-none px-2 pt-3">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
@@ -51,7 +51,7 @@ export function AppSidebar({ footer }: { footer?: React.ReactNode }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {footer ? <SidebarFooter className="px-4 pb-4">{footer}</SidebarFooter> : null}
+      {footer ? <SidebarFooter className="mt-auto px-4 pb-4">{footer}</SidebarFooter> : null}
     </Sidebar>
   );
 }

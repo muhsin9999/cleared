@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-type LiveEvent = { id: string; type: string; summary: string; saleId: string | null };
+type LiveEvent = { id: string; type: string; summary: string; saleId: string | null; source: string; verified: boolean; simulated: boolean };
 
 const POLL_MS = 5_000;
 
-/** Watches for new PayPal events while the tab is visible: shows a toast and refreshes the page data. */
+/** Watches for new events while the tab is visible: shows a toast and refreshes the page data. */
 export function LiveEvents() {
   const router = useRouter();
   const since = useRef<string | null>(null);
@@ -29,8 +29,8 @@ export function LiveEvents() {
             events.forEach((e) => seen.current.add(e.id));
             since.current = now;
             for (const e of fresh.reverse()) {
-              const fromPayPal = /^(INVOICING|PAYMENT|CHECKOUT|CUSTOMER)\./.test(e.type);
-              (e.type.includes("DISPUTE.CREATED") ? toast.warning : toast.success)(e.summary, { description: fromPayPal ? "Verified event from PayPal" : undefined });
+              const fromPayPal = e.source === "paypal" && e.verified && !e.simulated;
+              (e.type.includes("DISPUTE.CREATED") ? toast.warning : toast.success)(e.summary, { description: fromPayPal ? "From PayPal" : undefined });
             }
             if (fresh.length) router.refresh();
           }

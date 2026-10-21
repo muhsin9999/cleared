@@ -25,11 +25,11 @@ export function relativeTime(date: Date | string, now = Date.now()) {
 
 export const SALE_STATUS_LABEL = {
   draft: "Draft",
-  sent: "Sent",
+  sent: "Awaiting payment",
   paid: "Paid",
   delivered: "Delivered",
-  accepted: "Accepted",
-  released: "Released",
+  accepted: "Client confirmed",
+  released: "Money released",
   disputed: "Disputed",
   refunded: "Refunded",
 } as const;

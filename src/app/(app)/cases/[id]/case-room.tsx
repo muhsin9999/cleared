@@ -4,7 +4,7 @@ import { AnimatePresence, m } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { CheckIcon, ShieldAlertIcon, FileIcon, LockKeyholeIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
+import { CheckIcon, GavelIcon, ShieldAlertIcon, FileIcon, LockKeyholeIcon, LoaderCircleIcon, MessageSquareTextIcon, PackageIcon, ReceiptTextIcon, ShieldCheckIcon, UserCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { StampMark } from "@/components/brand/logo";
 import { AgentTag, markerStrike } from "@/components/brand/marks";
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { approveAndSubmit, startDraft } from "@/server/actions/cases";
+import { resolveLatestDispute } from "@/server/actions/demo";
 
 type Exhibit = { id: string; letter: string; label: string; kind: string };
 type Packet = {
@@ -37,10 +38,11 @@ const KIND_ICON = { file: FileIcon, message: MessageSquareTextIcon, acceptance: 
 const WORKING = new Set(["gathering", "drafting", "checking", "submitting"]);
 const RECOMMENDATION = { fight: "Recommended: respond with evidence", offer: "Recommended: offer a partial refund", accept: "Recommended: accept and refund" } as Record<string, string>;
 
-export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, resolved, real }: { disputeId: string; packet: Packet | null; exhibits: Exhibit[]; canSubmit: boolean; resolved: boolean; real: boolean }) {
+export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, resolved, real, demo = false }: { disputeId: string; packet: Packet | null; exhibits: Exhibit[]; canSubmit: boolean; resolved: boolean; real: boolean; demo?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const asked = useRef(false);
+  const [confirming, setConfirming] = useState(false);
   // Starts from the server's copy; while the agent works it is kept current by polling the packet endpoint.
   const [packet, setPacket] = useState(initial);
   const working = !packet || WORKING.has(packet.status);
@@ -82,10 +84,10 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3">
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="flex flex-wrap items-center gap-2 text-base">
             <AgentTag className="text-[0.85rem]">Cleared AI agent</AgentTag>
-            <span className="font-normal text-muted-foreground">{working ? "is investigating" : "investigated this case"}</span>
+            <span className="font-normal text-muted-foreground">{working ? "is investigating" : packet?.source === "ai" ? "investigated this case" : "was unavailable, so Cleared built the case from your files"}</span>
           </CardTitle>
           {packet?.model && packet.source === "ai" ? <Badge variant="outline" className="font-mono text-[0.7rem]">{packet.model}</Badge> : null}
         </CardHeader>
@@ -115,7 +117,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
 
       {drafted ? (
         <Card className="relative overflow-hidden">
-          <CardHeader className="flex-row items-start justify-between gap-4">
+          <CardHeader className={cn("flex flex-row flex-wrap items-start justify-between gap-4", packet!.recommendation === "fight" && packet!.claims.length && "pr-24")}>
             <div className="space-y-1">
               <CardTitle>Evidence packet</CardTitle>
               <p className="text-sm text-muted-foreground">
@@ -195,7 +197,9 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
         <Card className="flex-row flex-wrap items-center justify-between gap-3 px-5 py-4">
           <p className="text-sm text-muted-foreground" role="status">
             {resolved
-              ? "This case is closed."
+              ? demo
+                ? <span>This case is closed. <Link href="/home" className="font-medium text-foreground underline underline-offset-2">Back to Start here</Link> for the next job.</span>
+                : "This case is closed."
               : packet!.status === "submitting"
                 ? "Sending your evidence to PayPal through the evidence workflow…"
                 : submitted
@@ -210,9 +214,25 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                         ? <span className="inline-flex items-center gap-1.5 font-medium text-cleared-strong"><LockKeyholeIcon aria-hidden className="size-4" /> The AI can’t press this. Only you can.</span>
                         : "PayPal isn’t accepting evidence on this case right now."}
           </p>
+          {submitted && !resolved && demo ? (
+            // In the demo the visitor plays PayPal's part too; the same action is in "Play the client".
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  const r = await resolveLatestDispute();
+                  if (!r.ok) toast.error(r.message);
+                  router.refresh();
+                })
+              }
+            >
+              <GavelIcon aria-hidden /> {pending ? "Asking PayPal…" : "Play PayPal: decide this case"}
+            </Button>
+          ) : null}
           {!submitted && !resolved && packet!.status !== "submitting" ? (
-            <Dialog>
-              <DialogTrigger render={<Button size="lg" disabled={!canSubmit || !packet!.claims.length} />}>Approve &amp; submit to PayPal</DialogTrigger>
+            <Dialog open={confirming} onOpenChange={setConfirming}>
+              <DialogTrigger render={<Button size="lg" disabled={pending || !canSubmit || !packet!.claims.length} />}>{pending ? "Sending to PayPal…" : <>Approve &amp; submit to PayPal</>}</DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{packet!.status === "failed" ? "Try sending this evidence again?" : "Submit this evidence to PayPal?"}</DialogTitle>
@@ -223,7 +243,8 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                   <DialogClose render={<Button variant="ghost" />}>Keep reviewing</DialogClose>
                   <Button
                     disabled={pending}
-                    onClick={() =>
+                    onClick={() => {
+                      setConfirming(false);
                       start(async () => {
                         const r = await approveAndSubmit(disputeId);
                         if (r.ok) toast.success(r.mode === "workflow" ? "Sending to PayPal…" : "Evidence submitted");
@@ -231,8 +252,8 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                         const res = await fetch(`/api/cases/${disputeId}/packet`, { cache: "no-store" });
                         if (res.ok) setPacket(((await res.json()) as { packet: Packet | null }).packet);
                         router.refresh();
-                      })
-                    }
+                      });
+                    }}
                   >
                     {pending ? "Submitting…" : "Approve & submit"}
                   </Button>

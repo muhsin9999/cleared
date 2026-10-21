@@ -82,3 +82,13 @@ export async function salesByIds(sellerId: string, ids: string[]) {
   if (!ids.length) return [];
   return db.query.sales.findMany({ where: and(eq(s.sales.sellerId, sellerId), inArray(s.sales.id, ids)) });
 }
+
+/** The three jobs on the "Start here" card, and which the visitor has already done in this workspace. */
+export async function getTour(sellerId: string) {
+  const [dispute, checked, notice] = await Promise.all([
+    db.query.disputes.findFirst({ where: eq(s.disputes.sellerId, sellerId), orderBy: desc(s.disputes.openedAt), columns: { id: true } }),
+    db.query.events.findFirst({ where: and(eq(s.events.sellerId, sellerId), eq(s.events.type, "PREFLIGHT.COMPLETED")), columns: { saleId: true } }),
+    db.query.notices.findFirst({ where: eq(s.notices.sellerId, sellerId), orderBy: desc(s.notices.createdAt), columns: { id: true } }),
+  ]);
+  return { disputeId: dispute?.id ?? null, checkedSaleId: checked?.saleId ?? null, noticeId: notice?.id ?? null };
+}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { HourglassIcon, LogOutIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,13 +16,14 @@ async function HoldIsland() {
   const days = daysUntil(home.nextRelease);
   if (!home.nextReleaseSale || days === null) return null;
   return (
-    <div role="status" className="flex items-center gap-2 rounded-full bg-ink px-3.5 py-1.5 text-sm text-paper shadow-soft">
-      <HourglassIcon aria-hidden className="size-3.5 text-cleared-tint" />
+    <Link href={`/sales/${home.nextReleaseSale.id}`} title={`${home.nextReleaseSale.clientName}: PayPal releases it ${days === 0 ? "today" : `in ${days} ${days === 1 ? "day" : "days"}`}`} className="flex min-w-0 items-center gap-2 rounded-full bg-ink px-3 py-1.5 text-sm whitespace-nowrap text-paper shadow-soft transition-opacity hover:opacity-90">
+      <HourglassIcon aria-hidden className="size-3.5 shrink-0 text-cleared-tint" />
       <span>
-        <span className="font-medium tabular-nums">{money(home.nextReleaseSale.amountCents)}</span> releases in{" "}
+        <span className="font-medium tabular-nums">{money(home.nextReleaseSale.amountCents)}</span>
+        <span className="hidden sm:inline"> releases</span> in{" "}
         <span className="font-medium tabular-nums">{days} {days === 1 ? "day" : "days"}</span>
       </span>
-    </div>
+    </Link>
   );
 }
 

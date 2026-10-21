@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AgentTag } from "@/components/brand/marks";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { and, eq } from "drizzle-orm";
@@ -43,7 +43,7 @@ async function Notice({ params }: { params: PageProps<"/notices/[id]">["params"]
   return (
     <>
       <PageHeader
-        eyebrow={<Link href="/cases" className="hover:text-foreground">Cases</Link>}
+        back={{ href: "/cases", label: "All cases" }}
         title={phishing ? "This email is likely phishing" : TYPE_LABEL[r.type]}
         description={`Checked ${shortDate(notice.createdAt)}${r.transcribed ? " · read from your screenshot by Cleared AI" : ""}${notice.doneAt ? " · marked as done" : ""}`}
       />
@@ -123,7 +123,7 @@ async function Notice({ params }: { params: PageProps<"/notices/[id]">["params"]
               <Card>
                 <CardHeader>
                   <CardTitle>Draft reply</CardTitle>
-                  <CardDescription>{r.replySource === "ai" ? "Written by Cleared AI using only your records · check before sending" : "Drafted by Cleared from your records · check before sending"}</CardDescription>
+                  <CardDescription>{r.replySource === "ai" ? <><AgentTag className="mr-1 text-[0.72rem]" /> wrote this from your records only · check before sending</> : "Drafted by Cleared from your records · check before sending"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <pre className="max-h-80 overflow-auto rounded-md bg-paper px-3 py-2 font-sans text-sm whitespace-pre-wrap">{r.draftReply}</pre>

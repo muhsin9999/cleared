@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ClosingCta, ForJudges, Hero, HowItWorks, SellersWords, TheNumbers } from "@/components/marketing/landing";
+import { ClosingCta, Hero, HowItWorks, SellersWords, TheNumbers } from "@/components/marketing/landing";
 import { AgentSection } from "@/components/marketing/agent-scene";
 import { GITHUB_URL, SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 
@@ -20,7 +20,6 @@ export default function LandingPage() {
         <TheNumbers />
         <HowItWorks />
         <SellersWords />
-        <ForJudges />
         <ClosingCta />
       </main>
       <SiteFooter />

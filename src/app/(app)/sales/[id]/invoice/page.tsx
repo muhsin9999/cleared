@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PageBody, PageHeader } from "@/components/app/page-header";
@@ -37,7 +36,7 @@ async function Invoice({ params }: { params: PageProps<"/sales/[id]/invoice">["p
 
   return (
     <>
-      <PageHeader eyebrow={<Link href={`/sales/${sale.id}`} className="hover:text-foreground">{sale.title}</Link>} title={invoice.sentAt ? `Invoice #${invoice.invoiceNumber}` : "Review the invoice"} description={invoice.sentAt ? "Sent through PayPal. The client pays on PayPal’s own page." : "This is what PayPal will email the client. Check every line."} />
+      <PageHeader back={{ href: `/sales/${sale.id}`, label: sale.title }} title={invoice.sentAt ? `Invoice #${invoice.invoiceNumber}` : "Review the invoice"} description={invoice.sentAt ? "Sent through PayPal. The client pays on PayPal’s own page." : "This is what PayPal will email the client. Check every line."} />
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <article aria-label="Invoice preview" className="relative rounded-[10px] border bg-surface px-6 py-8 shadow-soft sm:px-10">
           <header className="flex flex-wrap items-start justify-between gap-6 border-b pb-6">

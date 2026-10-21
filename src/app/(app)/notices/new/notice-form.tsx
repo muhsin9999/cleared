@@ -17,11 +17,11 @@ const RC: { value: ResolutionCenterAnswer; label: string }[] = [
   { value: "unsure", label: "Not sure" },
 ];
 
-export function NoticeForm() {
+export function NoticeForm({ sample }: { sample?: keyof typeof SAMPLE_NOTICES }) {
   const [state, action, pending] = useActionState(submitNotice, {} as NoticeFormState);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(sample ? SAMPLE_NOTICES[sample].text : "");
   const [fileName, setFileName] = useState<string | null>(null);
-  const [rc, setRc] = useState<ResolutionCenterAnswer | null>(null);
+  const [rc, setRc] = useState<ResolutionCenterAnswer | null>(sample ? SAMPLE_NOTICES[sample].rc : null);
 
   return (
     <Card>

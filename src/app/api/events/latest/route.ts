@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const after = new URL(request.url).searchParams.get("after");
   const since = after ? new Date(after) : new Date(Date.now() - 60_000);
   const events = await db
-    .select({ id: s.events.id, type: s.events.type, summary: s.events.summary, occurredAt: s.events.occurredAt, saleId: s.events.saleId })
+    .select({ id: s.events.id, type: s.events.type, summary: s.events.summary, source: s.events.source, verified: s.events.verified, simulated: s.events.simulated, occurredAt: s.events.occurredAt, saleId: s.events.saleId })
     .from(s.events)
     .where(and(eq(s.events.sellerId, seller.id), gt(s.events.receivedAt, since)))
     .orderBy(desc(s.events.receivedAt))

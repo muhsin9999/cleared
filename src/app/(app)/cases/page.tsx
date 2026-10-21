@@ -55,7 +55,7 @@ async function Cases() {
               })}
             </ul>
           ) : (
-            <p className="py-6 text-center text-sm text-muted-foreground">No open disputes.{home.proofCoverage !== null ? ` Your proof coverage is ${home.proofCoverage}%.` : ""}</p>
+            <p className="py-6 text-center text-sm text-muted-foreground text-pretty">No disputes. When a client disputes a payment, Cleared’s AI starts building the case here.{home.proofCoverage !== null ? ` Your proof coverage is ${home.proofCoverage}%.` : ""}</p>
           )}
         </CardContent>
       </Card>

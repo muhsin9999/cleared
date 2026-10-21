@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlusIcon } from "lucide-react";
 import { Suspense } from "react";
 import { CoverageDots } from "@/components/app/coverage-dots";
 import { PageBody, PageHeader } from "@/components/app/page-header";
@@ -17,7 +18,7 @@ export const metadata = { title: "Sales" };
 export default function SalesPage() {
   return (
     <PageBody>
-      <PageHeader title="Sales" description="Every sale, its PayPal status, and how well its proof is covered." actions={<Link href="/sales/new" className={buttonVariants()}>New sale</Link>} />
+      <PageHeader title="Sales" description="Every sale, its PayPal status, and how well its proof is covered." actions={<Link href="/sales/new" className={buttonVariants({ size: "lg" })}><PlusIcon aria-hidden /> New sale</Link>} />
       <Suspense fallback={<Skeleton className="h-96" />}>
         <SalesTable />
       </Suspense>
@@ -55,7 +56,7 @@ async function SalesTable() {
           {sales.map((s) => {
             const c = coverage(s);
             return (
-              <TableRow key={s.id} className="relative">
+              <TableRow key={s.id} className="relative cursor-pointer">
                 <TableCell className="max-w-56 pl-5">
                   <Link href={`/sales/${s.id}`} className="block truncate font-medium after:absolute after:inset-0">{s.title}</Link>
                   <span className="text-xs text-muted-foreground">{shortDate(s.createdAt)}</span>
@@ -64,7 +65,7 @@ async function SalesTable() {
                 <TableCell className="text-right font-medium tabular-nums">{money(s.amountCents)}</TableCell>
                 <TableCell><SaleStatusBadge status={s.status} /></TableCell>
                 <TableCell className="hidden md:table-cell">{s.paidAt ? <CoverageDots {...c} /> : <span className="text-xs text-muted-foreground">After payment</span>}</TableCell>
-                <TableCell className="hidden pr-5 text-muted-foreground md:table-cell">{s.releasedAt ? "Released" : s.expectedReleaseAt ? shortDate(s.expectedReleaseAt) : "—"}</TableCell>
+                <TableCell className="hidden pr-5 text-muted-foreground md:table-cell">{s.releasedAt ? `Released ${shortDate(s.releasedAt)}` : s.expectedReleaseAt ? shortDate(s.expectedReleaseAt) : "—"}</TableCell>
               </TableRow>
             );
           })}

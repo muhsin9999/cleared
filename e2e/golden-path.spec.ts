@@ -34,10 +34,10 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
 
   await test.step("a dispute arrives and the agent investigates", async () => {
     const panel = await sandboxControls(page);
-    await panel.getByRole("button", { name: /simulate a buyer dispute/i }).click();
+    await panel.getByRole("button", { name: /^open a dispute$/i }).click();
     await page.waitForURL(/\/cases\/[0-9a-f-]+/);
     await expect(page.getByText(/Read the dispute|Starting the investigation/).first()).toBeVisible();
-    await expect(page.getByText(/Checked every claim|AI unavailable/).first()).toBeVisible({ timeout: 150_000 });
+    await expect(page.getByText(/Checked every claim|AI unavailable|AI was unavailable/).first()).toBeVisible({ timeout: 150_000 });
     await expect(page.getByRole("button", { name: /approve & submit to paypal/i })).toBeVisible();
     await expect(page.getByText(/Exhibit [A-Z]/).first()).toBeVisible();
   });
@@ -49,6 +49,8 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
   });
 
   await test.step("audit log explains the packet", async () => {
+    // With no AI (a local run without a key) there is no AI decision to explain.
+    if (await page.getByText(/AI was unavailable/).count()) return;
     await page.getByRole("link", { name: /why did cleared say this/i }).click();
     await expect(page.getByText(/Claim checker/).first()).toBeVisible();
     await page.goBack();
@@ -56,7 +58,7 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
 
   await test.step("the case resolves in Ada's favour", async () => {
     const panel = await sandboxControls(page);
-    await panel.getByRole("button", { name: /resolve in ada/i }).click();
+    await panel.getByRole("button", { name: /decide the dispute for ada/i }).click();
     await expect(page.getByText(/Closed in your favour/).first()).toBeVisible();
   });
 

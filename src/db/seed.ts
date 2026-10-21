@@ -1,4 +1,6 @@
 // Ada Okafor's demo workspace. Dates are relative to the time of seeding so the story never goes stale.
+// Seeded history is written as Cleared’s own record (source "cleared", unverified): only events PayPal
+// really sent may show "From PayPal".
 import { and, eq, inArray, isNotNull, lt, ne } from "drizzle-orm";
 import { deleteFiles } from "../server/storage";
 import type { PgDatabase } from "drizzle-orm/pg-core";
@@ -78,7 +80,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
       { saleId: sale.id, kind: "acceptance", label: "Client confirmed receipt", meta: { name: r.clientName, ip: "198.51.100.x", userAgent: "Chrome 141 on macOS" }, occurredAt: new Date(delivered.getTime() + 3 * 3_600_000) },
     ]);
     await db.insert(s.events).values([
-      { sellerId: ada.id, saleId: sale.id, type: "INVOICING.INVOICE.PAID", summary: `${r.clientName} paid $${r.amountCents / 100}`, verified: true, occurredAt: r.paidAt },
+      { sellerId: ada.id, saleId: sale.id, source: "cleared", type: "INVOICING.INVOICE.PAID", summary: `${r.clientName} paid $${r.amountCents / 100}`, verified: false, occurredAt: r.paidAt },
       { sellerId: ada.id, saleId: sale.id, source: "cleared", type: "FUNDS.RELEASED", summary: `$${r.amountCents / 100} from ${r.clientName} is available`, verified: true, occurredAt: new Date(r.paidAt.getTime() + 11 * DAY) },
     ]);
   }
@@ -126,7 +128,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     { saleId: cover.id, kind: "acceptance", label: "Client confirmed receipt", meta: { name: "Tolu A., Lagos Lo-Fi Records", ip: "102.89.xx.xx", userAgent: "Safari 19 on iPhone" }, occurredAt: at(-2, 18) },
   ]);
   await db.insert(s.events).values([
-    { sellerId: ada.id, saleId: cover.id, type: "INVOICING.INVOICE.PAID", summary: "Lagos Lo-Fi Records paid $250", verified: true, occurredAt: at(-6, 9) },
+    { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "INVOICING.INVOICE.PAID", summary: "Lagos Lo-Fi Records paid $250", verified: false, occurredAt: at(-6, 9) },
     { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "PROOF.FILES_ADDED", summary: "Final files added to the proof locker", verified: true, occurredAt: at(-2, 15) },
     { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "CLIENT.ACCEPTED", summary: "Lagos Lo-Fi Records confirmed they received the work", verified: true, occurredAt: at(-2, 18) },
     { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "SALE.COMPLETED_MARKED", summary: "Marked completed in PayPal: release starts in 7 days", verified: true, occurredAt: at(-1, 9) },

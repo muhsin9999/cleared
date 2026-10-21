@@ -22,10 +22,10 @@ export function DemoButton({ className }: { className?: string }) {
   );
 }
 
-export function NewSellerLink({ className }: { className?: string }) {
+export function NewSellerLink({ className, linkClassName }: { className?: string; linkClassName?: string }) {
   return (
     <form action={startNewSeller} className={className}>
-      <TextSubmit pendingLabel="Creating your workspace…">or start as a new seller</TextSubmit>
+      <TextSubmit pendingLabel="Creating your workspace…" className={linkClassName}>or start as a new seller</TextSubmit>
     </form>
   );
 }
