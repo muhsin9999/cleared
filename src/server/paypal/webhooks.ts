@@ -35,7 +35,8 @@ export async function verifySignature(headers: Headers, raw: string) {
   const missing = HEADERS.filter((h) => !headers.get(h));
   if (missing.length) return { status: "FAILURE" as const, reason: `missing ${missing.join(", ")}` };
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-  if (!webhookId) throw new Error("PAYPAL_WEBHOOK_ID is not set");
+  // Without our webhook id nothing can be verified, so nothing is accepted (PayPal retries later).
+  if (!webhookId) return { status: "FAILURE" as const, reason: "PAYPAL_WEBHOOK_ID is not set" };
   const get = (h: (typeof HEADERS)[number]) => headers.get(h)!;
   const certUrl = get("paypal-cert-url");
   if (!trustedCertUrl(certUrl)) return { status: "FAILURE" as const, reason: "certificate is not on a PayPal host" };

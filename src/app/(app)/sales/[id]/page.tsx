@@ -7,6 +7,7 @@ import { CoverageDots } from "@/components/app/coverage-dots";
 import { MessageProofForm } from "@/components/app/message-proof-form";
 import { ProofDropzone } from "@/components/app/proof-dropzone";
 import { TrackingForm } from "@/components/app/tracking-form";
+import { isConfirmedProof } from "@/lib/proof-status";
 import { EventList } from "@/components/app/event-row";
 import { ProofList } from "@/components/app/proof-list";
 import { PageBody, PageHeader } from "@/components/app/page-header";
@@ -164,7 +165,11 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
               <CardHeader><CardTitle className="flex items-center gap-2"><PackageIcon aria-hidden className="size-4" /> Tracking</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {sale.proofs.filter((p) => p.kind === "tracking").map((p) => (
-                  <p key={p.id} className="flex items-center gap-2 text-sm text-cleared-strong"><CheckIcon aria-hidden className="size-4" /> {p.label} · sent {shortDate(p.occurredAt)}</p>
+                  isConfirmedProof(p) ? (
+                    <p key={p.id} className="flex items-center gap-2 text-sm text-cleared-strong"><CheckIcon aria-hidden className="size-4" /> {p.label} · sent {shortDate(p.occurredAt)}</p>
+                  ) : (
+                    <p key={p.id} className="text-sm text-caution">{p.label} · PayPal hasn’t confirmed it yet. Send it again and Cleared checks PayPal first.</p>
+                  )
                 ))}
                 {sale.paidAt ? <TrackingForm saleId={sale.id} /> : <p className="text-sm text-muted-foreground">Available once the client has paid.</p>}
               </CardContent>

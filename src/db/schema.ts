@@ -1,5 +1,5 @@
 // Cleared data model. Money is stored as integer cents; PayPal ids are kept as text.
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const id = () => uuid("id").primaryKey().defaultRandom();
@@ -90,7 +90,11 @@ export const proofs = pgTable(
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: createdAt(),
   },
-  (t) => [index("proofs_sale_idx").on(t.saleId)],
+  (t) => [
+    index("proofs_sale_idx").on(t.saleId),
+    // The claim that stops one tracking number reaching PayPal twice for a sale (paypal-plan.md, DUPLICATE CLAIMS).
+    uniqueIndex("proofs_tracking_unique").on(t.saleId, sql`(${t.meta}->>'trackingNumber')`).where(sql`${t.kind} = 'tracking'`),
+  ],
 );
 
 // Verified PayPal webhooks plus Cleared's own events, shown on the live timeline.

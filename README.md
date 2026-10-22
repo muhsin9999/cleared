@@ -77,11 +77,15 @@ A cron job also polls the Disputes API every 30 minutes, so a dispute still arri
 
 Cleared's Orders and Payments code (adding shipment tracking to a PayPal payment) runs on the PayPal TypeScript SDK that [APIMatic's PayPal Context Plugin](https://github.com/apimatic/context-plugins-installer) documents (package `paypal` 2.29.0). We started on PayPal's APIMatic-generated Server SDK, then installed the plugin in Claude Code (22 Oct) and rebuilt `src/server/paypal/tracking.ts` with its skills.
 
+Following the plugin's own workflow, we then wrote its contract sheet, [`paypal-plan.md`](paypal-plan.md), from the SDK map (every field, channel and error arm for the three calls). Writing it exposed four more gaps, all fixed in the same commit.
+
 What the plugin changed:
-- **A real bug fixed.** Our old code re-sent "add tracking" after a timeout or a 5xx. The plugin's resilience guide says a write that timed out may have succeeded, so Cleared now looks at the order first and only reports a failure if the tracker really isn't there. This stops a buyer getting the same tracking number twice.
+- **A real bug fixed.** Our old code re-sent "add tracking" after a timeout or a 5xx. The plugin's resilience guide says a write that timed out may have succeeded, so Cleared now re-reads the order instead. If PayPal never answered, the result is "unknown", never "failed", and the next attempt checks PayPal before sending again. This stops a buyer getting the same tracking number twice.
+- **A duplicate claim.** A unique index on (sale, tracking number) is claimed before the call, so two quick clicks can't both reach PayPal; the claim is released if PayPal refuses. An unconfirmed claim is never used as evidence by the agent.
+- **Our faults and the seller's kept apart.** PayPal's own reason reaches the seller only for a 4xx about what they typed; our credentials (401/403), our quota (429) and PayPal's own errors (5xx) get fixed messages, and PayPal's debug id goes to the audit log.
 - **The SDK's own retries, for reads only**, instead of our hand-written retry loop.
 - **Every failure kind kept distinct** (`api`, `decode`, `timeout`, `connection`, `auth`), and PayPal's own message and debug id reach the seller.
-- **Tests the plugin's way:** `tests/tracking.test.ts` runs the real SDK against a fake `fetch` that answers in PayPal's wire format (field names, a 422, a 500 that did or didn't land, a 503 on a read).
+- **Tests the plugin's way:** `tests/tracking.test.ts` runs the real SDK against a fake `fetch` that answers in PayPal's wire format: 12 cases covering the exact fields sent, a dropped connection settled or left unknown, an unreadable reply, a 500 that did or didn't land, a failed token request that is never re-read, a 422 and a 403.
 - **Checked against the live sandbox:** `scripts/spikes/sdk-smoke.ts` finds the order behind a paid sandbox invoice through the SDK.
 
 To reproduce: `npx context-plugins install paypal`, then `/reload-plugins` in Claude Code.

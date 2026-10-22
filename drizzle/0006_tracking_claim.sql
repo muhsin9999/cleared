@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "proofs_tracking_unique" ON "proofs" USING btree ("sale_id",("meta"->>'trackingNumber')) WHERE "proofs"."kind" = 'tracking';

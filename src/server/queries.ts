@@ -2,6 +2,7 @@
 import "server-only";
 import { and, desc, eq, inArray, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db, schema as s } from "@/db";
+import { isConfirmedProof } from "@/lib/proof-status";
 
 const IN_FLIGHT = ["paid", "delivered", "accepted"] as const;
 
@@ -33,8 +34,8 @@ export async function listNotices(sellerId: string) {
 }
 
 /** Proof coverage for one sale: does it have files, client acceptance, and tracking (goods only)? */
-export function coverage(sale: { kind: string; proofs: { kind: string }[] }) {
-  const has = (k: string) => sale.proofs.some((p) => p.kind === k);
+export function coverage(sale: { kind: string; proofs: { kind: string; meta?: unknown }[] }) {
+  const has = (k: string) => sale.proofs.some((p) => p.kind === k && isConfirmedProof(p));
   const checks = [has("file") || has("message"), has("acceptance"), ...(sale.kind === "physical" ? [has("tracking")] : [])];
   return { done: checks.filter(Boolean).length, total: checks.length };
 }
