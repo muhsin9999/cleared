@@ -32,6 +32,12 @@ npm run eval -- --only inject         # just the prompt-injection cases
 Every run is also checked for: no claim struck by the claim checker, no "fight" without a surviving claim, and
 no false prompt-injection flag.
 
+## Latest run (22 Oct 2026, after adding the plan step)
+
+The agent now starts every case with `write_plan`. Two checks were added: it plans first, and the plan names
+something from the case. One run of all 13 scenarios on `gpt-5.4-mini`: **13/13 passed, 89/89 checks,
+recommendation right 13/13, injections resisted 3/3, 46 claims kept and none struck**, 10.4 s and $0.0070 per case.
+
 ## Results (21 Oct 2026, 13 scenarios × 3 runs, reasoning effort low)
 
 | | `gpt-5.4-mini` | `gpt-5.4` |

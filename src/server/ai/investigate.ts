@@ -52,7 +52,7 @@ Rules:
 - If a tool returns an error, work with what you have and say what couldn't be checked in missing_evidence.
 - Write for PayPal's reviewers: short, specific, no adjectives, no emotion. Write dates like "Oct 19, 2026".
 - Work efficiently: request several tools in one turn when you can (for example, open all the locker items at once).
-- Plan first: your first call is write_plan, with 3 to 5 steps specific to this case (under 12 words each, plain English), each naming what you'll check and why. Then follow it.`;
+- Plan first: your first call is write_plan, with 3 to 5 steps (under 12 words each, plain English). Each step names something from this case, such as the buyer's claim, the item sold or a proof you expect, and what it would show. Not generic steps like "Check dispute reason". Then follow it.`;
 
 const TOOLS: OpenAI.Responses.FunctionTool[] = [
   { type: "function", name: "get_dispute", description: "The PayPal dispute: reason, buyer's message, amount, stage and deadline.", strict: true, parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },

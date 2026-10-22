@@ -57,6 +57,8 @@ Each visitor gets a private copy of the workspace. **Sandbox** in the top bar ho
 | Average time per case | 7.5 s | 14.5 s |
 | Average cost per case | $0.006 | $0.023 |
 
+After the plan step was added (22 Oct, one run on `gpt-5.4-mini`): 13/13 scenarios passed, 89/89 checks, no claims struck, $0.007 per case.
+
 The two other AI jobs run while the seller waits: **the sale check** (`src/server/ai/preflight.ts`, about $0.002) and **the notice reader** (`src/server/ai/notice.ts`), which spots fake "PayPal" emails before drafting a reply. Both fall back to rule-based results if the model is unavailable.
 
 ## PayPal APIs used
