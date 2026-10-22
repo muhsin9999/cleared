@@ -62,7 +62,7 @@ export function ProofDropzone({ saleId }: { saleId: string }) {
       >
         {busy ? <LoaderCircleIcon aria-hidden className="size-5 animate-spin text-cleared" /> : <UploadIcon aria-hidden className="size-5 text-muted-foreground" />}
         <span className="text-sm font-medium">{busy ? `Uploading ${busy}…` : "Drop delivered files here, or choose files"}</span>
-        <span className="text-xs text-muted-foreground">JPG, PNG, GIF or PDF, up to 10 MB each: the files PayPal accepts as evidence.</span>
+        <span className="text-xs text-muted-foreground">JPG, PNG, GIF or PDF, up to 10 MB.</span>
       </button>
       <input ref={input} type="file" multiple accept="image/jpeg,image/png,image/gif,application/pdf" className="sr-only" tabIndex={-1} onChange={(e) => e.target.files && upload(e.target.files)} />
       <p role="status" aria-live="polite" className={cn("mt-2 text-sm text-risk", !error && "sr-only")}>{error ?? ""}</p>

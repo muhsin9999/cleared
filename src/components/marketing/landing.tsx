@@ -155,11 +155,11 @@ export function SellersWords() {
   );
 }
 
-// The same three jobs, in the same order, as the "Start here" card the demo opens on.
+// What happens in the demo, in order: the same moments the app shows on Home.
 const DEMO_PATH = [
-  { n: "1", title: "A client disputes $250", body: "Watch Cleared’s AI agent read the dispute, match Ada’s files and draft her reply." },
-  { n: "2", title: "A $400 job, before it’s invoiced", body: "The AI flags what would lose a dispute and fixes it in one tap. Then a real PayPal invoice goes out." },
-  { n: "3", title: "“Your account has been limited”", body: "Cleared checks a scary email for phishing before Ada clicks anything." },
+  { n: "1", title: "A $250 dispute comes in", body: "Seconds after you arrive, Ada’s client disputes a paid album cover." },
+  { n: "2", title: "Watch the agent work", body: "Every tool it calls and every file it opens, live. Then a reply with each claim tied to a file." },
+  { n: "3", title: "Approve and send", body: "Only you can send it to PayPal. Then play PayPal and decide the case." },
 ];
 
 /**
@@ -197,7 +197,7 @@ export function ClosingCta() {
           />
         </div>
         <div className="lg:col-span-2">
-          <p className="text-[0.9rem] font-medium text-paper/60">The demo opens on three jobs:</p>
+          <p className="text-[0.9rem] font-medium text-paper/60">What happens:</p>
           <ol className="mt-4 grid gap-px overflow-hidden rounded-[10px] bg-white/10 ring-1 ring-white/10 sm:grid-cols-3">
             {DEMO_PATH.map((s) => (
               <li key={s.n} className="bg-ink p-5">

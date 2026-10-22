@@ -8,15 +8,17 @@ import { isActive, NAV } from "./nav";
 
 export function MobileTabs() {
   const pathname = usePathname();
+  // The new-sale button only where sales start; elsewhere it covers the page's own actions.
+  const fab = pathname === "/home" || pathname === "/sales";
   return (
     <>
-      <Link
+      {fab ? <Link
         href="/sales/new"
         aria-label="New sale"
         className="fixed right-4 bottom-20 z-40 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-soft md:hidden"
       >
         <PlusIcon aria-hidden />
-      </Link>
+      </Link> : null}
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <ul className="grid grid-cols-5">
           {NAV.map(({ href, label, icon: Icon }) => {

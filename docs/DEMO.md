@@ -3,7 +3,7 @@
 ## What judges actually get
 
 1. **A YouTube video under 3 minutes.** This is the main way most judges will experience Cleared, so it carries Presentation and much of Design.
-2. **A live link** (`cleared-web.onrender.com`) with **"Try the live demo"**: no sign-up, no keys. Home opens on a **"Start here"** card with three jobs: (1) "Open the dispute" claims a real sandbox dispute and opens the case room, where the agent works live; (2) "Check the sale" opens the $400 sample in the pre-flight; (3) "Check the email" opens the phishing sample. "Play the client" in the top bar holds the other side's actions (pay, dispute, PayPal's decision, start over). It must stay live until **15 Dec**.
+2. **A live link** (`cleared-web.onrender.com`) with **"Try the live demo"**: no sign-up, no keys. Home shows Cleared AI "watching your PayPal account"; a few seconds later a $250 dispute arrives (a real sandbox dispute while stock lasts). "Open the case" shows the agent working live: each tool call, each file it opens, then the reply with every claim tied to an exhibit. Approve and send, then "Ask PayPal to decide". Home also links the sale check and the "PayPal" email check. "Sandbox" in the top bar holds the other side's actions (pay, dispute, PayPal's decision, reset). It must stay live until **15 Dec**.
 3. **A public GitHub repo** with an MIT licence, README, architecture diagram, `.env.example`, eval results and sponsor sections.
 4. **The Devpost write-up:** problem, user, what it does, how it's built (PayPal APIs and AI named exactly), challenges, what's next.
 5. **The Postman collection** link.
@@ -47,8 +47,8 @@
 ## Submission checklist
 
 - [ ] Video public on YouTube, under 3:00, captions on
-- [ ] Live link works in a private window, and all three "Start here" jobs complete end to end
-- [ ] Judge instructions in Devpost "Testing instructions": the link, "click Try the live demo, then follow Start here", the expected flow, and sandbox buyer credentials only if the backup path needs them
+- [ ] Live link works in a private window, and the dispute arrives, drafts, sends and closes end to end
+- [ ] Judge instructions in Devpost "Testing instructions": the link, "click Try the live demo, wait for the dispute, open the case", the expected flow, and sandbox buyer credentials only if the backup path needs them
 - [ ] Repo public, MIT licence detected, README complete, no secrets (`git log -p | grep -i secret` check)
 - [ ] Render credits confirmed through 15 Dec; services on paid always-on plans
 - [ ] APIMatic claim form submitted; README section present

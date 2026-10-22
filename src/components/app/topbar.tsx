@@ -32,7 +32,7 @@ async function Account() {
   const [payable, stock] = seller.isDemo ? await Promise.all([latestPayableInvoice(seller.id), disputeStock()]) : [null, 0];
   const initials = seller.name.split(" ").map((p) => p[0]).join("").slice(0, 2);
   return (
-    <div className="flex items-center gap-2">
+    <div className="ml-auto flex items-center gap-2">
       {seller.isDemo ? <DemoPanel stock={stock} buyerEmail={process.env.PAYPAL_SANDBOX_BUYER_EMAIL ?? null} payable={payable && payable.url ? { url: payable.url, label: `Invoice #${payable.number} · ${money(payable.amountCents)} · ${payable.clientName}` } : null} /> : null}
       <Avatar className="size-8"><AvatarFallback className="bg-cleared-tint text-xs font-medium text-cleared-strong">{initials}</AvatarFallback></Avatar>
       <span className="hidden text-sm lg:inline">{seller.name}</span>

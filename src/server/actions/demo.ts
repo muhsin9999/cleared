@@ -23,7 +23,8 @@ export async function resetDemo() {
   redirect("/home?reset=1");
 }
 
-export async function simulateDispute(useReal = true) {
+/** Brings in a dispute on Ada's delivered album cover. `draft` starts the agent now; otherwise it starts when the case is opened. */
+export async function simulateDispute(useReal = true, draft = true) {
   const seller = await requireSeller();
   const sale = await db.query.sales.findFirst({ where: and(eq(s.sales.sellerId, seller.id), eq(s.sales.status, "accepted")) });
   if (!sale) return { ok: false as const, message: "No paid and delivered sale to dispute. Reset the demo first." };
@@ -36,7 +37,7 @@ export async function simulateDispute(useReal = true) {
         .insert(s.events)
         .values({ sellerId: seller.id, saleId: sale.id, paypalEventId: `pool:${real.paypalDisputeId}:claimed`, type: "CUSTOMER.DISPUTE.CREATED", summary: `${sale.clientName} opened a dispute: ${reasonText(real.reason)}`, verified: true, payload: { dispute_id: real.paypalDisputeId, via: "sandbox stock" } })
         .onConflictDoNothing({ target: s.events.paypalEventId });
-      await ensureDraft(real.id);
+      if (draft) await ensureDraft(real.id);
       revalidatePath("/", "layout");
       return { ok: true as const, disputeId: real.id };
     }
@@ -62,7 +63,7 @@ export async function simulateDispute(useReal = true) {
     .returning();
   await db.update(s.sales).set({ status: "disputed" }).where(eq(s.sales.id, sale.id));
   await db.insert(s.events).values({ sellerId: seller.id, saleId: sale.id, type: "CUSTOMER.DISPUTE.CREATED", summary: `${sale.clientName} opened a dispute: “not received”`, simulated: true, verified: false, payload: { dispute_id: dispute.paypalDisputeId } });
-  await ensureDraft(dispute.id);
+  if (draft) await ensureDraft(dispute.id);
   revalidatePath("/", "layout");
   return { ok: true as const, disputeId: dispute.id };
 }
@@ -87,14 +88,13 @@ export async function resolveLatestDispute() {
   return { ok: true as const, disputeId: dispute.id };
 }
 
-/** "Start here", step 1: brings in a dispute on Ada's delivered album cover and opens the case room. */
-export async function startDisputeTour() {
+/** The demo's opening moment: shortly after a visitor arrives, Ada's client disputes the album cover, the way a
+ *  PayPal webhook would bring it in. Only once per workspace; the agent starts when the case is opened. */
+export async function arriveDemoDispute() {
   const seller = await requireSeller();
-  if (!seller.isDemo) throw new Error("Only demo workspaces have the tour");
+  if (!seller.isDemo) return { ok: false as const };
   const existing = await db.query.disputes.findFirst({ where: eq(s.disputes.sellerId, seller.id), columns: { id: true } });
-  if (existing) redirect(`/cases/${existing.id}`);
+  if (existing) return { ok: true as const, disputeId: existing.id };
   // Local runs and e2e set DEMO_TEST_DISPUTES so they never use up the real sandbox disputes kept for judges.
-  const r = await simulateDispute(process.env.DEMO_TEST_DISPUTES !== "true");
-  if (!r.ok) redirect("/cases");
-  redirect(`/cases/${r.disputeId}`);
+  return simulateDispute(process.env.DEMO_TEST_DISPUTES !== "true", false);
 }

@@ -39,20 +39,20 @@ export function NoticeForm({ sample }: { sample?: keyof typeof SAMPLE_NOTICES })
           <Field>
             <FieldLabel htmlFor="notice-text">The email, as you received it</FieldLabel>
             <Textarea id="notice-text" name="text" rows={12} value={text} onChange={(e) => setText(e.target.value)} placeholder={"From: …\nSubject: …\n\nPaste the whole email, including the sender line and any links."} className="font-mono text-[0.85rem]" />
-            <FieldDescription>Paste it as text, or upload a screenshot or PDF below. Don’t click any links in it first.</FieldDescription>
+            <FieldDescription>Don’t click its links.</FieldDescription>
           </Field>
 
           <label className={cn("flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm has-focus-visible:outline-2 has-focus-visible:outline-focus", fileName ? "border-cleared bg-cleared-tint/40" : "bg-paper/60 hover:bg-muted/60")}>
             <ImageUpIcon aria-hidden className="size-5 shrink-0 text-muted-foreground" />
             <span className="min-w-0 flex-1">
               {fileName ? <span className="font-medium">{fileName}</span> : <span>Or upload a screenshot or PDF of the email</span>}
-              <span className="block text-xs text-muted-foreground">Cleared AI reads it, keeping the sender and links exactly as shown. PNG, JPG, WebP or PDF, up to 10 MB.</span>
+              <span className="block text-xs text-muted-foreground">PNG, JPG, WebP or PDF, up to 10 MB.</span>
             </span>
             <input type="file" name="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" className="sr-only" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)} />
           </label>
 
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Log in to PayPal yourself (type paypal.com, don’t use the email’s links). Is the same message in your Resolution Center?</legend>
+            <legend className="text-sm font-medium">Is it in your PayPal Resolution Center too?</legend>
             <div className="flex flex-wrap gap-2" role="radiogroup">
               {RC.map((o) => (
                 <label key={o.value} className={cn("cursor-pointer rounded-md border px-3 py-1.5 text-sm has-focus-visible:outline-2 has-focus-visible:outline-focus", rc === o.value ? "border-cleared bg-cleared-tint text-cleared-strong" : "bg-surface")}>
@@ -65,7 +65,7 @@ export function NoticeForm({ sample }: { sample?: keyof typeof SAMPLE_NOTICES })
 
           <div className="flex items-start gap-3 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
             <ShieldAlertIcon aria-hidden className="mt-0.5 size-4 shrink-0" />
-            Real PayPal limitation notices always appear in your Resolution Center too. If this one doesn’t, forward it to phishing@paypal.com and delete it.
+            Real notices always are.
           </div>
 
           <div className="flex flex-col-reverse items-start gap-3 sm:flex-row sm:items-center sm:justify-between">

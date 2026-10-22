@@ -162,3 +162,20 @@
     }
   }
 }
+/* The agent's active step: a light band moves across the label while it works. */
+@utility shimmer-text {
+  background: linear-gradient(90deg, var(--ink-muted) 0%, var(--ink-muted) 40%, var(--cleared) 50%, var(--ink-muted) 60%, var(--ink-muted) 100%);
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shimmer-x 2.2s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    color: var(--ink-muted);
+  }
+}
+@keyframes shimmer-x {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}

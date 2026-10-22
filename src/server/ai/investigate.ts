@@ -77,6 +77,33 @@ const LABEL: Record<string, (args: Record<string, string>) => string> = {
 };
 
 const iso = (d: Date | null) => d?.toISOString() ?? null;
+const day = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(d) : null);
+
+/** A one-line summary of what a tool returned, for the live step list. `ref` is the exhibit it opened. */
+function describe(name: string, args: Record<string, string>, output: unknown, c: CaseFile): { detail?: string; ref?: string } {
+  const o = output as Record<string, unknown> | null;
+  if (o && !Array.isArray(o) && "error" in o) return { detail: String(o.message ?? "Unavailable") };
+  switch (name) {
+    case "get_dispute":
+      return { detail: [REASON_LABEL[c.dispute.reason] ?? c.dispute.reason, money(c.dispute.amountCents)].join(" · ") };
+    case "get_sale":
+      return { detail: [c.sale.title, money(c.sale.amountCents), c.sale.deliveredAt && `delivered ${day(c.sale.deliveredAt)}`].filter(Boolean).join(" · ") };
+    case "get_invoice":
+      return { detail: c.invoice ? `#${c.invoice.invoiceNumber ?? "draft"} · ${c.invoice.status.toLowerCase()}` : undefined };
+    case "list_locker_items":
+      return { detail: `${c.exhibits.length} ${c.exhibits.length === 1 ? "exhibit" : "exhibits"}` };
+    case "read_locker_item": {
+      const e = c.exhibits.find((x) => x.letter === String(args.letter).toUpperCase());
+      return e ? { detail: e.label, ref: e.id } : {};
+    }
+    case "get_tracking":
+      return { detail: Array.isArray(o) && o.length ? `${o.length} shipment${o.length === 1 ? "" : "s"}` : "None on file" };
+    case "search_policy":
+      return { detail: Array.isArray(o) && o.length ? (o as { id: string }[]).map((r) => r.id).join(", ") : "No matching rule" };
+    default:
+      return {};
+  }
+}
 
 function runTool(name: string, args: Record<string, string>, c: CaseFile) {
   switch (name) {
@@ -103,7 +130,7 @@ function runTool(name: string, args: Record<string, string>, c: CaseFile) {
 }
 
 export type InvestigateOptions = {
-  onStep?: (tool: string, label: string) => unknown;
+  onStep?: (step: { tool: string; label: string; turn: number; detail?: string; ref?: string }) => unknown;
   model?: string;
   effort?: "low" | "medium" | "high";
   /** Evals only: these tools return an "unavailable" error, to test how the agent copes. */
@@ -170,7 +197,7 @@ export async function investigate(c: CaseFile, opts: InvestigateOptions = {}): P
         output = { error: "tool_failed", message: e instanceof Error ? e.message : "Tool failed", retryable: false };
       }
       tools.push(call.name);
-      await opts.onStep?.(call.name, (LABEL[call.name] ?? (() => call.name))(args));
+      await opts.onStep?.({ tool: call.name, label: (LABEL[call.name] ?? (() => call.name))(args), turn, ...describe(call.name, args, output, c) });
       input.push({ type: "function_call_output", call_id: call.call_id, output: JSON.stringify(output) });
     }
   }

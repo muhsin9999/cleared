@@ -41,7 +41,7 @@ SELLER APP  (requires session; redirect to / if none)
 /settings                 PayPal connection · webhook health · demo reset · AI audit log
 
 ALWAYS AVAILABLE IN DEMO MODE
-Demo panel (drawer from the top bar, "Play the client"; the Start here card on Home is the guided way in)
+Sandbox panel (drawer from the top bar): pay an invoice, open a dispute, decide it as PayPal, reset. Home brings in the first dispute by itself.
 ```
 
 ## 3. Navigation

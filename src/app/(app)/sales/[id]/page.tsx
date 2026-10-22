@@ -107,7 +107,7 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><ShieldCheckIcon aria-hidden className="size-4 text-cleared" /> Proof locker</CardTitle>
-              <CardDescription>What you delivered and what was agreed. If the client disputes, this is what Cleared’s AI builds the case from.</CardDescription>
+              <CardDescription>Cleared AI builds your case from these.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="divide-y rounded-lg border">
@@ -149,7 +149,7 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><UserCheckIcon aria-hidden className="size-4" /> Client acceptance</CardTitle>
-              <CardDescription>The client confirms receipt on a private page. Cleared records the time, IP and device.</CardDescription>
+              <CardDescription>The client confirms they got it.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {sale.proofs.filter((p) => p.kind === "acceptance").map((p) => {
@@ -175,7 +175,7 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><PackageIcon aria-hidden className="size-4" /> Tracking</CardTitle>
-                <CardDescription>Sent to PayPal with the Add Tracking API. PayPal releases the hold about 24 hours after the carrier confirms delivery.</CardDescription>
+                <CardDescription>Sent to PayPal. Releases about a day after delivery.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {sale.proofs.filter((p) => p.kind === "tracking").map((p) => (
@@ -204,21 +204,21 @@ type Next = { icon: LucideIcon; tone: "act" | "risk" | "done"; title: string; bo
 
 /** The one thing that moves this sale's money forward, in plain words. */
 function nextStep(sale: SaleRow, x: { invoice: SaleRow["invoices"][number] | undefined; acceptance: boolean; days: number | null; dispute: SaleRow["disputes"][number] | null; files: boolean }): Next {
-  if (x.dispute) return { icon: ShieldAlertIcon, tone: "risk", title: `${sale.clientName} opened a dispute`, body: "Cleared’s AI builds your reply from this sale’s proof locker. Nothing is sent to PayPal until you approve it.", cta: { label: "Open the case", href: `/cases/${x.dispute.id}` } };
-  if (sale.releasedAt) return { icon: LockOpenIcon, tone: "done", title: `${money(sale.amountCents)} was released on ${shortDate(sale.releasedAt)}`, body: "PayPal has released this payment. The proof stays here in case the client ever disputes it." };
-  if (!x.invoice?.sentAt) return { icon: SendIcon, tone: "act", title: "Send the invoice", body: "Cleared creates it in PayPal with the delivery terms and refund policy written in, so a reviewer can see what was agreed.", cta: { label: "Review and send", href: `/sales/${sale.id}/invoice` } };
+  if (x.dispute) return { icon: ShieldAlertIcon, tone: "risk", title: `${sale.clientName} opened a dispute`, body: "Cleared AI builds your reply. You approve it.", cta: { label: "Open the case", href: `/cases/${x.dispute.id}` } };
+  if (sale.releasedAt) return { icon: LockOpenIcon, tone: "done", title: `${money(sale.amountCents)} was released on ${shortDate(sale.releasedAt)}`, body: "Proof stays here in case of a dispute." };
+  if (!x.invoice?.sentAt) return { icon: SendIcon, tone: "act", title: "Send the invoice", body: "Terms and refund policy are written in.", cta: { label: "Review and send", href: `/sales/${sale.id}/invoice` } };
   if (!sale.paidAt)
     return {
       icon: CreditCardIcon,
       tone: "act",
       title: `Waiting for ${sale.clientName} to pay`,
-      body: `Invoice #${x.invoice.invoiceNumber} is with them on PayPal. When they pay, PayPal tells Cleared and this page updates by itself.`,
+      body: `Invoice #${x.invoice.invoiceNumber} is with them on PayPal.`,
       cta: x.invoice.payerViewUrl ? { label: "Pay as the client", href: x.invoice.payerViewUrl, external: true } : undefined,
     };
-  if (!x.files) return { icon: FileUpIcon, tone: "act", title: "Add what you delivered", body: "Upload the final files below. If the client ever says it never arrived, these are your proof." };
-  if (!x.acceptance) return { icon: UserCheckIcon, tone: "act", title: "Ask the client to confirm they received it", body: "Copy the acceptance link and send it to them. Cleared records when and where they confirmed." };
+  if (!x.files) return { icon: FileUpIcon, tone: "act", title: "Add what you delivered", body: "Your proof if they say it never arrived." };
+  if (!x.acceptance) return { icon: UserCheckIcon, tone: "act", title: "Ask the client to confirm they received it", body: "Send them the acceptance link." };
   if (sale.kind === "physical") return { icon: PackageIcon, tone: "act", title: "Add tracking", body: "PayPal releases the hold about 24 hours after the carrier confirms delivery." };
   if (sale.completedMarkedAt && x.days !== null)
-    return { icon: HourglassIcon, tone: "done", title: `${money(sale.amountCents)} releases in ${x.days} ${x.days === 1 ? "day" : "days"}`, body: "You marked the job complete in PayPal. PayPal releases service payments 7 days after that, as long as nothing changes. Your proof is complete." };
-  return { icon: BadgeCheckIcon, tone: "act", title: "Mark the job complete in PayPal", body: "In PayPal: Activity → this payment → Get your money. Service payments release 7 days later." };
+    return { icon: HourglassIcon, tone: "done", title: `${money(sale.amountCents)} releases in ${x.days} ${x.days === 1 ? "day" : "days"}`, body: "PayPal releases service payments 7 days after the job is marked complete." };
+  return { icon: BadgeCheckIcon, tone: "act", title: "Mark the job complete in PayPal", body: "Payment releases 7 days later." };
 }

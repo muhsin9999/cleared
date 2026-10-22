@@ -1,7 +1,7 @@
 // Two labelled sample notices for the demo ("Try a sample"). Written for Cleared, not copied from PayPal.
 export const SAMPLE_NOTICES = {
   genuine: {
-    label: "A limitation notice that is also in the Resolution Center",
+    label: "A real limitation notice",
     rc: "yes" as const,
     text: `From: service@paypal.com
 Subject: Your account access has been limited
@@ -21,7 +21,7 @@ Sincerely,
 PayPal`,
   },
   phishing: {
-    label: "A fake “PayPal” email (not in the Resolution Center)",
+    label: "A fake “PayPal” email",
     rc: "no" as const,
     text: `From: PayPal Security <support@paypal-account-review.net>
 Subject: FINAL NOTICE: your account will be permanently suspended

@@ -10,7 +10,7 @@ export default function NewNoticePage({ searchParams }: PageProps<"/notices/new"
       <PageHeader
         back={{ href: "/cases", label: "All cases" }}
         title="I got a PayPal email"
-        description="Cleared checks it for phishing first. If it’s real, it lists what PayPal is asking for, shows which proof you already have, and drafts your reply."
+        description="Check it’s really PayPal before you click anything."
       />
       <Suspense fallback={<NoticeForm />}>
         <Form searchParams={searchParams} />

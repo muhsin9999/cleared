@@ -8,6 +8,7 @@ import { desc, eq } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { exhibitsFor } from "../exhibits";
 import { templatePacket } from "../packet";
+import { fakeAiEnabled, fakeClient } from "./fake-client";
 import { investigate, packetEffort, packetModel, PROMPT_VERSION, type CaseFile } from "./investigate";
 
 async function load(disputeId: string) {
@@ -31,9 +32,10 @@ function caseFile(d: Awaited<ReturnType<typeof load>>): CaseFile {
   };
 }
 
-async function addStep(packetId: string, tool: string, label: string) {
+type Step = { tool: string; label: string; turn?: number; detail?: string; ref?: string };
+async function addStep(packetId: string, step: Step) {
   const row = await db.query.packets.findFirst({ where: eq(s.packets.id, packetId), columns: { trace: true } });
-  await db.update(s.packets).set({ trace: [...(row?.trace ?? []), { tool, label, at: new Date().toISOString() }] }).where(eq(s.packets.id, packetId));
+  await db.update(s.packets).set({ trace: [...(row?.trace ?? []), { ...step, at: new Date().toISOString() }] }).where(eq(s.packets.id, packetId));
 }
 
 /** Drafts the packet for a dispute with the agent, checks it, and stores it for the seller's approval. */
@@ -42,13 +44,14 @@ export async function draftPacket(packetId: string) {
   if (!packet) throw new Error("Packet not found");
   const d = await load(packet.disputeId);
   const c = caseFile(d);
-  await db.update(s.packets).set({ status: "drafting", trace: [], model: packetModel(c.dispute.amountCents) }).where(eq(s.packets.id, packetId));
+  const fake = fakeAiEnabled();
+  await db.update(s.packets).set({ status: "drafting", trace: [], model: fake ? "fake-local" : packetModel(c.dispute.amountCents) }).where(eq(s.packets.id, packetId));
 
-  const r = await investigate(c, { onStep: (tool, label) => addStep(packetId, tool, label) });
+  const r = await investigate(c, { onStep: (step) => addStep(packetId, step), ...(fake && { client: fakeClient(c), model: "fake-local" }) });
 
   await db.update(s.packets).set({ status: "checking" }).where(eq(s.packets.id, packetId));
-  await addStep(packetId, "check_claims", `Checked every claim: ${r.kept.length} kept${r.removed.length ? `, ${r.removed.length} struck` : ""}`);
-  if (r.injections.length) await addStep(packetId, "guardrail", `Ignored ${r.injections.length === 1 ? "an instruction" : `${r.injections.length} instructions`} hidden in the buyer’s message or files`);
+  await addStep(packetId, { tool: "check_claims", label: "Checked every claim against its exhibit", detail: `${r.kept.length} kept${r.removed.length ? `, ${r.removed.length} struck` : ""}` });
+  if (r.injections.length) await addStep(packetId, { tool: "guardrail", label: `Ignored ${r.injections.length === 1 ? "an instruction" : `${r.injections.length} instructions`} hidden in the case` });
   const idByLetter = Object.fromEntries(c.exhibits.map((e) => [e.letter, e.id]));
 
   await db
@@ -87,7 +90,7 @@ export async function draftTemplateFallback(packetId: string, reason: string) {
   const d = await load(packet.disputeId);
   const t = templatePacket(d.sale!, d.sale!.proofs, d.reason);
   await db.update(s.packets).set({ status: "awaiting_approval", source: "template", recommendation: t.recommendation, rationale: t.rationale, claims: t.claims, missingEvidence: t.missing, coverLetter: t.coverLetter, error: `AI unavailable: ${reason}`.slice(0, 500) }).where(eq(s.packets.id, packetId));
-  await addStep(packetId, "fallback", "AI unavailable: built the packet from the locker instead");
+  await addStep(packetId, { tool: "fallback", label: "AI unavailable: built the reply from your files instead" });
 }
 
 /** The newest packet for a dispute (any status). */

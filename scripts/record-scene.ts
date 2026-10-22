@@ -12,7 +12,7 @@ const model = packetModel(scenario.caseFile.dispute.amountCents);
 const runs = [];
 for (let i = 0; i < Number(process.argv[2] ?? 3); i++) {
   const steps: string[] = [];
-  const r = await investigate(scenario.caseFile, { model, effort: packetEffort(), onStep: (_t, label) => steps.push(label) });
+  const r = await investigate(scenario.caseFile, { model, effort: packetEffort(), onStep: ({ label }) => steps.push(label) });
   const run = {
     recommendation: r.recommendation,
     rationale: r.parsed.rationale,

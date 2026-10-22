@@ -176,7 +176,7 @@ export const packets = pgTable("packets", {
   source: text("source").notNull().default("template"),
   model: text("model"),
   // The agent's steps, shown live in the case room: [{ tool, label, at }].
-  trace: jsonb("trace").$type<{ tool: string; label: string; at: string }[]>(),
+  trace: jsonb("trace").$type<{ tool: string; label: string; at: string; turn?: number; detail?: string; ref?: string }[]>(),
   error: text("error"),
   createdAt: createdAt(),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),

@@ -40,10 +40,14 @@ export function coverage(sale: { kind: string; proofs: { kind: string }[] }) {
 }
 
 export async function getHome(sellerId: string) {
-  const [sales, events, openDisputes] = await Promise.all([
+  const [sales, events, openDisputes, lastDispute] = await Promise.all([
     listSales(sellerId),
     listEvents(sellerId, 8),
-    db.query.disputes.findMany({ where: and(eq(s.disputes.sellerId, sellerId), notInArray(s.disputes.status, ["resolved_seller", "resolved_buyer", "closed"])) }),
+    db.query.disputes.findMany({
+      where: and(eq(s.disputes.sellerId, sellerId), notInArray(s.disputes.status, ["resolved_seller", "resolved_buyer", "closed"])),
+      with: { sale: { columns: { clientName: true, title: true } }, packets: { orderBy: desc(s.packets.createdAt), limit: 1, columns: { status: true } } },
+    }),
+    db.query.disputes.findFirst({ where: eq(s.disputes.sellerId, sellerId), orderBy: desc(s.disputes.openedAt), columns: { id: true, status: true, amountCents: true } }),
   ]);
   const inFlight = sales.filter((x) => (IN_FLIGHT as readonly string[]).includes(x.status));
   const paidish = sales.filter((x) => x.paidAt);
@@ -53,6 +57,7 @@ export async function getHome(sellerId: string) {
     sales,
     events,
     openDisputes,
+    lastDispute: lastDispute ?? null,
     fundsInFlightCents: inFlight.reduce((sum, x) => sum + x.amountCents, 0),
     nextRelease,
     nextReleaseSale: inFlight.find((x) => x.expectedReleaseAt?.getTime() === nextRelease?.getTime()) ?? null,
@@ -83,12 +88,3 @@ export async function salesByIds(sellerId: string, ids: string[]) {
   return db.query.sales.findMany({ where: and(eq(s.sales.sellerId, sellerId), inArray(s.sales.id, ids)) });
 }
 
-/** The three jobs on the "Start here" card, and which the visitor has already done in this workspace. */
-export async function getTour(sellerId: string) {
-  const [dispute, checked, notice] = await Promise.all([
-    db.query.disputes.findFirst({ where: eq(s.disputes.sellerId, sellerId), orderBy: desc(s.disputes.openedAt), columns: { id: true } }),
-    db.query.events.findFirst({ where: and(eq(s.events.sellerId, sellerId), eq(s.events.type, "PREFLIGHT.COMPLETED")), columns: { saleId: true } }),
-    db.query.notices.findFirst({ where: eq(s.notices.sellerId, sellerId), orderBy: desc(s.notices.createdAt), columns: { id: true } }),
-  ]);
-  return { disputeId: dispute?.id ?? null, checkedSaleId: checked?.saleId ?? null, noticeId: notice?.id ?? null };
-}

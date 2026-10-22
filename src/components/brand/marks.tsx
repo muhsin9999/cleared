@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { StampMark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
 // The agent's marks, shared by the landing page's agent scene and the case room so the product looks the
@@ -17,11 +16,15 @@ export function markerStrike(color: string): CSSProperties {
   return { backgroundImage: strikeImage(color), backgroundRepeat: "no-repeat", backgroundPosition: "0 56%", backgroundSize: "100% 0.55em", boxDecorationBreak: "clone", WebkitBoxDecorationBreak: "clone" };
 }
 
+/** The agent's face at rest, for small static places (tags, lists). The animated one is <AgentAvatar>. */
 export function AgentMark({ className }: { className?: string }) {
   return (
-    <span className={cn("grid shrink-0 place-items-center rounded-full bg-[#1F7A55]", className)}>
-      <StampMark detail="simple" className="size-[70%] text-white" />
-    </span>
+    <svg viewBox="0 0 100 100" aria-hidden className={cn("shrink-0", className)}>
+      <circle cx="50" cy="50" r="49" fill="#12191c" />
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="2" />
+      <ellipse cx="37" cy="50" rx="7.5" ry="10.5" fill="#fff" />
+      <ellipse cx="63" cy="50" rx="7.5" ry="10.5" fill="#fff" />
+    </svg>
   );
 }
 

@@ -9,7 +9,7 @@ export const metadata = { title: "New sale" };
 export default function NewSalePage({ searchParams }: PageProps<"/sales/new">) {
   return (
     <PageBody className="max-w-4xl">
-      <PageHeader title="New sale" description="Describe the job. Before anything is sent, Cleared checks it against your history and PayPal’s published rules, and the AI reads it the way a PayPal reviewer would." />
+      <PageHeader title="New sale" description="Cleared AI checks it before you invoice." />
       <Suspense fallback={<Skeleton className="h-[28rem]" />}>
         <Flow searchParams={searchParams} />
       </Suspense>

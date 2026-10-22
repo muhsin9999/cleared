@@ -10,5 +10,6 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/proofs/[id]
   const { id } = await ctx.params;
   const proof = await db.query.proofs.findFirst({ where: eq(s.proofs.id, id), with: { sale: { columns: { sellerId: true } } } });
   if (!proof?.fileKey || proof.sale.sellerId !== seller.id) return new Response("Not found.", { status: 404 });
-  return Response.redirect(await fileUrl(proof.fileKey, proof.fileName ?? undefined), 302);
+  // A relative Location works for the demo files served from /public; R2 links are absolute.
+  return new Response(null, { status: 302, headers: { Location: await fileUrl(proof.fileKey, proof.fileName ?? undefined) } });
 }

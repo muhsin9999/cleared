@@ -2,7 +2,7 @@
 // Seeded history is written as Cleared’s own record (source "cleared", unverified): only events PayPal
 // really sent may show "From PayPal".
 import { and, eq, inArray, isNotNull, lt, ne } from "drizzle-orm";
-import { deleteFiles } from "../server/storage";
+import { deleteFiles, staticKey } from "../server/storage";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import * as s from "./schema";
 
@@ -17,6 +17,10 @@ const at = (days: number, hour = 10) => {
 type Db = PgDatabase<any, typeof s>;
 
 export const DEMO_TAG = "ada";
+
+// Real files for Ada's locker, rendered by scripts/demo-art and served from public/demo, so every proof opens.
+const FILES: Record<string, number> = { "harmattan-cover-final.png": 633_981, "harmattan-sketch-v1.png": 242_402, "harmattan-cover-layers.pdf": 689_820, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
+const file = (fileName: string, mimeType = "image/png") => ({ fileName, fileKey: staticKey(`demo/${fileName}`), mimeType, sizeBytes: FILES[fileName] });
 
 /** Deletes demo workspaces (and their R2 files) created more than `hours` ago. Ada's base workspace stays. */
 export async function cleanupDemoWorkspaces(db: Db, hours = 48) {
@@ -76,7 +80,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
       .returning();
     const delivered = new Date(r.paidAt.getTime() + 4 * DAY);
     await db.insert(s.proofs).values([
-      { saleId: sale.id, kind: "file", label: "Final files", fileName: `${r.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-final.png`, mimeType: "image/png", sizeBytes: 2_400_000, occurredAt: delivered },
+      { saleId: sale.id, kind: "file", label: "Final files", ...file(`${r.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-final.png`), occurredAt: delivered },
       { saleId: sale.id, kind: "acceptance", label: "Client confirmed receipt", meta: { name: r.clientName, ip: "198.51.100.x", userAgent: "Chrome 141 on macOS" }, occurredAt: new Date(delivered.getTime() + 3 * 3_600_000) },
     ]);
     await db.insert(s.events).values([
@@ -113,7 +117,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     status: "PAID",
     paypalInvoiceId: `SEED-${tag}-0007`,
     draft: {
-      items: [{ name: "Album cover artwork", description: "3000×3000 px PNG + layered PSD, 2 revision rounds", quantity: "1", unitAmount: "250.00" }],
+      items: [{ name: "Album cover artwork", description: "3000×3000 px PNG + layered source PDF, 2 revision rounds", quantity: "1", unitAmount: "250.00" }],
       note: "Final files delivered within 10 days of payment.",
       terms: "Revisions: 2 rounds. Refunds available until the first sketch is approved.",
     },
@@ -121,10 +125,10 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     paidAt: at(-6, 9),
   });
   await db.insert(s.proofs).values([
-    { saleId: cover.id, kind: "message", label: "Agreed scope (email thread)", text: "Square cover, retro tape aesthetic, 2 revision rounds, final PNG + PSD.", occurredAt: at(-7, 12) },
-    { saleId: cover.id, kind: "file", label: "Sketch v1", fileName: "harmattan-sketch-v1.png", mimeType: "image/png", sizeBytes: 812_000, occurredAt: at(-4, 16) },
-    { saleId: cover.id, kind: "file", label: "Final cover", fileName: "harmattan-cover-final.png", mimeType: "image/png", sizeBytes: 6_400_000, occurredAt: at(-2, 15) },
-    { saleId: cover.id, kind: "file", label: "Layered source", fileName: "harmattan-cover-layers.pdf", mimeType: "application/pdf", sizeBytes: 9_100_000, occurredAt: at(-2, 15) },
+    { saleId: cover.id, kind: "message", label: "Agreed scope (email thread)", text: "Square cover, retro tape aesthetic, 2 revision rounds, final PNG + layered source (PDF).", occurredAt: at(-7, 12) },
+    { saleId: cover.id, kind: "file", label: "Sketch v1", ...file("harmattan-sketch-v1.png"), occurredAt: at(-4, 16) },
+    { saleId: cover.id, kind: "file", label: "Final cover", ...file("harmattan-cover-final.png"), occurredAt: at(-2, 15) },
+    { saleId: cover.id, kind: "file", label: "Layered source", ...file("harmattan-cover-layers.pdf", "application/pdf"), occurredAt: at(-2, 15) },
     { saleId: cover.id, kind: "acceptance", label: "Client confirmed receipt", meta: { name: "Tolu A., Lagos Lo-Fi Records", ip: "102.89.xx.xx", userAgent: "Safari 19 on iPhone" }, occurredAt: at(-2, 18) },
   ]);
   await db.insert(s.events).values([
