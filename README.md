@@ -68,10 +68,23 @@ The two other AI jobs run while the seller waits: **the sale check** (`src/serve
 | Invoicing v2 | generate-next-invoice-number, create, send, get | `src/server/paypal/invoicing.ts` |
 | Disputes v1 | list, get, `provide-evidence` (multipart), `adjudicate` (sandbox) | `src/server/paypal/disputes.ts`, `evidence.ts` |
 | Webhooks | PayPal's certificate check on the raw body, with `verify-webhook-signature` as the fallback | `src/server/paypal/webhooks.ts`, `src/lib/paypal-signature.ts` |
-| Orders v2 and Payments v2, through the official Server SDK | `getCapturedPayment`, `createOrderTracking` | `src/server/paypal/tracking.ts` |
+| Orders v2 and Payments v2, through the SDK from APIMatic's PayPal Context Plugin | `getCapturedPayment`, `createOrderTracking`, `getOrder` | `src/server/paypal/tracking.ts` |
 | Events received | `INVOICING.INVOICE.PAID/CANCELLED`, `CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED`, `PAYMENT.CAPTURE.COMPLETED`, `CHECKOUT.ORDER.APPROVED` | `src/app/api/paypal/webhook/route.ts` |
 
 A cron job also polls the Disputes API every 30 minutes, so a dispute still arrives if a webhook is missed.
+
+## Built with APIMatic's PayPal Context Plugin
+
+Cleared's Orders and Payments code (adding shipment tracking to a PayPal payment) runs on the PayPal TypeScript SDK that [APIMatic's PayPal Context Plugin](https://github.com/apimatic/context-plugins-installer) documents (package `paypal` 2.29.0). We started on PayPal's APIMatic-generated Server SDK, then installed the plugin in Claude Code (22 Oct) and rebuilt `src/server/paypal/tracking.ts` with its skills.
+
+What the plugin changed:
+- **A real bug fixed.** Our old code re-sent "add tracking" after a timeout or a 5xx. The plugin's resilience guide says a write that timed out may have succeeded, so Cleared now looks at the order first and only reports a failure if the tracker really isn't there. This stops a buyer getting the same tracking number twice.
+- **The SDK's own retries, for reads only**, instead of our hand-written retry loop.
+- **Every failure kind kept distinct** (`api`, `decode`, `timeout`, `connection`, `auth`), and PayPal's own message and debug id reach the seller.
+- **Tests the plugin's way:** `tests/tracking.test.ts` runs the real SDK against a fake `fetch` that answers in PayPal's wire format (field names, a 422, a 500 that did or didn't land, a 503 on a read).
+- **Checked against the live sandbox:** `scripts/spikes/sdk-smoke.ts` finds the order behind a paid sandbox invoice through the SDK.
+
+To reproduce: `npx context-plugins install paypal`, then `/reload-plugins` in Claude Code.
 
 ## Architecture
 
@@ -111,7 +124,7 @@ npm run dev                     # http://localhost:3000 → Try the live demo
 
 ## Built with
 
-Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui on Base UI, Motion · OpenAI Responses API · PayPal REST APIs and `@paypal/paypal-server-sdk` · Render (web service, Workflows, cron) · Neon Postgres with Drizzle · Cloudflare R2 · Vitest and Playwright.
+Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui on Base UI, Motion · OpenAI Responses API · PayPal REST APIs and the APIMatic PayPal SDK · Render (web service, Workflows, cron) · Neon Postgres with Drizzle · Cloudflare R2 · Vitest and Playwright.
 
 Design and planning notes are in [docs/](docs/): product, flows, PayPal integration, AI design, stack, demo script.
 
