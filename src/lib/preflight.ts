@@ -6,7 +6,7 @@ export type SaleDraft = {
   clientEmail: string;
   title: string;
   description: string;
-  kind: "service" | "digital" | "physical";
+  kind: "service" | "digital" | "physical" | "other";
   amountCents: number;
   depositPercent: number | null;
   deliveryDays: number | null;
@@ -94,7 +94,7 @@ export function preflight(draft: SaleDraft, history: History): { score: number; 
     findings.push({
       id: "protection",
       severity: "info",
-      title: "Services and digital work aren’t covered by Seller Protection",
+      title: draft.kind === "other" ? "Only shipped goods are covered by Seller Protection" : "Services and digital work aren’t covered by Seller Protection",
       reason: "For intangible work, your proof is everything. Cleared will keep the files and ask the client to confirm receipt.",
       ruleRef: "K16",
       weight: 0,

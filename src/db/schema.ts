@@ -5,7 +5,7 @@ import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqu
 const id = () => uuid("id").primaryKey().defaultRandom();
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
-export const saleKind = pgEnum("sale_kind", ["service", "digital", "physical"]);
+export const saleKind = pgEnum("sale_kind", ["service", "digital", "physical", "other"]);
 export const saleStatus = pgEnum("sale_status", ["draft", "sent", "paid", "delivered", "accepted", "released", "disputed", "refunded"]);
 export const proofKind = pgEnum("proof_kind", ["file", "acceptance", "message", "tracking"]);
 export const disputeStatus = pgEnum("dispute_status", ["open", "waiting_for_seller", "under_review", "resolved_seller", "resolved_buyer", "closed"]);

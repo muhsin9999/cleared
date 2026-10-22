@@ -55,13 +55,13 @@ async function Invoice({ params }: { params: PageProps<"/sales/[id]/invoice">["p
             <p className="text-muted-foreground">{sale.clientEmail}</p>
           </section>
           <table className="w-full text-sm">
-            <thead><tr className="border-b text-left text-xs tracking-[0.08em] text-muted-foreground uppercase"><th className="py-2 font-medium">Item</th><th className="py-2 text-right font-medium">Qty</th><th className="py-2 text-right font-medium">Amount</th></tr></thead>
+            <thead><tr className="border-b text-left text-xs tracking-[0.08em] text-muted-foreground uppercase"><th className="py-2 font-medium">Item</th><th className="py-2 pl-6 text-right font-medium">Qty</th><th className="py-2 pl-6 text-right font-medium">Amount</th></tr></thead>
             <tbody>
               {draft.items.map((it) => (
                 <tr key={it.name} className="border-b align-top">
                   <td className="py-3 pr-4"><p className="font-medium">{it.name}</p>{it.description ? <p className="mt-0.5 text-muted-foreground text-pretty">{it.description}</p> : null}</td>
                   <td className="py-3 text-right tabular-nums">{it.quantity}</td>
-                  <td className="py-3 text-right tabular-nums">{money(Math.round(Number(it.unitAmount) * 100))}</td>
+                  <td className="py-3 pl-6 text-right tabular-nums">{money(Math.round(Number(it.unitAmount) * 100))}</td>
                 </tr>
               ))}
             </tbody>

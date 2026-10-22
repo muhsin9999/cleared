@@ -2,12 +2,19 @@
 // live view can be built and screenshotted without paying for model calls. It walks the same tools a real run
 // uses, with pauses, and drafts plain claims straight from the exhibits. The packet is marked "fake-local".
 import type OpenAI from "openai";
+import type { Finding } from "@/lib/preflight";
 import type { CaseFile } from "./investigate";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const day = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(iso));
 
 export const fakeAiEnabled = () => process.env.AI_FAKE === "true" && !process.env.RENDER;
+
+/** Stands in for the AI pre-flight pass: a pause, then one finding the rules can't raise. */
+export async function fakePreflight(): Promise<Finding[]> {
+  await wait(2600);
+  return [{ id: "ai-0", severity: "caution", title: "Usage rights aren’t stated", reason: "Say whether the client may use the work commercially. A client who expected full rights can call it “not as described”.", ruleRef: "K16", weight: 6, source: "ai" }];
+}
 
 export function fakeClient(c: CaseFile): OpenAI {
   let turn = 0;

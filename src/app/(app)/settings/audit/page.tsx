@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { and, desc, eq } from "drizzle-orm";
-import { BotIcon, CheckCircle2Icon, CircleSlashIcon, SendIcon, UserCheckIcon } from "lucide-react";
+import { CheckCircle2Icon, CircleSlashIcon, SendIcon, UserCheckIcon } from "lucide-react";
+import { AgentMark } from "@/components/brand/marks";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { WebhookHealth } from "@/components/app/webhook-health";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +77,7 @@ async function Audit({ searchParams }: { searchParams: PageProps<"/settings/audi
           <li key={row.id}>
             <Card className="gap-3 px-5 py-4">
               <div className="flex flex-wrap items-start gap-3">
-                {k.ai ? <BotIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-cleared" /> : <SendIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />}
+                {k.ai ? <AgentMark className="size-6 shrink-0" /> : <SendIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />}
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{k.label}</p>
                   <p className="text-xs text-muted-foreground">

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema as s } from "@/db";
 import { type Finding, preflight, scoreWith } from "@/lib/preflight";
 import { requireSeller } from "../auth";
+import { fakeAiEnabled, fakePreflight } from "../ai/fake-client";
 import { aiPreflight } from "../ai/preflight";
 import { PayPalError } from "../paypal/client";
 import { createAndSendInvoice, type InvoiceDraft } from "../paypal/invoicing";
@@ -16,7 +17,7 @@ const Draft = z.object({
   clientEmail: z.email("Use a valid email"),
   title: z.string().trim().min(3, "Give the sale a short title"),
   description: z.string().trim().min(10, "Describe what you’re delivering"),
-  kind: z.enum(["service", "digital", "physical"]),
+  kind: z.enum(["service", "digital", "physical", "other"]),
   amountCents: z.number().int().positive("Enter an amount"),
   depositPercent: z.number().int().min(10).max(90).nullable(),
   deliveryDays: z.number().int().min(1).max(365).nullable(),
@@ -120,6 +121,7 @@ export async function suggestFindings(input: z.input<typeof Draft>) {
   const draft = { clientName: "", clientEmail: "", ...parsed.data } as z.infer<typeof Draft>;
   try {
     const history = await sellerHistory();
+    if (fakeAiEnabled()) return { ok: true as const, findings: await fakePreflight() };
     const findings = await aiPreflight(seller.id, draft, history, preflight(draft, history).findings);
     return { ok: true as const, findings };
   } catch (e) {

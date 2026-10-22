@@ -104,9 +104,10 @@ function Ring({ score, ready }: { score: number; ready: boolean }) {
           className={cn("transition-[stroke-dashoffset,stroke] duration-500 ease-out", ready ? "stroke-cleared" : "stroke-caution")}
         />
       </svg>
-      <div className="relative flex flex-col items-center leading-none">
+      {/* NumberFlow pads its box above and below the digits, so the pair is pulled up to sit optically centred. */}
+      <div className="relative -mt-[0.3em] flex flex-col items-center leading-none">
         <NumberFlow value={score} className="text-[2.35em] font-semibold tracking-[-0.04em] text-ink tabular-nums" />
-        <span className="mt-[0.2em] text-[0.74em] text-muted-foreground">Readiness</span>
+        <span className="-mt-[0.15em] text-[0.66em] font-medium tracking-[0.01em] text-muted-foreground">Readiness</span>
       </div>
     </div>
   );

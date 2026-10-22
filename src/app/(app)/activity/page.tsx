@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import { EventList } from "@/components/app/event-row";
+import { ActivityFeed } from "@/components/app/activity-feed";
 import { PageBody, PageHeader } from "@/components/app/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireSeller } from "@/server/auth";
 import { requestNow } from "@/server/time";
@@ -24,5 +23,5 @@ async function Activity() {
   const now = await requestNow();
   const seller = await requireSeller();
   const events = await listEvents(seller.id, 200);
-  return <Card><CardContent className="pt-6">{events.length ? <EventList events={events} now={now} /> : <p className="py-8 text-center text-sm text-muted-foreground">Nothing yet. Events appear here the moment PayPal sends them.</p>}</CardContent></Card>;
+  return <ActivityFeed events={events} now={now} />;
 }

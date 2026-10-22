@@ -1,8 +1,8 @@
 import { BadgeCheckIcon, CircleAlertIcon, CircleDollarSignIcon, FileUpIcon, FlaskConicalIcon, GavelIcon, LockOpenIcon, PackageIcon, SendIcon, UserCheckIcon, type LucideIcon } from "lucide-react";
-import { AgentMark } from "@/components/brand/marks";
+import { AgentAvatar } from "@/components/brand/agent-avatar";
 import { cn } from "@/lib/utils";
 
-type EventLike = { id: string; type: string; summary: string; occurredAt: Date; simulated: boolean; verified: boolean; source: string };
+export type EventLike = { id: string; type: string; summary: string; occurredAt: Date; simulated: boolean; verified: boolean; source: string };
 
 // One line per event: an icon for the kind, a short label, and the time. The full sentence stays in the tooltip.
 const KIND: Record<string, { icon: LucideIcon; tone?: "risk" | "good"; label?: string }> = {
@@ -25,6 +25,16 @@ const KIND: Record<string, { icon: LucideIcon; tone?: "risk" | "good"; label?: s
 // Events the AI produced: they show its face so the feed says what the agent did and when.
 const AI_EVENTS = new Set(["PACKET.DRAFTED", "PREFLIGHT.COMPLETED"]);
 
+/** The words a row shows, for search. */
+export const eventText = (e: EventLike) => `${AI_EVENTS.has(e.type) ? "Cleared AI " : ""}${KIND[e.type]?.label ?? e.summary} ${e.summary}`;
+
+export const EVENT_GROUPS = {
+  disputes: (t: string) => t.includes("DISPUTE") || t === "CLIENT.REPORTED_PROBLEM",
+  payments: (t: string) => t.startsWith("INVOICING.") || t.startsWith("FUNDS.") || t.startsWith("SALE."),
+  proof: (t: string) => t.startsWith("PROOF.") || t.startsWith("TRACKING.") || t === "CLIENT.ACCEPTED",
+  ai: (t: string) => AI_EVENTS.has(t),
+};
+
 function ago(d: Date, now: number) {
   const s = (now - d.getTime()) / 1000;
   if (s < 90) return "now";
@@ -42,7 +52,7 @@ export function EventRow({ event, now }: { event: EventLike; now: number }) {
   return (
     <li className="flex items-center gap-3 py-2" title={event.summary}>
       {ai ? (
-        <AgentMark className="size-6" />
+        <AgentAvatar calm label="" className="size-6" />
       ) : (
         <span className={cn("grid size-6 shrink-0 place-items-center rounded-full", k.tone === "risk" ? "bg-risk-tint text-risk" : k.tone === "good" ? "bg-cleared-tint text-cleared-strong" : "bg-muted text-muted-foreground")}>
           <k.icon aria-hidden className="size-3.5" />

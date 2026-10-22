@@ -1,0 +1,1 @@
+ALTER TYPE "public"."sale_kind" ADD VALUE 'other';

@@ -65,12 +65,13 @@ export function ReadinessRing({
           className={cn(TONE_STROKE[tone], "transition-[stroke-dashoffset,stroke] duration-700 ease-out")}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden>
+      {/* NumberFlow pads its box above and below the digits; with a verdict under it the pair is pulled up a little to look centred. */}
+      <div className={cn("absolute inset-0 flex flex-col items-center justify-center", showVerdict && !compact && "-translate-y-[4%]")} aria-hidden>
         <NumberFlow
           value={value}
           className={cn("font-semibold tracking-[-0.03em] text-ink tabular-nums", compact ? "text-lg" : "text-[2rem] leading-none")}
         />
-        {showVerdict && !compact ? <span className="mt-1 text-[0.7rem] font-medium text-muted-foreground">{TONE_WORD[tone]}</span> : null}
+        {showVerdict && !compact ? <span className="-mt-0.5 text-[0.7rem] font-medium text-muted-foreground">{TONE_WORD[tone]}</span> : null}
       </div>
     </div>
   );

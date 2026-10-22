@@ -33,7 +33,7 @@ async function lockerCounts(sellerId: string): Promise<Locker> {
 function draftReply(seller: Seller, r: ReturnType<typeof readNotice>, locker: Locker) {
   if (r.verdict === "likely_phishing") return null;
   const who = seller.businessName ? `${seller.name} of ${seller.businessName}` : seller.name;
-  const what = { service: "services", digital: "commissioned digital artwork", physical: "physical goods" }[seller.sells];
+  const what = { service: "services", digital: "commissioned digital artwork", physical: "physical goods", other: "freelance work" }[seller.sells];
   const ready = r.requirements.filter((q) => q.status === "ready");
   const yours = r.requirements.filter((q) => q.status === "you");
   const lines = [

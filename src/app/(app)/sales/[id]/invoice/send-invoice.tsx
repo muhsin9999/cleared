@@ -11,9 +11,16 @@ export function SendInvoice({ saleId, clientEmail, amount, sandbox }: { saleId: 
   const [error, setError] = useState<string | null>(null);
   return (
     <Dialog>
-      <DialogTrigger render={<Button size="lg" className="h-auto w-full py-3 whitespace-normal" />}>
-        <SendIcon aria-hidden /> Send {amount} invoice to {clientEmail} via PayPal
-      </DialogTrigger>
+      <div className="space-y-3 rounded-[10px] border bg-surface p-4">
+        <p className="text-sm">
+          <span className="font-semibold tabular-nums">{amount}</span>
+          <span className="text-muted-foreground"> to </span>
+          <span className="break-all">{clientEmail}</span>
+        </p>
+        <DialogTrigger render={<Button className="w-full" />}>
+          <SendIcon aria-hidden /> Send through PayPal
+        </DialogTrigger>
+      </div>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Send this invoice through PayPal?</DialogTitle>

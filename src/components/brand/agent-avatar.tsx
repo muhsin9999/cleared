@@ -20,7 +20,9 @@ const LOOKS: Record<Exclude<AgentMood, "done">, Gaze[]> = {
 };
 const PACE: Record<AgentMood, number> = { idle: 1700, working: 900, thinking: 1400, concerned: 4000, done: 4000 };
 
-export function AgentAvatar({ mood = "idle", className, still = false, label = "Cleared AI" }: { mood?: AgentMood; className?: string; still?: boolean; label?: string }) {
+// `calm` is for lists such as Activity: the eyes drift less, wait several seconds between moves and each copy
+// keeps its own timing, so a column of faces never moves in step or pulls the eye away from the text.
+export function AgentAvatar({ mood = "idle", className, still = false, calm = false, label = "Cleared AI" }: { mood?: AgentMood; className?: string; still?: boolean; calm?: boolean; label?: string }) {
   const reduce = useReducedMotion();
   const moving = !still && !reduce;
   const [look, setLook] = useState(0);
@@ -28,9 +30,20 @@ export function AgentAvatar({ mood = "idle", className, still = false, label = "
 
   useEffect(() => {
     if (!moving || mood === "done") return;
-    const t = setInterval(() => setLook((i) => i + 1), PACE[mood]);
-    return () => clearInterval(t);
-  }, [moving, mood]);
+    if (!calm) {
+      const t = setInterval(() => setLook((i) => i + 1), PACE[mood]);
+      return () => clearInterval(t);
+    }
+    let t: ReturnType<typeof setTimeout>;
+    const next = (first: boolean) => {
+      t = setTimeout(() => {
+        setLook((i) => i + 1);
+        next(false);
+      }, (first ? 2500 : 5000) + Math.random() * 5000);
+    };
+    next(true);
+    return () => clearTimeout(t);
+  }, [moving, mood, calm]);
   useEffect(() => {
     if (!moving || mood === "done") return;
     let t: ReturnType<typeof setTimeout>;
@@ -39,14 +52,15 @@ export function AgentAvatar({ mood = "idle", className, still = false, label = "
         setBlink(true);
         setTimeout(() => setBlink(false), 130);
         next();
-      }, 2600 + Math.random() * 2400);
+      }, calm ? 6000 + Math.random() * 8000 : 2600 + Math.random() * 2400);
     };
     next();
     return () => clearTimeout(t);
-  }, [moving, mood]);
+  }, [moving, mood, calm]);
 
   const looks = mood === "done" ? [{ x: 0, y: -2 }] : LOOKS[mood];
-  const gaze = moving ? looks[look % looks.length] : mood === "working" ? { x: 0, y: 6 } : { x: 0, y: 0 };
+  const raw = moving ? looks[look % looks.length] : mood === "working" ? { x: 0, y: 6 } : { x: 0, y: 0 };
+  const gaze = calm ? { x: raw.x * 0.55, y: raw.y * 0.55 } : raw;
   const ry = blink ? 1 : mood === "concerned" ? 7 : 9;
 
   return (
@@ -56,7 +70,7 @@ export function AgentAvatar({ mood = "idle", className, still = false, label = "
           <circle cx="50" cy="50" r="49" fill={AGENT_GREEN} />
           <circle cx="50" cy="50" r="44.5" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="3.5" />
           <circle cx="50" cy="50" r="38.5" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="1.3" />
-          <m.g initial={false} animate={gaze} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
+          <m.g initial={false} animate={gaze} transition={calm ? { type: "spring", stiffness: 60, damping: 16 } : { type: "spring", stiffness: 180, damping: 18 }}>
             {mood === "done" ? (
               <g fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round">
                 <path d="M30 52 Q37 42 44 52" />

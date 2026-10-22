@@ -27,7 +27,7 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
     await page.getByRole("button", { name: /create invoice/i }).click();
     await page.waitForURL("**/invoice");
     await expect(page.getByText("Total due")).toBeVisible();
-    await page.getByRole("button", { name: /via PayPal/i }).click();
+    await page.getByRole("button", { name: /send through paypal/i }).click();
     await page.getByRole("button", { name: /^send invoice$/i }).click();
     await page.waitForURL(/\/sales\/[0-9a-f-]+\?sent=1/, { timeout: 60_000 });
   });
