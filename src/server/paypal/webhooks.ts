@@ -1,8 +1,10 @@
 // PayPal webhooks (F5): verify with PayPal, store once, translate to plain English, update the sale.
 import "server-only";
+import { X509Certificate } from "node:crypto";
 import { eq, or } from "drizzle-orm";
 import { db, schema as s } from "@/db";
 import { describe, resourceOf, type WebhookEvent } from "@/lib/paypal-events";
+import { checkSignature, trustedCertUrl } from "@/lib/paypal-signature";
 import { paypal } from "./client";
 import { upsertDispute, type PayPalDispute } from "./disputes";
 
@@ -10,22 +12,53 @@ export type { WebhookEvent };
 
 const HEADERS = ["paypal-auth-algo", "paypal-cert-url", "paypal-transmission-id", "paypal-transmission-sig", "paypal-transmission-time"] as const;
 
-/** Asks PayPal whether this delivery really came from PayPal for our webhook. Returns SUCCESS or FAILURE. */
-export async function verifySignature(headers: Headers, event: WebhookEvent) {
+const certs = new Map<string, string>();
+
+async function cert(url: string) {
+  const hit = certs.get(url);
+  if (hit) return hit;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`PayPal certificate fetch failed (${res.status})`);
+  const pem = await res.text();
+  const x = new X509Certificate(pem);
+  if (new Date(x.validTo) < new Date()) throw new Error("PayPal signing certificate has expired");
+  certs.set(url, pem);
+  return pem;
+}
+
+/**
+ * Confirms a delivery really came from PayPal for our webhook. First the offline check on the exact bytes PayPal
+ * sent (PayPal's certificate, fetched only from its own API hosts); if that can't decide, PayPal's own
+ * verify-webhook-signature API, given the raw event so nothing is re-serialised. Returns SUCCESS or FAILURE.
+ */
+export async function verifySignature(headers: Headers, raw: string) {
   const missing = HEADERS.filter((h) => !headers.get(h));
   if (missing.length) return { status: "FAILURE" as const, reason: `missing ${missing.join(", ")}` };
-  const result = await paypal<{ verification_status: "SUCCESS" | "FAILURE" }>("POST", "/v1/notifications/verify-webhook-signature", {
-    body: {
-      auth_algo: headers.get("paypal-auth-algo"),
-      cert_url: headers.get("paypal-cert-url"),
-      transmission_id: headers.get("paypal-transmission-id"),
-      transmission_sig: headers.get("paypal-transmission-sig"),
-      transmission_time: headers.get("paypal-transmission-time"),
-      webhook_id: process.env.PAYPAL_WEBHOOK_ID,
-      webhook_event: event,
-    },
-  });
-  return { status: result.verification_status, reason: null };
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) throw new Error("PAYPAL_WEBHOOK_ID is not set");
+  const get = (h: (typeof HEADERS)[number]) => headers.get(h)!;
+  const certUrl = get("paypal-cert-url");
+  if (!trustedCertUrl(certUrl)) return { status: "FAILURE" as const, reason: "certificate is not on a PayPal host" };
+  if (/^SHA256withRSA$/i.test(get("paypal-auth-algo"))) {
+    try {
+      const ok = checkSignature({ transmissionId: get("paypal-transmission-id"), time: get("paypal-transmission-time"), webhookId, raw, signature: get("paypal-transmission-sig"), certPem: await cert(certUrl) });
+      if (ok) return { status: "SUCCESS" as const, reason: null, method: "certificate" };
+    } catch (e) {
+      console.warn("Offline webhook check failed, asking PayPal:", (e as Error).message);
+    }
+  }
+  const fields = {
+    auth_algo: get("paypal-auth-algo"),
+    cert_url: certUrl,
+    transmission_id: get("paypal-transmission-id"),
+    transmission_sig: get("paypal-transmission-sig"),
+    transmission_time: get("paypal-transmission-time"),
+    webhook_id: webhookId,
+  };
+  // The event goes in as PayPal sent it, spliced into the JSON, not parsed and re-stringified.
+  const body = `${JSON.stringify(fields).slice(0, -1)},"webhook_event":${raw}}`;
+  const result = await paypal<{ verification_status: "SUCCESS" | "FAILURE" }>("POST", "/v1/notifications/verify-webhook-signature", { rawBody: body });
+  return { status: result.verification_status, reason: result.verification_status === "SUCCESS" ? null : "PayPal did not confirm the signature", method: "api" };
 }
 
 /** Finds the Cleared sale an event belongs to, using the ids PayPal includes. */

@@ -20,11 +20,11 @@ export async function POST(request: Request) {
   let verification: string;
   let reason: string | null = null;
   try {
-    ({ status: verification, reason } = await verifySignature(request.headers, event));
+    ({ status: verification, reason } = await verifySignature(request.headers, raw));
   } catch (e) {
     // PayPal refused the verification request itself (forged or malformed headers): reject, don't retry.
     if (e instanceof PayPalError && e.status >= 400 && e.status < 500) {
-      await log(event, "FAILURE", "rejected", `PayPal refused the verification request (${e.status})`);
+      await log(event, "FAILURE", "rejected", `PayPal refused the verification request (${e.status}): ${e.message}`);
       return Response.json({ ok: false }, { status: 400 });
     }
     // PayPal itself didn't answer: ask it to retry later rather than drop the event.

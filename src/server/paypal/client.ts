@@ -26,17 +26,19 @@ async function token() {
   return cached.value;
 }
 
-export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: { body?: unknown; headers?: Record<string, string> } = {}): Promise<T> {
+export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: { body?: unknown; rawBody?: string; headers?: Record<string, string> } = {}): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: { Authorization: `Bearer ${await token()}`, "Content-Type": "application/json", Prefer: "return=representation", ...init.headers },
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    body: init.rawBody ?? (init.body === undefined ? undefined : JSON.stringify(init.body)),
     cache: "no-store",
   });
   const text = await res.text();
   const json = text ? (JSON.parse(text) as unknown) : null;
   if (!res.ok) {
-    const message = (json as { message?: string } | null)?.message ?? `PayPal ${method} ${path} failed`;
+    const err = json as { message?: string; details?: { field?: string; issue?: string; description?: string }[] } | null;
+    const detail = err?.details?.[0];
+    const message = [err?.message ?? `PayPal ${method} ${path} failed`, detail ? `(${[detail.field, detail.issue ?? detail.description].filter(Boolean).join(": ")})` : null].filter(Boolean).join(" ");
     throw new PayPalError(res.status, res.headers.get("paypal-debug-id"), json, message);
   }
   return json as T;
