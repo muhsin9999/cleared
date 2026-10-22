@@ -17,9 +17,9 @@ function s3() {
 const bucket = () => process.env.R2_BUCKET?.trim() || "cleared-proofs";
 
 // The demo workspace's files ship with the app (public/demo) instead of living in R2; their keys start "static:".
-const STATIC = "static:";
+export const STATIC = "static:";
 export const staticKey = (path: string) => `${STATIC}${path}`;
-const isStatic = (key: string) => key.startsWith(STATIC);
+export const isStatic = (key: string) => key.startsWith(STATIC);
 
 export async function putFile(key: string, body: Uint8Array, contentType: string) {
   await s3().send(new PutObjectCommand({ Bucket: bucket(), Key: key, Body: body, ContentType: contentType }));
@@ -35,11 +35,11 @@ export async function readFile(key: string) {
 }
 
 /** A link that works for five minutes, for viewing one private file. */
-export async function fileUrl(key: string, downloadName?: string) {
+export async function fileUrl(key: string, downloadName?: string, attachment = false) {
   if (isStatic(key)) return `/${key.slice(STATIC.length)}`;
   return getSignedUrl(
     s3(),
-    new GetObjectCommand({ Bucket: bucket(), Key: key, ResponseContentDisposition: downloadName ? `inline; filename="${downloadName.replace(/"/g, "")}"` : undefined }),
+    new GetObjectCommand({ Bucket: bucket(), Key: key, ResponseContentDisposition: downloadName ? `${attachment ? "attachment" : "inline"}; filename="${downloadName.replace(/"/g, "")}"` : undefined }),
     { expiresIn: 300 },
   );
 }

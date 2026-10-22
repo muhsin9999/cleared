@@ -1,4 +1,5 @@
 import { CaseRoom } from "@/app/(app)/cases/[id]/case-room";
+import { ViewerProvider } from "@/components/app/exhibit-viewer";
 
 export const metadata = { title: "Case room", robots: { index: false } };
 
@@ -16,6 +17,7 @@ const tools = ["get_dispute", "get_sale", "list_locker_items", "read_locker_item
 
 export default function CaseRoomPreview() {
   return (
+    <ViewerProvider>
     <main className="mx-auto min-h-svh max-w-6xl bg-paper px-5 py-12">
       <CaseRoom
         disputeId="preview"
@@ -45,5 +47,6 @@ export default function CaseRoomPreview() {
         }}
       />
     </main>
+    </ViewerProvider>
   );
 }

@@ -1,49 +1,67 @@
-import { CheckCircle2Icon, FlaskConicalIcon } from "lucide-react";
-import { AgentTag } from "@/components/brand/marks";
-import { relativeTime } from "@/lib/format";
+import { BadgeCheckIcon, CircleAlertIcon, CircleDollarSignIcon, FileUpIcon, FlaskConicalIcon, GavelIcon, LockOpenIcon, PackageIcon, SendIcon, UserCheckIcon, type LucideIcon } from "lucide-react";
+import { AgentMark } from "@/components/brand/marks";
 import { cn } from "@/lib/utils";
 
 type EventLike = { id: string; type: string; summary: string; occurredAt: Date; simulated: boolean; verified: boolean; source: string };
 
-const tone = (type: string) =>
-  type.includes("DISPUTE.CREATED") || type.includes("REPORTED_PROBLEM") || type.includes("PHISHING")
-    ? "bg-risk"
-    : type.includes("EVIDENCE_SUBMITTED") || type.endsWith("DISPUTE.RESOLVED")
-      ? "bg-cleared"
-      : type.includes("DISPUTE")
-        ? "bg-caution"
-        : "bg-cleared";
-
-// Events the AI produced. They carry its name tag so the feed shows what the agent did and when.
+// One line per event: an icon for the kind, a short label, and the time. The full sentence stays in the tooltip.
+const KIND: Record<string, { icon: LucideIcon; tone?: "risk" | "good"; label?: string }> = {
+  "CUSTOMER.DISPUTE.CREATED": { icon: CircleAlertIcon, tone: "risk", label: "Dispute opened" },
+  "CUSTOMER.DISPUTE.RESOLVED": { icon: GavelIcon, tone: "good" },
+  "DISPUTE.EVIDENCE_SUBMITTED": { icon: SendIcon, label: "Reply sent to PayPal" },
+  "CLIENT.REPORTED_PROBLEM": { icon: CircleAlertIcon, tone: "risk" },
+  "INVOICING.INVOICE.PAID": { icon: CircleDollarSignIcon, tone: "good" },
+  "INVOICING.INVOICE.SENT": { icon: SendIcon },
+  "FUNDS.RELEASED": { icon: LockOpenIcon, tone: "good" },
+  "CLIENT.ACCEPTED": { icon: UserCheckIcon, tone: "good", label: "Client confirmed receipt" },
+  "SALE.COMPLETED_MARKED": { icon: BadgeCheckIcon, label: "Marked complete in PayPal" },
+  "PROOF.FILES_ADDED": { icon: FileUpIcon, label: "Files added" },
+  "PROOF.FILE_ADDED": { icon: FileUpIcon },
+  "PROOF.MESSAGE_ADDED": { icon: FileUpIcon },
+  "TRACKING.ADDED": { icon: PackageIcon },
+  "PACKET.DRAFTED": { icon: BadgeCheckIcon, label: "drafted the reply to PayPal" },
+  "PREFLIGHT.COMPLETED": { icon: BadgeCheckIcon, label: "checked the sale" },
+};
+// Events the AI produced: they show its face so the feed says what the agent did and when.
 const AI_EVENTS = new Set(["PACKET.DRAFTED", "PREFLIGHT.COMPLETED"]);
 
+function ago(d: Date, now: number) {
+  const s = (now - d.getTime()) / 1000;
+  if (s < 90) return "now";
+  if (s < 3600) return `${Math.round(s / 60)}m`;
+  if (s < 86_400) return `${Math.round(s / 3600)}h`;
+  if (s < 7 * 86_400) return `${Math.round(s / 86_400)}d`;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(d);
+}
+
 export function EventRow({ event, now }: { event: EventLike; now: number }) {
+  const k = KIND[event.type] ?? { icon: BadgeCheckIcon };
+  const ai = AI_EVENTS.has(event.type);
+  // Only events PayPal itself sent: a webhook whose signature PayPal confirmed, or a sandbox dispute read from its API.
+  const fromPayPal = event.source === "paypal" && event.verified && !event.simulated;
   return (
-    <li className="relative flex gap-3 pb-5 pl-1 last:pb-0">
-      <span aria-hidden className={cn("relative z-10 mt-1.5 size-2.5 shrink-0 rounded-full ring-4 ring-surface", tone(event.type))} />
-      <div className="min-w-0 flex-1">
-        <p className="text-[0.95rem] text-pretty">
-          {AI_EVENTS.has(event.type) ? <><AgentTag className="mr-1 align-[0.08em] text-[0.7rem]" /> </> : null}
-          {event.summary}
-        </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-          <time dateTime={event.occurredAt.toISOString()} title={event.occurredAt.toUTCString()}>{relativeTime(event.occurredAt, now)}</time>
-          {event.simulated ? (
-            <span className="inline-flex items-center gap-1 text-caution"><FlaskConicalIcon aria-hidden className="size-3" /> sandbox test event</span>
-          ) : event.source === "paypal" && event.verified ? (
-            // Only events PayPal itself sent (a webhook whose signature PayPal confirmed, or a sandbox dispute read from its API).
-            <span className="inline-flex items-center gap-1 font-medium text-cleared" title={event.type}><CheckCircle2Icon aria-hidden className="size-3" /> From PayPal</span>
-          ) : null}
-        </p>
-      </div>
+    <li className="flex items-center gap-3 py-2" title={event.summary}>
+      {ai ? (
+        <AgentMark className="size-6" />
+      ) : (
+        <span className={cn("grid size-6 shrink-0 place-items-center rounded-full", k.tone === "risk" ? "bg-risk-tint text-risk" : k.tone === "good" ? "bg-cleared-tint text-cleared-strong" : "bg-muted text-muted-foreground")}>
+          <k.icon aria-hidden className="size-3.5" />
+        </span>
+      )}
+      <p className="min-w-0 flex-1 truncate text-sm">
+        {ai ? <span className="font-medium">Cleared AI </span> : null}
+        {k.label ?? event.summary}
+      </p>
+      {event.simulated ? (
+        <FlaskConicalIcon role="img" aria-label="Sandbox test event" className="size-3.5 shrink-0 text-caution" />
+      ) : fromPayPal ? (
+        <span className="shrink-0 rounded bg-cleared-tint px-1.5 py-0.5 text-[0.65rem] font-medium text-cleared-strong" title={`From PayPal: ${event.type}`}>PayPal</span>
+      ) : null}
+      <time className="w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums" dateTime={event.occurredAt.toISOString()} title={event.occurredAt.toUTCString()}>{ago(event.occurredAt, now)}</time>
     </li>
   );
 }
 
 export function EventList({ events, now }: { events: EventLike[]; now: number }) {
-  return (
-    <ol className="relative before:absolute before:top-2 before:bottom-2 before:left-[0.55rem] before:w-px before:bg-border">
-      {events.map((e) => <EventRow key={e.id} event={e} now={now} />)}
-    </ol>
-  );
+  return <ol className="-my-2 divide-y">{events.map((e) => <EventRow key={e.id} event={e} now={now} />)}</ol>;
 }

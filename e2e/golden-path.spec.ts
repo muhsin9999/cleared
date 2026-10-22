@@ -39,7 +39,7 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
     await page.waitForURL(/\/cases\/[0-9a-f-]+/);
     await expect(page.getByText(/Starting on a Render Workflow|Reading the case|get_dispute/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /approve and send to paypal/i })).toBeVisible({ timeout: 150_000 });
-    await expect(page.getByText(/exhibits attached/).first()).toBeVisible();
+    await expect(page.getByText(/exhibits · click to open/).first()).toBeVisible();
   });
 
   await test.step("seller approves; Cleared submits", async () => {

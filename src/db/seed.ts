@@ -19,7 +19,7 @@ type Db = PgDatabase<any, typeof s>;
 export const DEMO_TAG = "ada";
 
 // Real files for Ada's locker, rendered by scripts/demo-art and served from public/demo, so every proof opens.
-const FILES: Record<string, number> = { "harmattan-cover-final.png": 633_981, "harmattan-sketch-v1.png": 242_402, "harmattan-cover-layers.pdf": 689_820, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
+const FILES: Record<string, number> = { "harmattan-cover-final.png": 633_981, "harmattan-sketch-v1.png": 242_402, "harmattan-cover-layers.pdf": 689_136, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
 const file = (fileName: string, mimeType = "image/png") => ({ fileName, fileKey: staticKey(`demo/${fileName}`), mimeType, sizeBytes: FILES[fileName] });
 
 /** Deletes demo workspaces (and their R2 files) created more than `hours` ago. Ada's base workspace stays. */

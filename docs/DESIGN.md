@@ -71,6 +71,7 @@ Supporting pieces:
 - `<MotionConfig reducedMotion="user">` wraps the app. Use `useReducedMotion()` to swap flying cards for crossfades. CSS effects go behind `motion-safe:`.
 - The scan verdict is announced through `aria-live="polite"`.
 - Risk is never shown by colour alone: always an icon plus text.
+- No coloured side stripes (thick left borders) on cards or callouts: use a tinted background, a full thin border or an icon in a tinted circle.
 - WCAG AA contrast (check `--muted` on `--paper`).
 - Focus rings everywhere, full keyboard path through the approval flow.
 - Nothing flashes more than 3 times per second.

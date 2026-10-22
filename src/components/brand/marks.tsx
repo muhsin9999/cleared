@@ -20,8 +20,8 @@ export function markerStrike(color: string): CSSProperties {
 export function AgentMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" aria-hidden className={cn("shrink-0", className)}>
-      <circle cx="50" cy="50" r="49" fill="#12191c" />
-      <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="2" />
+      <circle cx="50" cy="50" r="49" fill="#0f7b5f" />
+      <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="4.5" />
       <ellipse cx="37" cy="50" rx="7.5" ry="10.5" fill="#fff" />
       <ellipse cx="63" cy="50" rx="7.5" ry="10.5" fill="#fff" />
     </svg>

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/app/app-sidebar";
+import { ViewerProvider } from "@/components/app/exhibit-viewer";
 import { LiveEvents } from "@/components/app/live-events";
 import { MobileTabs } from "@/components/app/mobile-tabs";
 import { Topbar } from "@/components/app/topbar";
@@ -13,7 +14,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </Suspense>
       <SidebarInset className="min-w-0 bg-paper pb-20 md:pb-0">
         <Topbar />
-        {children}
+        <ViewerProvider>{children}</ViewerProvider>
       </SidebarInset>
       <Suspense>
         <MobileTabs />

@@ -56,13 +56,13 @@ export function ProofDropzone({ saleId }: { saleId: string }) {
         }}
         disabled={!!busy}
         className={cn(
-          "flex w-full flex-col items-center gap-2 rounded-lg border border-dashed bg-paper/60 px-4 py-8 text-center transition-colors hover:border-cleared/50 hover:bg-cleared-tint/30",
+          "flex w-full items-center gap-3 rounded-lg border border-dashed bg-paper/60 px-4 py-3 text-left transition-colors hover:border-cleared/50 hover:bg-cleared-tint/30",
           over && "border-cleared bg-cleared-tint/50",
         )}
       >
         {busy ? <LoaderCircleIcon aria-hidden className="size-5 animate-spin text-cleared" /> : <UploadIcon aria-hidden className="size-5 text-muted-foreground" />}
-        <span className="text-sm font-medium">{busy ? `Uploading ${busy}…` : "Drop delivered files here, or choose files"}</span>
-        <span className="text-xs text-muted-foreground">JPG, PNG, GIF or PDF, up to 10 MB.</span>
+        <span className="min-w-0 flex-1 text-sm font-medium">{busy ? `Uploading ${busy}…` : "Add delivered files"}</span>
+        <span className="hidden text-xs text-muted-foreground sm:inline">JPG, PNG, GIF or PDF · 10 MB</span>
       </button>
       <input ref={input} type="file" multiple accept="image/jpeg,image/png,image/gif,application/pdf" className="sr-only" tabIndex={-1} onChange={(e) => e.target.files && upload(e.target.files)} />
       <p role="status" aria-live="polite" className={cn("mt-2 text-sm text-risk", !error && "sr-only")}>{error ?? ""}</p>

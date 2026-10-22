@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
-  ArrowDownIcon,
   CheckIcon,
+  ChevronDownIcon,
   FileTextIcon,
   FolderOpenIcon,
   GavelIcon,
@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useViewer, type ViewerItem } from "@/components/app/exhibit-viewer";
 import { StampMark } from "@/components/brand/logo";
 import { AgentAvatar, type AgentMood } from "@/components/brand/agent-avatar";
 import { markerStrike } from "@/components/brand/marks";
@@ -36,7 +37,8 @@ import { approveAndSubmit, startDraft } from "@/server/actions/cases";
 import { resolveLatestDispute } from "@/server/actions/demo";
 import type { PacketView } from "@/server/packet-view";
 
-type Exhibit = { id: string; letter: string; label: string; kind: string; date: string; mime: string | null; size: number | null; file: boolean };
+type Exhibit = ViewerItem & { letter: string };
+type Step = PacketView["trace"][number];
 
 // The marker colour is baked into an SVG, so it can’t follow the theme tokens; this red reads on both.
 const STRIKE = "#C0341D";
@@ -47,10 +49,10 @@ const KIND_ICON: Record<string, LucideIcon> = { file: FileTextIcon, message: Mes
 // How the agent's first batch of tool calls reads as its plan.
 const PLAN_WORD: Record<string, string> = { get_dispute: "the dispute", get_sale: "the sale", get_invoice: "the invoice", list_locker_items: "the proof locker", get_tracking: "tracking", search_policy: "PayPal’s rules" };
 
-const day = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(iso));
-const size = (b: number | null) => (b === null ? null : b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.round(b / 1000)} KB`);
 const seconds = (from: string, to: string) => Math.max(0, (new Date(to).getTime() - new Date(from).getTime()) / 1000);
 const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
+const isImage = (e: Exhibit) => e.file && !!e.mime?.startsWith("image/");
+const exhibitIcon = (e: Exhibit) => (isImage(e) ? ImageIcon : KIND_ICON[e.kind] ?? FileTextIcon);
 
 export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, resolved, real, demo = false }: { disputeId: string; packet: PacketView | null; exhibits: Exhibit[]; canSubmit: boolean; resolved: boolean; real: boolean; demo?: boolean }) {
   const router = useRouter();
@@ -58,6 +60,8 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
   const asked = useRef(false);
   // Starts from the server's copy; while the agent works it is kept current by polling the packet endpoint.
   const [packet, setPacket] = useState(initial);
+  // The exhibit the seller is pointing at in the reply; the log lights up the step where the agent opened it.
+  const [focus, setFocus] = useState<string | null>(null);
   const working = !packet || WORKING.has(packet.status);
   const drafted = !!packet && !["gathering", "drafting", "checking"].includes(packet.status);
   const submitted = packet?.status === "submitted";
@@ -97,33 +101,32 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
   const title = resolved ? "Case closed" : submitted ? "Sent to PayPal" : packet?.status === "submitting" ? "Sending to PayPal…" : working ? "Building your case" : ai ? "Your reply is ready" : "Reply built from your files";
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-start">
-      <section aria-label="What Cleared AI did" className="min-w-0 rounded-[10px] border bg-surface">
-        <header className="flex items-center gap-3 border-b px-4 py-3.5 sm:px-5">
-          <AgentAvatar mood={mood} className="size-11" />
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <aside aria-label="What Cleared AI did" className="min-w-0 rounded-[10px] border bg-surface lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1">
+        <header className="flex items-center gap-3 px-4 py-3.5">
+          <AgentAvatar mood={mood} label="" className="size-10" />
           <div className="min-w-0 flex-1">
             <p className="font-semibold">{title}</p>
-            <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+            <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
               <span>Cleared AI</span>
               {packet?.model && ai ? <span className="font-mono">· {packet.model}</span> : null}
-              {packet?.trace.length && !working ? <span>· {Math.round(seconds(packet.startedAt, packet.trace.at(-1)!.at))}s</span> : null}
             </p>
           </div>
           {working ? <span className="inline-flex items-center gap-1.5 rounded-full bg-cleared-tint px-2.5 py-1 text-xs font-medium text-cleared-strong"><span className="size-1.5 animate-pulse rounded-full bg-cleared" /> Live</span> : null}
         </header>
-        <AgentSteps packet={packet} working={working} byId={byId} />
-        <p className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-3 text-xs text-muted-foreground sm:px-5">
-          <span className="inline-flex items-center gap-1.5"><LockKeyholeIcon aria-hidden className="size-3.5" /> Read-only tools. It can’t send anything.</span>
+        <AgentLog packet={packet} working={working} byId={byId} focus={focus} />
+        <p className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2.5 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><LockKeyholeIcon aria-hidden className="size-3.5" /> Read-only. It can’t send anything.</span>
           {packet?.id && drafted ? <Link href={`/settings/audit?subject=${packet.id}`} className="font-medium text-foreground underline-offset-2 hover:underline">Audit log</Link> : null}
         </p>
-      </section>
+      </aside>
 
-      <section id="reply" aria-label="Reply to PayPal" className="relative min-w-0 scroll-mt-20 overflow-hidden rounded-[10px] border bg-surface lg:sticky lg:top-20">
+      <section aria-label="Reply to PayPal" className="relative min-w-0 overflow-hidden rounded-[10px] border bg-surface lg:col-start-1 lg:row-start-1">
         <header className="flex min-h-14 flex-wrap items-center gap-2 border-b py-3.5 pr-20 pl-4 sm:pl-5">
           <h2 className="font-semibold">Reply to PayPal</h2>
           {drafted && packet!.recommendation ? <Badge className={cn("h-6", packet!.recommendation !== "fight" && "bg-caution text-white")}>{RECOMMENDATION[packet!.recommendation]}</Badge> : null}
         </header>
-        {drafted ? <Reply packet={packet!} byId={byId} exhibits={exhibits} /> : <Writing />}
+        {drafted ? <Reply packet={packet!} byId={byId} exhibits={exhibits} onFocus={setFocus} /> : <Writing />}
         {drafted ? (
           <footer className="space-y-3 border-t px-4 py-4 sm:px-5">
             {resolved ? (
@@ -176,13 +179,16 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
           </m.div>
         ) : null}
       </section>
-
-      {drafted && !submitted && !resolved && packet!.claims.length ? <JumpToReply /> : null}
     </div>
   );
 }
 
-function AgentSteps({ packet, working, byId }: { packet: PacketView | null; working: boolean; byId: Record<string, Exhibit> }) {
+/**
+ * The agent's steps. While it works, each finished step is one line and the current one shimmers; once it's
+ * done the run folds into a summary that opens again on click. Lines for opened files open the file.
+ */
+function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null; working: boolean; byId: Record<string, Exhibit>; focus: string | null }) {
+  const [expanded, setExpanded] = useState(false);
   const steps = packet?.trace ?? [];
   const firstMove = steps.filter((s) => s.turn === 0).map((s) => PLAN_WORD[s.tool]).filter(Boolean);
   const active =
@@ -192,96 +198,98 @@ function AgentSteps({ packet, working, byId }: { packet: PacketView | null; work
         ? { tool: "think", label: steps.length ? "Thinking about what it found" : "Reading the case" }
         : packet.status === "checking"
           ? { tool: "check_claims", label: "Checking every claim against its exhibit" }
-          : packet.status === "submitting"
-            ? { tool: "submit", label: "Sending your evidence to PayPal" }
-            : null;
+          : null;
+  const total = packet && steps.length ? Math.round(seconds(packet.startedAt, steps.at(-1)!.at)) : 0;
+  const opened = steps.filter((s) => s.ref).length;
+  // Pointing at an exhibit in the reply opens the log, so the matching step can light up.
+  const open = working || expanded || (!!focus && steps.some((s) => s.ref === focus));
 
   return (
-    <ol className="relative px-4 py-4 sm:px-5" aria-live="polite">
-      <span aria-hidden className="absolute top-7 bottom-7 left-[1.69rem] w-px bg-line sm:left-[1.94rem]" />
+    <div className="border-t">
+      {!working && steps.length ? (
+        <button type="button" onClick={() => setExpanded((x) => !x)} aria-expanded={open} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted/40">
+          <span className="grid size-5 place-items-center rounded-full bg-cleared text-white"><CheckIcon aria-hidden className="size-3" strokeWidth={3} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="font-medium">{steps.length} steps in {total}s</span>
+            <span className="text-muted-foreground"> · opened {opened} {opened === 1 ? "file" : "files"}</span>
+          </span>
+          <ChevronDownIcon aria-hidden className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+        </button>
+      ) : null}
       <AnimatePresence initial={false}>
-        {firstMove.length ? (
-          <Row key="plan" icon={ListChecksIcon} title="plan" detail={`Check ${list(firstMove)}`} state="done" />
+        {open ? (
+          <m.ol key="steps" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden px-2 pt-1 pb-2" aria-live="polite">
+            {firstMove.length ? <Line icon={ListChecksIcon} name="plan" detail={`Check ${list(firstMove)}`} /> : null}
+            {steps.map((st, i) => (
+              <StepLine key={`${st.at}-${i}`} step={st} ex={st.ref ? byId[st.ref] : undefined} elapsed={packet ? seconds(packet.startedAt, st.at) : 0} lit={!!focus && st.ref === focus} />
+            ))}
+            {working && active ? <ActiveLine label={active.label} name={active.tool === "think" || active.tool === "start" ? null : active.tool} /> : null}
+          </m.ol>
         ) : null}
-        {steps.map((st, i) => {
-          const ex = st.ref ? byId[st.ref] : undefined;
-          const icon = ex ? (ex.mime?.startsWith("image/") ? ImageIcon : KIND_ICON[ex.kind] ?? FileTextIcon) : TOOL_ICON[st.tool] ?? CheckIcon;
-          const batch = steps.slice(0, i).filter((x) => x.turn === st.turn).length;
-          return (
-            <Row
-              key={`${st.at}-${i}`}
-              delay={batch * 0.12}
-              icon={icon}
-              title={st.tool}
-              arg={st.tool === "read_locker_item" && ex ? `“${ex.letter}”` : undefined}
-              detail={st.detail ?? st.label}
-              tone={st.tool === "guardrail" ? "risk" : st.tool === "fallback" ? "caution" : undefined}
-              elapsed={packet ? seconds(packet.startedAt, st.at) : undefined}
-              state="done"
-            >
-              {ex?.file ? <FileCard exhibit={ex} /> : null}
-            </Row>
-          );
-        })}
-        {working && active ? <Row key={`active-${active.tool}`} icon={TOOL_ICON[active.tool] ?? LoaderCircleIcon} title={active.tool === "think" || active.tool === "start" ? null : active.tool} detail={active.label} state="active" /> : null}
       </AnimatePresence>
-    </ol>
+    </div>
   );
 }
 
-function Row({ icon: Icon, title, arg, detail, tone, elapsed, state, delay = 0, children }: { icon: LucideIcon; title: string | null; arg?: string; detail: string; tone?: "risk" | "caution"; elapsed?: number; state: "done" | "active"; delay?: number; children?: React.ReactNode }) {
+function StepLine({ step, ex, elapsed, lit }: { step: Step; ex?: Exhibit; elapsed: number; lit: boolean }) {
+  const viewer = useViewer();
+  const tone = step.tool === "guardrail" ? "risk" : step.tool === "fallback" ? "caution" : undefined;
   return (
-    <m.li layout="position" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.1 } }} transition={{ duration: 0.25, delay }} className="relative flex gap-3 py-2">
-      <span className={cn("relative z-10 mt-1.5 grid size-5 shrink-0 place-items-center rounded-full", state === "active" ? "bg-surface" : tone === "risk" ? "bg-risk text-white" : tone === "caution" ? "bg-caution text-white" : "bg-cleared text-white")}>
-        {state === "active" ? <LoaderCircleIcon aria-hidden className="size-5 animate-spin text-cleared" /> : <CheckIcon aria-hidden className="size-3" strokeWidth={3} />}
+    <Line
+      icon={ex ? exhibitIcon(ex) : TOOL_ICON[step.tool] ?? CheckIcon}
+      name={step.tool}
+      arg={step.tool === "read_locker_item" && ex ? ex.letter : undefined}
+      detail={step.detail ?? step.label}
+      elapsed={elapsed}
+      tone={tone}
+      lit={lit}
+      onOpen={ex ? () => viewer.open(ex) : undefined}
+      thumb={ex && isImage(ex) ? `/api/proofs/${ex.id}` : undefined}
+    />
+  );
+}
+
+function Line({ icon: Icon, name, arg, detail, elapsed, tone, lit, onOpen, thumb }: { icon: LucideIcon; name: string; arg?: string; detail: string; elapsed?: number; tone?: "risk" | "caution"; lit?: boolean; onOpen?: () => void; thumb?: string }) {
+  const body = (
+    <>
+      <Icon aria-hidden className={cn("size-3.5 shrink-0", tone === "risk" ? "text-risk" : tone === "caution" ? "text-caution" : "text-cleared")} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-mono text-[0.75rem]">
+          {name}
+          {arg ? <span className="text-muted-foreground">(“{arg}”)</span> : null}
+        </span>
+        <span className={cn("block truncate text-xs", tone === "risk" ? "text-risk" : "text-muted-foreground")}>{detail}</span>
       </span>
-      <span className={cn("grid size-8 shrink-0 place-items-center rounded-md border bg-paper", state === "active" && "border-cleared/30 bg-cleared-tint/50")}>
-        <Icon aria-hidden className={cn("size-4", tone === "risk" ? "text-risk" : "text-muted-foreground")} />
-      </span>
-      <div className="min-w-0 flex-1 pt-0.5">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="min-w-0 truncate text-sm">
-            {title ? <span className="font-mono text-[0.8rem] font-medium">{title}</span> : null}
-            {arg ? <span className="font-mono text-[0.8rem] text-muted-foreground">({arg})</span> : null}
-          </p>
-          {elapsed !== undefined ? <span className="shrink-0 font-mono text-[0.7rem] text-muted-foreground tabular-nums">{elapsed.toFixed(1)}s</span> : null}
-        </div>
-        <p className={cn("text-sm text-pretty", state === "active" ? "shimmer-text" : tone === "risk" ? "text-risk" : "text-muted-foreground", !title && "-mt-0.5")}>{detail}</p>
-        {children}
-      </div>
+      {thumb ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a private file behind a redirect
+        <img src={thumb} alt="" className="size-8 shrink-0 rounded border object-cover" loading="lazy" />
+      ) : null}
+      {elapsed !== undefined ? <span className="shrink-0 font-mono text-[0.65rem] text-muted-foreground tabular-nums">{elapsed.toFixed(1)}s</span> : null}
+    </>
+  );
+  const cls = cn("flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors", lit && "bg-cleared-tint ring-1 ring-cleared/30");
+  return (
+    <m.li layout="position" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+      {onOpen ? <button type="button" onClick={onOpen} className={cn(cls, "hover:bg-muted/60")} title="Open this file">{body}</button> : <div className={cls}>{body}</div>}
     </m.li>
   );
 }
 
-function FileCard({ exhibit: e }: { exhibit: Exhibit }) {
-  const image = e.mime?.startsWith("image/");
+function ActiveLine({ name, label }: { name: string | null; label: string }) {
   return (
-    <m.a
-      href={`/api/proofs/${e.id}`}
-      target="_blank"
-      rel="noreferrer"
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      transition={{ duration: 0.3, delay: 0.15 }}
-      className="mt-2 flex max-w-sm items-center gap-3 overflow-hidden rounded-lg border bg-paper p-1.5 pr-3 transition-colors hover:bg-muted/60"
-    >
-      {image ? (
-        // eslint-disable-next-line @next/next/no-img-element -- a private file behind a redirect, not a static asset
-        <img src={`/api/proofs/${e.id}`} alt="" className="size-14 shrink-0 rounded-md border object-cover" loading="lazy" />
-      ) : (
-        <span className="grid size-14 shrink-0 place-items-center rounded-md border bg-surface"><FileTextIcon aria-hidden className="size-5 text-muted-foreground" /></span>
-      )}
+    <m.li initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-2.5 rounded-md border border-cleared/20 bg-cleared-tint/40 px-2 py-2.5">
+      <LoaderCircleIcon aria-hidden className="size-3.5 shrink-0 animate-spin text-cleared" />
       <span className="min-w-0">
-        <span className="block truncate font-mono text-[0.8rem]">{e.label}</span>
-        <span className="block text-xs text-muted-foreground">{[size(e.size), `added ${day(e.date)}`].filter(Boolean).join(" · ")}</span>
+        {name ? <span className="block font-mono text-[0.75rem]">{name}</span> : null}
+        <span className="shimmer-text block text-sm">{label}</span>
       </span>
-    </m.a>
+    </m.li>
   );
 }
 
 function Writing() {
   return (
-    <div className="space-y-3 px-4 py-5 sm:px-5" aria-hidden>
+    <div className="space-y-3 px-4 py-6 sm:px-5" aria-hidden>
       {[92, 80, 86, 60].map((w, i) => (
         <div key={i} className="h-3 animate-pulse rounded-full bg-muted" style={{ width: `${w}%`, animationDelay: `${i * 150}ms` }} />
       ))}
@@ -290,48 +298,49 @@ function Writing() {
   );
 }
 
-function Reply({ packet, byId, exhibits }: { packet: PacketView; byId: Record<string, Exhibit>; exhibits: Exhibit[] }) {
+function Reply({ packet, byId, exhibits, onFocus }: { packet: PacketView; byId: Record<string, Exhibit>; exhibits: Exhibit[]; onFocus: (id: string | null) => void }) {
+  const viewer = useViewer();
+  const point = (id: string) => ({ onMouseEnter: () => onFocus(id), onMouseLeave: () => onFocus(null), onFocus: () => onFocus(id), onBlur: () => onFocus(null) });
   return (
-    <div className="space-y-5 px-4 py-4 sm:px-5">
+    <div className="space-y-5 px-4 py-5 sm:px-5">
       {packet.source !== "ai" ? <p className="rounded-md bg-caution-tint px-3 py-2 text-sm text-caution">The AI was unavailable, so this was built from your files.</p> : null}
-      {packet.rationale ? <p className="text-[0.95rem] text-pretty">{packet.rationale}</p> : null}
+      {packet.rationale ? <p className="max-w-prose text-[0.95rem] text-pretty">{packet.rationale}</p> : null}
       <ol className="divide-y rounded-lg border">
         {packet.claims.map((c, i) => (
-          <m.li key={c.text} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.1 }} className="flex items-start justify-between gap-3 px-3.5 py-3">
+          <m.li key={c.text} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.08 }} className="flex items-start justify-between gap-3 px-3.5 py-3">
             <p className="text-sm text-pretty">{c.text}</p>
             <span className="flex shrink-0 flex-wrap justify-end gap-1">
-              {c.exhibitIds.map((id) => (
-                <span key={id} title={byId[id]?.label} className="inline-flex items-center gap-1 rounded bg-cleared-tint px-1.5 py-0.5 font-mono text-[0.7rem] text-cleared-strong">
-                  <ShieldCheckIcon aria-hidden className="size-3" /> {byId[id]?.letter ?? "?"}
-                </span>
-              ))}
+              {c.exhibitIds.map((id) =>
+                byId[id] ? (
+                  <button key={id} type="button" title={`Open ${byId[id].label}`} onClick={() => viewer.open(byId[id])} {...point(id)} className="inline-flex items-center gap-1 rounded bg-cleared-tint px-1.5 py-0.5 font-mono text-[0.7rem] text-cleared-strong transition-colors hover:bg-cleared hover:text-white">
+                    <ShieldCheckIcon aria-hidden className="size-3" /> {byId[id].letter}
+                  </button>
+                ) : null,
+              )}
             </span>
           </m.li>
         ))}
       </ol>
       {exhibits.length ? (
         <div>
-          <p className="mb-2 text-xs font-medium text-muted-foreground">{exhibits.length} exhibits attached</p>
-          <ul className="flex gap-2 overflow-x-auto pb-1">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">{exhibits.length} exhibits · click to open</p>
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
             {exhibits.map((e) => {
-              const Icon = KIND_ICON[e.kind] ?? FileTextIcon;
-              const inner = (
-                <>
-                  {e.file && e.mime?.startsWith("image/") ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- a private file behind a redirect
-                    <img src={`/api/proofs/${e.id}`} alt="" className="h-16 w-full rounded-t-md object-cover" loading="lazy" />
-                  ) : (
-                    <span className="grid h-16 place-items-center rounded-t-md bg-paper"><Icon aria-hidden className="size-5 text-muted-foreground" /></span>
-                  )}
-                  <span className="flex items-center gap-1.5 px-2 py-1.5 text-xs">
-                    <span className="grid size-4 shrink-0 place-items-center rounded bg-ink font-mono text-[0.6rem] text-paper">{e.letter}</span>
-                    <span className="truncate">{e.label}</span>
-                  </span>
-                </>
-              );
+              const Icon = exhibitIcon(e);
               return (
-                <li key={e.id} className="w-32 shrink-0 overflow-hidden rounded-md border bg-surface">
-                  {e.file ? <a href={`/api/proofs/${e.id}`} target="_blank" rel="noreferrer" className="block hover:opacity-90">{inner}</a> : inner}
+                <li key={e.id}>
+                  <button type="button" onClick={() => viewer.open(e)} {...point(e.id)} className="group block w-full overflow-hidden rounded-md border bg-surface text-left transition-shadow hover:shadow-soft focus-visible:outline-2 focus-visible:outline-focus">
+                    {isImage(e) ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- a private file behind a redirect
+                      <img src={`/api/proofs/${e.id}`} alt="" className="h-20 w-full object-cover transition-transform group-hover:scale-[1.03]" />
+                    ) : (
+                      <span className="grid h-20 place-items-center bg-paper"><Icon aria-hidden className="size-5 text-muted-foreground" /></span>
+                    )}
+                    <span className="flex items-center gap-1.5 px-2 py-1.5 text-xs">
+                      <span className="grid size-4 shrink-0 place-items-center rounded bg-ink font-mono text-[0.6rem] text-paper">{e.letter}</span>
+                      <span className="truncate">{e.label}</span>
+                    </span>
+                  </button>
                 </li>
               );
             })}
@@ -366,7 +375,7 @@ function Approve({ packet, pending, onApprove }: { packet: PacketView; pending: 
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="lg" className="w-full" disabled={pending} />}>{pending ? "Sending to PayPal…" : "Approve and send to PayPal"}</DialogTrigger>
+      <DialogTrigger render={<Button size="lg" className="w-full sm:w-auto sm:min-w-64" disabled={pending} />}>{pending ? "Sending to PayPal…" : "Approve and send to PayPal"}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{packet.status === "failed" ? "Try sending again?" : "Send this to PayPal?"}</DialogTitle>
@@ -387,28 +396,5 @@ function Approve({ packet, pending, onApprove }: { packet: PacketView; pending: 
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/** Phones: the reply sits below the steps, so offer a jump to it until it's on screen. */
-function JumpToReply() {
-  const [seen, setSeen] = useState(false);
-  useEffect(() => {
-    const el = document.getElementById("reply");
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && setSeen(true), { threshold: 0.2 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  if (seen) return null;
-  return (
-    <m.a
-      href="#reply"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="fixed inset-x-4 bottom-20 z-30 flex h-12 items-center justify-center gap-2 rounded-lg bg-primary font-medium text-primary-foreground shadow-soft lg:hidden"
-    >
-      Review the reply <ArrowDownIcon aria-hidden className="size-4" />
-    </m.a>
   );
 }

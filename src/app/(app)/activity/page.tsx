@@ -12,7 +12,7 @@ export const metadata = { title: "Activity" };
 export default function ActivityPage() {
   return (
     <PageBody className="max-w-3xl">
-      <PageHeader title="Activity" description="Every event from PayPal, checked against PayPal’s signature before it appears here, plus what Cleared did." />
+      <PageHeader title="Activity" description="What PayPal sent, and what Cleared did." />
       <Suspense fallback={<Skeleton className="h-96" />}>
         <Activity />
       </Suspense>

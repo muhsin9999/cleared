@@ -48,7 +48,7 @@ async function Notice({ params }: { params: PageProps<"/notices/[id]">["params"]
         description={`Checked ${shortDate(notice.createdAt)}${r.transcribed ? " · read from your screenshot by Cleared AI" : ""}${notice.doneAt ? " · marked as done" : ""}`}
       />
 
-      <Card className={cn("gap-4 border-l-4 px-6 py-5", phishing ? "border-l-risk bg-risk-tint/50" : r.verdict === "genuine" ? "border-l-cleared bg-cleared-tint/40" : "border-l-caution bg-caution-tint/60")}>
+      <Card className={cn("gap-4 px-6 py-5", phishing ? "border-risk/25 bg-risk-tint/50" : r.verdict === "genuine" ? "border-cleared/20 bg-cleared-tint/40" : "border-caution/25 bg-caution-tint/60")}>
         <div className="flex items-start gap-3" role="status">
           {phishing ? <ShieldAlertIcon aria-hidden className="mt-0.5 size-6 shrink-0 text-risk" /> : r.verdict === "genuine" ? <ShieldCheckIcon aria-hidden className="mt-0.5 size-6 shrink-0 text-cleared" /> : <CircleHelpIcon aria-hidden className="mt-0.5 size-6 shrink-0 text-caution" />}
           <div className="space-y-1">

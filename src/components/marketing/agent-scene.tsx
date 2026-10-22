@@ -4,7 +4,8 @@ import { createContext, type CSSProperties, type ReactNode, useContext, useEffec
 import Image from "next/image";
 import { ArrowUpRight, LockKeyhole, RotateCcw } from "lucide-react";
 import { m, useInView, useReducedMotion } from "motion/react";
-import { AgentMark, AgentTag, strikeImage } from "@/components/brand/marks";
+import { AgentAvatar, type AgentMood } from "@/components/brand/agent-avatar";
+import { AgentTag, strikeImage } from "@/components/brand/marks";
 import { cn } from "@/lib/utils";
 import sceneRun from "../../../evals/scene-run.json";
 import { documentSerif } from "./fonts";
@@ -124,6 +125,8 @@ function Appear({ at, delay = 0, className, style, children }: { at: number; del
   );
 }
 
+// The agent's face in the name tag reacts to each beat, the same moods it shows in the app.
+const CURSOR_MOOD: AgentMood[] = ["idle", "concerned", "working", "concerned", "done"];
 const CURSOR_LABEL = ["Opening the case", "Reading the buyer’s message", "Matching proof to each claim", "Checking every claim", `Done in ${SECONDS} seconds. Waiting for you.`];
 
 /** The agent's cursor and name tag. The tip of the arrow is the element's top-left corner. */
@@ -136,7 +139,7 @@ function CursorBody() {
       </svg>
       <div className="mt-[-0.2em] ml-[1.3em] w-max rounded-[0.6em] rounded-tl-[0.15em] px-[0.75em] py-[0.5em] text-white" style={{ background: INK, boxShadow: "0.15em 0.35em 0.9em -0.2em rgb(20 15 5 / 0.45)" }}>
         <p className="flex items-center gap-[0.45em] text-[0.8em] font-semibold">
-          <AgentMark className="size-[1.4em]" />
+          <AgentAvatar mood={CURSOR_MOOD[beat]} label="" className="size-[1.7em]" />
           Cleared AI agent
         </p>
         <p className="mt-[0.2em] text-[0.68em] text-white/70" aria-live="polite">

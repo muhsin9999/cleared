@@ -39,7 +39,7 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
   const proofs = new Map(sale.proofs.map((p) => [p.id, p]));
   const exhibits = exhibitsFor(sale).map((e) => {
     const p = proofs.get(e.id);
-    return { id: e.id, letter: e.letter, label: e.label, kind: e.kind, date: e.date, mime: p?.mimeType ?? null, size: p?.sizeBytes ?? null, file: !!p?.fileKey };
+    return { id: e.id, letter: e.letter, label: e.label, kind: e.kind, date: e.date, mime: p?.mimeType ?? null, size: p?.sizeBytes ?? null, file: !!p?.fileKey, text: e.text, meta: e.meta };
   });
   const due = daysUntil(dispute.responseDueAt, now);
   const open = dispute.status === "waiting_for_seller";
@@ -59,7 +59,7 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
         </p>
         <p className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
           {open && due !== null ? <span className="inline-flex items-center gap-1.5 font-medium text-caution"><CalendarClockIcon aria-hidden className="size-4" /> {due} days to reply</span> : null}
-          <span className="font-mono">{dispute.paypalDisputeId}</span>
+          {dispute.paypalDisputeId.startsWith("SIM-") ? <span className="rounded-full border px-2 py-0.5">Test dispute</span> : <span className="font-mono">PayPal case {dispute.paypalDisputeId}</span>}
         </p>
       </section>
       <CaseRoom
