@@ -104,7 +104,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_24rem]">
       <aside aria-label="What Cleared AI did" className="min-w-0 rounded-[10px] border bg-surface lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1">
         <header className="flex items-center gap-3 px-4 py-3.5">
-          <AgentAvatar mood={mood} label="" className="size-10" />
+          <AgentAvatar mood={mood} milestone={resolved ? "closed" : submitted ? "sent" : "drafted"} label="" className="size-10" />
           <div className="min-w-0 flex-1">
             <p className="font-semibold">{title}</p>
             <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">

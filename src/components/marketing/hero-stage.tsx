@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import NumberFlow from "@number-flow/react";
 import { m, useInView, useReducedMotion } from "motion/react";
 import { Check, RotateCcw, TriangleAlert } from "lucide-react";
+import { Burst, useCelebration } from "@/components/brand/agent-avatar";
 import { cn } from "@/lib/utils";
 
 // The app's sample sale (src/app/(app)/sales/new/new-sale-flow.tsx) checked by src/lib/preflight.ts
@@ -86,10 +87,12 @@ function ArtTile() {
 }
 
 function Ring({ score, ready }: { score: number; ready: boolean }) {
+  const celebrated = useCelebration(ready);
   const r = 42;
   const c = 2 * Math.PI * r;
   return (
     <div className="relative grid size-[7.4em] shrink-0 place-items-center" aria-hidden>
+      {celebrated ? <Burst key={celebrated} color="var(--cleared)" from={53} length={9} /> : null}
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full -rotate-90">
         <circle cx="50" cy="50" r={r} fill="none" strokeWidth="7.5" className="stroke-[#ECE9E2]" />
         <circle

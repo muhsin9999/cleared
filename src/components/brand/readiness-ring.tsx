@@ -2,6 +2,7 @@
 
 import NumberFlow from "@number-flow/react";
 import { cn } from "@/lib/utils";
+import { Burst, useCelebration } from "./agent-avatar";
 
 type Tone = "risk" | "caution" | "cleared";
 
@@ -39,6 +40,8 @@ export function ReadinessRing({
   const circumference = 2 * Math.PI * r;
   const tone = readinessTone(value);
   const compact = size < 96;
+  // Crossing into "ready" while the seller watches gets the agent's ray burst, once.
+  const celebrated = useCelebration(tone === "cleared");
 
   return (
     <div
@@ -51,6 +54,7 @@ export function ReadinessRing({
       className={cn("relative inline-grid shrink-0 place-items-center", className)}
       style={{ width: size, height: size }}
     >
+      {celebrated ? <Burst key={celebrated} color="var(--cleared)" from={53} length={9} /> : null}
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-line" />
         <circle

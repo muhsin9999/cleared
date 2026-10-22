@@ -18,11 +18,54 @@ const LOOKS: Record<Exclude<AgentMood, "done">, Gaze[]> = {
   thinking: [{ x: 5, y: -7 }, { x: -3, y: -8 }, { x: 6, y: -6 }],
   concerned: [{ x: 0, y: 2 }],
 };
+/**
+ * Counts the moments `signal` turns on (or changes to a new truthy value) while the component is mounted.
+ * It is 0 on first render, so something already finished when a page opens doesn't celebrate again; only
+ * finishing in front of the viewer does.
+ */
+export function useCelebration(signal: boolean | string) {
+  const [prev, setPrev] = useState(signal);
+  const [count, setCount] = useState(0);
+  if (signal !== prev) {
+    setPrev(signal);
+    if (signal) setCount((c) => c + 1);
+  }
+  return count;
+}
+
+const RAYS = Array.from({ length: 8 }, (_, i) => i * 45 + 22.5);
+
+/**
+ * Short green rays that burst out and fade once, around whatever it sits on (the avatar, the readiness
+ * ring). Render it with a new `key` each time it should play; it draws nothing under reduced motion.
+ */
+export function Burst({ className, color = AGENT_GREEN, from = 56, length = 10 }: { className?: string; color?: string; from?: number; length?: number }) {
+  const reduce = useReducedMotion();
+  if (reduce) return null;
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden className={cn("pointer-events-none absolute inset-0 size-full overflow-visible", className)}>
+      {RAYS.map((deg, i) => (
+        <g key={deg} transform={`rotate(${deg} 50 50)`}>
+          <m.line
+            x1="50" x2="50" y1={50 - from} y2={50 - from - length}
+            stroke={color} strokeWidth="4" strokeLinecap="round"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: [0, 1, 1, 0], y: [4, -2, -6, -9] }}
+            transition={{ duration: 0.8, delay: 0.05 + (i % 2) * 0.06, ease: "easeOut" }}
+          />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 const PACE: Record<AgentMood, number> = { idle: 1700, working: 900, thinking: 1400, concerned: 4000, done: 4000 };
 
 // `calm` is for lists such as Activity: the eyes drift less, wait several seconds between moves and each copy
 // keeps its own timing, so a column of faces never moves in step or pulls the eye away from the text.
-export function AgentAvatar({ mood = "idle", className, still = false, calm = false, label = "Cleared AI" }: { mood?: AgentMood; className?: string; still?: boolean; calm?: boolean; label?: string }) {
+// `milestone` names what was just finished (e.g. "drafted", "sent"): reaching a new one while already done
+// celebrates again.
+export function AgentAvatar({ mood = "idle", className, still = false, calm = false, label = "Cleared AI", milestone = "done" }: { mood?: AgentMood; className?: string; still?: boolean; calm?: boolean; label?: string; milestone?: string }) {
   const reduce = useReducedMotion();
   const moving = !still && !reduce;
   const [look, setLook] = useState(0);
@@ -58,6 +101,9 @@ export function AgentAvatar({ mood = "idle", className, still = false, calm = fa
     return () => clearTimeout(t);
   }, [moving, mood, calm]);
 
+  // Finishing in front of the viewer: a small hop and a ray burst, once (the happy eyes and badge stay).
+  const celebrated = useCelebration(mood === "done" && milestone);
+
   const looks = mood === "done" ? [{ x: 0, y: -2 }] : LOOKS[mood];
   const raw = moving ? looks[look % looks.length] : mood === "working" ? { x: 0, y: 6 } : { x: 0, y: 0 };
   const gaze = calm ? { x: raw.x * 0.55, y: raw.y * 0.55 } : raw;
@@ -65,7 +111,9 @@ export function AgentAvatar({ mood = "idle", className, still = false, calm = fa
 
   return (
     <span role={label ? "img" : undefined} aria-label={label || undefined} aria-hidden={label ? undefined : true} className={cn("relative inline-grid shrink-0 place-items-center", className)}>
+      {celebrated && !calm ? <Burst key={celebrated} /> : null}
       <svg viewBox="0 0 100 100" className="size-full overflow-visible">
+        <m.g key={`hop-${celebrated}`} animate={celebrated && !reduce ? { y: [0, -7, 0, -2, 0] } : { y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
         <m.g animate={moving && mood === "working" ? { y: [0, -1.5, 0] } : { y: 0 }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
           <circle cx="50" cy="50" r="49" fill={AGENT_GREEN} />
           <circle cx="50" cy="50" r="44.5" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="3.5" />
@@ -85,6 +133,7 @@ export function AgentAvatar({ mood = "idle", className, still = false, calm = fa
               </g>
             )}
           </m.g>
+        </m.g>
         </m.g>
       </svg>
       <AnimatePresence>
