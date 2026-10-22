@@ -32,7 +32,7 @@ function caseFile(d: Awaited<ReturnType<typeof load>>): CaseFile {
   };
 }
 
-type Step = { tool: string; label: string; turn?: number; detail?: string; ref?: string };
+type Step = { tool: string; label: string; turn?: number; detail?: string; ref?: string; plan?: string[] };
 async function addStep(packetId: string, step: Step) {
   const row = await db.query.packets.findFirst({ where: eq(s.packets.id, packetId), columns: { trace: true } });
   await db.update(s.packets).set({ trace: [...(row?.trace ?? []), { ...step, at: new Date().toISOString() }] }).where(eq(s.packets.id, packetId));

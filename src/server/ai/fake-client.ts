@@ -20,9 +20,10 @@ export function fakeClient(c: CaseFile): OpenAI {
   let turn = 0;
   const call = (name: string, args: object = {}) => ({ type: "function_call", name, call_id: `${name}-${Math.random()}`, arguments: JSON.stringify(args) });
   const parse = async () => {
-    const t = turn++;
-    await wait(t === 0 ? 2200 : 1800);
+    const t = turn++ - 1;
+    await wait(t <= 0 ? 2200 : 1800);
     const usage = { input_tokens: 0, output_tokens: 0, input_tokens_details: { cached_tokens: 0 } };
+    if (t === -1) return { id: "fake-plan", usage, output: [call("write_plan", { steps: ["Read the buyer’s claim that the files never arrived", "Open every delivered file and the client’s confirmation", "Match the delivery dates to the paid invoice", "Find PayPal’s rule for digital goods"] })] };
     if (t === 0) return { id: "fake-0", usage, output: [call("get_dispute"), call("get_sale"), call("get_invoice"), call("list_locker_items")] };
     if (t === 1)
       return {

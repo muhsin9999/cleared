@@ -190,7 +190,9 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
 function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null; working: boolean; byId: Record<string, Exhibit>; focus: string | null }) {
   const [expanded, setExpanded] = useState(false);
   const steps = packet?.trace ?? [];
-  const firstMove = steps.filter((s) => s.turn === 0).map((s) => PLAN_WORD[s.tool]).filter(Boolean);
+  // The agent writes its own plan; older runs (and the fallback) get one worded from its first tool calls.
+  const wrotePlan = steps.some((s) => s.plan?.length);
+  const firstMove = wrotePlan ? [] : steps.filter((s) => s.turn === 0).map((s) => PLAN_WORD[s.tool]).filter(Boolean);
   const active =
     !packet || packet.status === "gathering"
       ? { tool: "start", label: "Starting on a Render Workflow" }
@@ -220,14 +222,38 @@ function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null;
         {open ? (
           <m.ol key="steps" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden px-2 pt-1 pb-2" aria-live="polite">
             {firstMove.length ? <Line icon={ListChecksIcon} name="plan" detail={`Check ${list(firstMove)}`} /> : null}
-            {steps.map((st, i) => (
-              <StepLine key={`${st.at}-${i}`} step={st} ex={st.ref ? byId[st.ref] : undefined} elapsed={packet ? seconds(packet.startedAt, st.at) : 0} lit={!!focus && st.ref === focus} />
-            ))}
+            {steps.map((st, i) =>
+              st.plan?.length ? (
+                <PlanBlock key={`${st.at}-${i}`} steps={st.plan} elapsed={packet ? seconds(packet.startedAt, st.at) : 0} />
+              ) : (
+                <StepLine key={`${st.at}-${i}`} step={st} ex={st.ref ? byId[st.ref] : undefined} elapsed={packet ? seconds(packet.startedAt, st.at) : 0} lit={!!focus && st.ref === focus} />
+              ),
+            )}
             {working && active ? <ActiveLine label={active.label} name={active.tool === "think" || active.tool === "start" ? null : active.tool} /> : null}
           </m.ol>
         ) : null}
       </AnimatePresence>
     </div>
+  );
+}
+
+function PlanBlock({ steps, elapsed }: { steps: string[]; elapsed: number }) {
+  return (
+    <m.li layout="position" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="my-1 rounded-md border bg-paper px-2.5 py-2">
+      <p className="flex items-center gap-2.5">
+        <ListChecksIcon aria-hidden className="size-3.5 shrink-0 text-cleared" />
+        <span className="flex-1 font-mono text-[0.75rem]">write_plan</span>
+        <span className="font-mono text-[0.65rem] text-muted-foreground tabular-nums">{elapsed.toFixed(1)}s</span>
+      </p>
+      <ol className="mt-1.5 space-y-0.5 pl-6 text-xs text-muted-foreground">
+        {steps.map((x, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="w-3 shrink-0 font-mono text-[0.65rem] leading-[1.1rem] text-cleared">{i + 1}</span>
+            <span className="min-w-0">{x}</span>
+          </li>
+        ))}
+      </ol>
+    </m.li>
   );
 }
 

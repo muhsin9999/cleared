@@ -10,7 +10,8 @@ const [packet] = await db.insert(s.packets).values({ disputeId: dispute.id, stat
 const result = await draftPacket(packet.id);
 const done = await db.query.packets.findFirst({ where: eq(s.packets.id, packet.id) });
 console.log("result:", result);
-console.log("steps:", done!.trace!.map((t) => t.label));
+console.log("steps:", done!.trace!.map((t) => `${t.turn ?? "-"} ${t.tool}: ${t.detail ?? t.label}`));
+console.log("plan:", done!.trace!.find((t) => t.plan)?.plan ?? "(none)");
 console.log("recommendation:", done!.recommendation, "—", done!.rationale);
 console.log("claims:", JSON.stringify(done!.claims, null, 1));
 console.log("struck:", JSON.stringify(done!.removedClaims));
