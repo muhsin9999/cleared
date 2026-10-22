@@ -402,14 +402,13 @@ function Decisions() {
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <h1 className="text-2xl font-semibold tracking-[-0.02em]">Decisions</h1>
-        <p className="mt-1 max-w-prose text-sm text-muted-foreground">What we chose, why, and what we turned down.</p>
+        <p className="mt-1 max-w-prose text-sm text-muted-foreground">What we chose, and why.</p>
         <div className="mt-6 grid gap-3 md:grid-cols-2">
           {DECISIONS.map((d) => (
             <article key={d.area} className="rounded-[10px] border bg-surface p-4">
               <p className="text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase">{d.area}</p>
               <h2 className="mt-1 font-semibold">{d.chose}</h2>
               <p className="mt-1.5 text-sm text-pretty">{d.why}</p>
-              {d.rejected ? <p className="mt-2 text-xs text-muted-foreground"><span className="font-medium">Turned down:</span> {d.rejected}</p> : null}
             </article>
           ))}
         </div>

@@ -312,19 +312,19 @@ export const CANNOT: { title: string; how: string; node: string }[] = [
   { title: "Act on a forged PayPal event", how: "Each webhook is verified against PayPal’s signature before it is stored.", node: "webhook" },
 ];
 
-export type Decision = { area: string; chose: string; why: string; rejected?: string };
+export type Decision = { area: string; chose: string; why: string };
 
 export const DECISIONS: Decision[] = [
-  { area: "Agent shape", chose: "A structured workflow with one agentic step", why: "Every step around a dispute is known in advance and mistakes cost money, so code orchestrates them. The model is used where judgement is needed: investigating the case, with read-only tools.", rejected: "A free-roaming agent with write access" },
-  { area: "Trust", chose: "Code checks the model", why: "The claim checker, the injection check and the approval gate are plain code with unit tests, so a model mistake is caught before it reaches PayPal.", rejected: "Asking a second model to review the first" },
-  { area: "Model", chose: "gpt-5.4-mini, gpt-5.4 for disputes of $500+", why: "The evals showed the same recommendations on both; the larger model writes more supported claims, so it’s used where more money is at stake.", rejected: "One large model for everything (about 4× the cost per case)" },
-  { area: "Background jobs", chose: "Render Workflows", why: "The investigation and the submission need retries and must survive a restart; the web request only starts them and streams their steps.", rejected: "A queue library on the web service" },
-  { area: "Disputes arriving", chose: "Webhooks plus a 30-minute sync", why: "Webhooks are fast; the sync means a missed or delayed webhook can’t lose a dispute.", rejected: "Webhooks alone" },
-  { area: "Webhook security", chose: "Verify the signature on the raw bytes", why: "PayPal signs the exact body it sent. Checking a re-serialised copy can fail, so the certificate check runs on the original bytes, with PayPal’s verify API as a fallback.", rejected: "Trusting the event or re-serialising it" },
-  { area: "PayPal Orders & tracking", chose: "The SDK from APIMatic’s PayPal Context Plugin", why: "Typed requests and errors; its guidance found a real bug (re-sending a write after a timeout), now fixed with a claim and a re-read.", rejected: "Hand-written requests for Orders" },
-  { area: "Invoicing, Disputes, Webhooks", chose: "A small typed REST client", why: "These APIs aren’t in the Orders SDK, and the Agent Toolkit has no provide-evidence.", rejected: "PayPal Agent Toolkit on the runtime path" },
-  { area: "Files", chose: "Cloudflare R2", why: "Proof files must persist and be readable by workflow tasks by key; workflow arguments are capped at 4 MB.", rejected: "A disk on the web service" },
-  { area: "Hosting", chose: "An always-on Render web service", why: "A sleeping instance would miss webhooks and give a judge a one-minute cold start.", rejected: "A free tier that sleeps" },
-  { area: "Access", chose: "One-click demo workspaces", why: "Anyone can try it without an account or keys; each visitor gets a private copy that resets nightly.", rejected: "Sign-up with email links" },
-  { area: "Language", chose: "TypeScript end to end", why: "The web app and the workflow tasks share types, the PayPal client and the agent code.", rejected: "A Python backend with a separate frontend" },
+  { area: "Agent shape", chose: "A structured workflow with one agentic step", why: "Every step around a dispute is known in advance and mistakes cost money, so code orchestrates them. The model is used where judgement is needed: investigating the case, with read-only tools." },
+  { area: "Trust", chose: "Code checks the model", why: "The claim checker, the injection check and the approval gate are plain code with unit tests, so a model mistake is caught before it reaches PayPal." },
+  { area: "Model", chose: "gpt-5.4-mini, gpt-5.4 for disputes of $500+", why: "The evals showed the same recommendations on both; the larger model writes more supported claims, so it’s used where more money is at stake." },
+  { area: "Background jobs", chose: "Render Workflows", why: "The investigation and the submission need retries and must survive a restart; the web request only starts them and streams their steps." },
+  { area: "Disputes arriving", chose: "Webhooks plus a 30-minute sync", why: "Webhooks are fast; the sync means a missed or delayed webhook can’t lose a dispute." },
+  { area: "Webhook security", chose: "Verify the signature on the raw bytes", why: "PayPal signs the exact body it sent. Checking a re-serialised copy can fail, so the certificate check runs on the original bytes, with PayPal’s verify API as a fallback." },
+  { area: "PayPal Orders & tracking", chose: "The SDK from APIMatic’s PayPal Context Plugin", why: "Typed requests and errors; its guidance found a real bug (re-sending a write after a timeout), now fixed with a claim and a re-read." },
+  { area: "Invoicing, Disputes, Webhooks", chose: "A small typed REST client", why: "These APIs aren’t in the Orders SDK, and the Agent Toolkit has no provide-evidence." },
+  { area: "Files", chose: "Cloudflare R2", why: "Proof files must persist and be readable by workflow tasks by key; workflow arguments are capped at 4 MB." },
+  { area: "Hosting", chose: "An always-on Render web service", why: "A sleeping instance would miss webhooks and give a judge a one-minute cold start." },
+  { area: "Access", chose: "One-click demo workspaces", why: "Anyone can try it without an account or keys; each visitor gets a private copy that resets nightly." },
+  { area: "Language", chose: "TypeScript end to end", why: "The web app and the workflow tasks share types, the PayPal client and the agent code." },
 ];
