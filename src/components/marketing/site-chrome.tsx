@@ -98,6 +98,11 @@ export function SiteFooter() {
             </FootColumn>
             <FootColumn title="Project">
               <li>
+                <Link href="/architecture" className={FOOT_LINK}>
+                  Architecture
+                </Link>
+              </li>
+              <li>
                 <a href={GITHUB_URL} className={FOOT_LINK}>
                   GitHub
                 </a>

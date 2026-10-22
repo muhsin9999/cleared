@@ -92,7 +92,9 @@ To reproduce: `npx context-plugins install paypal`, then `/reload-plugins` in Cl
 
 ## Architecture
 
-_Diagram to come._
+[![Cleared's architecture map: people, the Next.js app, Render Workflow, AI and PayPal lanes, with the data underneath](docs/architecture.png)](https://cleared-web.onrender.com/architecture)
+
+**Explore it live at [cleared-web.onrender.com/architecture](https://cleared-web.onrender.com/architecture):** click any part for what it does and its code, play a journey (a dispute arriving, a sale being checked) step by step, switch on the Trust lens to see what the AI can't do, or read the decisions behind each choice. Everything on that page comes from one file, `src/lib/architecture.ts`.
 
 | Piece | What it runs |
 | --- | --- |
