@@ -52,11 +52,13 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
         className={
           compact
             ? "inline-flex items-center gap-1.5 rounded-full border bg-surface px-2 py-1 text-sm"
-            : "inline-flex items-center gap-2 rounded-full border bg-surface py-1 pr-3 pl-1 text-sm font-medium shadow-soft transition-colors hover:border-cleared/40"
+            : "inline-flex shrink-0 items-center gap-2 rounded-full border bg-surface py-1 pr-3 pl-1 text-sm font-medium whitespace-nowrap shadow-soft transition-colors hover:border-cleared/40"
         }
       >
-        <AgentAvatar mood={busy ? "thinking" : "idle"} label="" className={compact ? "size-6" : "size-8"} />
-        <span className={compact ? "sr-only sm:not-sr-only" : ""}>Ask Cleared</span>
+        <AgentAvatar mood={busy ? "thinking" : "idle"} label="" className={compact ? "size-6" : "size-7 sm:size-8"} />
+        <span className={compact ? "sr-only sm:not-sr-only" : ""}>
+          Ask<span className="hidden sm:inline"> Cleared</span>
+        </span>
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col gap-0 bg-surface p-0 sm:max-w-md">
         <header className="flex items-center gap-3 border-b border-border px-5 py-4 pr-12">

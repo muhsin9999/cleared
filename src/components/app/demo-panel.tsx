@@ -37,7 +37,7 @@ export function DemoPanel({ buyerEmail, payable, stock }: { buyerEmail: string |
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger render={<Button variant="outline" size="sm" className="gap-2" />}>
-        <FlaskConicalIcon aria-hidden /> Sandbox
+        <FlaskConicalIcon aria-hidden /> <span className="sr-only sm:not-sr-only">Sandbox</span>
       </SheetTrigger>
       <SheetContent className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
