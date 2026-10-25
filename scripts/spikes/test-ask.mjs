@@ -1,0 +1,46 @@
+// Ask Cleared with real model calls: activity, holds, memory, filing a screenshot to a sale's proof locker.
+import { chromium } from "@playwright/test";
+const [out, shotFile, client = "Lagos Lo-Fi Records"] = process.argv.slice(2);
+const BASE = process.env.BASE ?? "http://localhost:3000";
+const b = await chromium.launch({ executablePath: process.env.HOME + "/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome" });
+const p = await (await b.newContext({ viewport: { width: 1440, height: 950 } })).newPage();
+const errors = [];
+p.on("pageerror", (e) => errors.push(e.message));
+const t0 = Date.now();
+const log = (m) => console.log(`${((Date.now() - t0) / 1000).toFixed(0)}s ${m}`);
+await p.goto(BASE);
+await p.getByRole("button", { name: /try the live demo/i }).first().click();
+await p.waitForURL("**/home", { timeout: 60000 });
+await p.click("button:has-text('Ask Cleared')");
+const dialog = p.locator("[role=dialog]");
+async function ask(q, file) {
+  const before = await dialog.locator("ol[aria-live] > li").count();
+  if (file) await dialog.locator("input[type=file]").setInputFiles(file);
+  await dialog.locator("input[aria-label='Message Cleared AI']").fill(q);
+  await dialog.locator("button[aria-label='Send']").click();
+  await p.waitForSelector("text=Cleared AI is looking…", { timeout: 10000 }).catch(() => {});
+  await p.waitForSelector("text=Cleared AI is looking…", { state: "detached", timeout: 120000 });
+  await p.waitForFunction((n) => document.querySelectorAll("[role=dialog] ol[aria-live] > li").length >= n + 2, before, { timeout: 30000 }).catch(() => {});
+  await p.waitForTimeout(600);
+  log(`Q: ${q}\n   A: ${(await dialog.locator("ol[aria-live] > li").last().innerText()).replace(/\s+/g, " ").slice(0, 330)}`);
+}
+await ask("What did we do last?");
+await ask("When does my held money release?");
+await ask(`Remember: ${client} approved the final work in a WhatsApp chat.`);
+await ask(`Here's the WhatsApp screenshot. Please file it to ${client}'s sale.`, shotFile);
+await ask("Do I have any open cases?");
+log(`memory: ${await dialog.locator("text=/What I remember \\(\\d+\\)/").innerText().catch(() => "none")}`);
+await ask("Please start drafting the evidence for that case.");
+await p.screenshot({ path: `${out}/cleared-ask.png` });
+await p.keyboard.press("Escape");
+await p.goto(`${BASE}/cases`, { waitUntil: "domcontentloaded" });
+await p.click(`main a[href^='/cases/']:has-text('${client}')`);
+await p.waitForURL(/cases\/[0-9a-f-]{36}/);
+for (let i = 0; i < 60 && !(await p.isVisible("text=/Approve & submit|Approve and submit/i")); i++) await p.waitForTimeout(3000);
+await p.waitForTimeout(1500);
+const main = (await p.locator("main").innerText()).replace(/\s+/g, " ");
+log(`packet mentions the approval: ${/approv/i.test(main)} · cites the screenshot: ${/client-approval|WhatsApp|screenshot/i.test(main)}`);
+log(`case room text: ${main.slice(0, 900)}`);
+await p.screenshot({ path: `${out}/cleared-case-after.png`, fullPage: true });
+console.log(errors.length ? "PAGE ERRORS " + JSON.stringify(errors.slice(0, 3)) : "no page errors");
+await b.close();

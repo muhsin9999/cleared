@@ -20,7 +20,7 @@ async function load(disputeId: string) {
   return dispute;
 }
 
-function caseFile(d: Awaited<ReturnType<typeof load>>): CaseFile {
+function caseFile(d: Awaited<ReturnType<typeof load>>, sellerNotes: string[] = []): CaseFile {
   const sale = d.sale!;
   return {
     caseId: d.paypalDisputeId,
@@ -29,7 +29,14 @@ function caseFile(d: Awaited<ReturnType<typeof load>>): CaseFile {
     sale: { title: sale.title, description: sale.description, kind: sale.kind, clientName: sale.clientName, amountCents: sale.amountCents, paidAt: sale.paidAt, deliveredAt: sale.deliveredAt, deliveryDueAt: sale.deliveryDueAt },
     invoice: sale.invoices[0] ?? null,
     exhibits: exhibitsFor(sale),
+    sellerNotes,
   };
+}
+
+/** The seller's memos about this sale (or about their business in general), newest first. */
+async function notesFor(sellerId: string, saleId: string) {
+  const rows = await db.select({ text: s.memos.text, saleId: s.memos.saleId }).from(s.memos).where(eq(s.memos.sellerId, sellerId)).orderBy(desc(s.memos.createdAt)).limit(20);
+  return rows.filter((r) => !r.saleId || r.saleId === saleId).map((r) => r.text);
 }
 
 type Step = { tool: string; label: string; turn?: number; detail?: string; ref?: string; plan?: string[] };
@@ -43,7 +50,7 @@ export async function draftPacket(packetId: string) {
   const packet = await db.query.packets.findFirst({ where: eq(s.packets.id, packetId) });
   if (!packet) throw new Error("Packet not found");
   const d = await load(packet.disputeId);
-  const c = caseFile(d);
+  const c = caseFile(d, await notesFor(d.sellerId, d.sale!.id));
   const fake = fakeAiEnabled();
   await db.update(s.packets).set({ status: "drafting", trace: [], model: fake ? "fake-local" : packetModel(c.dispute.amountCents) }).where(eq(s.packets.id, packetId));
 

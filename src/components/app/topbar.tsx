@@ -8,6 +8,9 @@ import { daysUntil, money } from "@/lib/format";
 import { signOut } from "@/server/actions/session";
 import { requireSeller } from "@/server/auth";
 import { disputeStock, getHome, latestPayableInvoice } from "@/server/queries";
+import { desc, eq } from "drizzle-orm";
+import { db, schema } from "@/db";
+import { AskCleared } from "./ask-cleared";
 import { DemoPanel } from "./demo-panel";
 
 async function HoldIsland() {
@@ -43,15 +46,34 @@ async function Account() {
   );
 }
 
+async function AskIsland() {
+  const seller = await requireSeller();
+  const [recent, memos] = await Promise.all([
+    db.select().from(schema.assistantMessages).where(eq(schema.assistantMessages.sellerId, seller.id)).orderBy(desc(schema.assistantMessages.createdAt)).limit(40),
+    db.select({ id: schema.memos.id, text: schema.memos.text, sale: schema.sales.clientName }).from(schema.memos).leftJoin(schema.sales, eq(schema.sales.id, schema.memos.saleId)).where(eq(schema.memos.sellerId, seller.id)).orderBy(desc(schema.memos.createdAt)),
+  ]);
+  return (
+    <AskCleared
+      messages={recent.reverse().map((m) => ({ id: m.id, kind: m.kind, body: m.body as Record<string, never> }))}
+      memos={memos.map((m) => ({ id: m.id, text: m.text, about: m.sale }))}
+    />
+  );
+}
+
 export function Topbar() {
   return (
     <div className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-paper/85 px-4 backdrop-blur sm:px-8">
       <Suspense fallback={<Skeleton className="h-8 w-56 rounded-full" />}>
         <HoldIsland />
       </Suspense>
-      <Suspense fallback={<Skeleton className="h-8 w-40" />}>
-        <Account />
-      </Suspense>
+      <div className="ml-auto flex items-center gap-2">
+        <Suspense fallback={<Skeleton className="h-8 w-28 rounded-full" />}>
+          <AskIsland />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-8 w-40" />}>
+          <Account />
+        </Suspense>
+      </div>
     </div>
   );
 }

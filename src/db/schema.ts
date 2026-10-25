@@ -247,3 +247,30 @@ export const disputesRelations = relations(disputes, ({ one, many }) => ({
 }));
 export const packetsRelations = relations(packets, ({ one }) => ({ dispute: one(disputes, { fields: [packets.disputeId], references: [disputes.id] }) }));
 export const noticesRelations = relations(notices, ({ one }) => ({ seller: one(sellers, { fields: [notices.sellerId], references: [sellers.id] }) }));
+
+// "Ask Cleared": the seller's conversation with Cleared AI, on every page.
+export const assistantMessages = pgTable(
+  "assistant_messages",
+  {
+    id: id(),
+    sellerId: uuid("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // user | agent
+    body: jsonb("body").notNull(), // { text, files?, steps?, seconds?, links?, actions? }
+    createdAt: createdAt(),
+  },
+  (t) => [index("assistant_messages_seller_idx").on(t.sellerId, t.createdAt)],
+);
+
+// What the seller told Cleared AI to remember ("this client always approves on WhatsApp"). Context for the
+// investigator, never evidence: a claim still needs an exhibit in the proof locker.
+export const memos = pgTable(
+  "memos",
+  {
+    id: id(),
+    sellerId: uuid("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+    saleId: uuid("sale_id").references(() => sales.id, { onDelete: "cascade" }),
+    text: text("text").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("memos_seller_idx").on(t.sellerId, t.createdAt)],
+);
