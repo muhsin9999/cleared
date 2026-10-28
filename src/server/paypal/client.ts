@@ -20,13 +20,39 @@ async function token() {
     body: "grant_type=client_credentials",
     cache: "no-store",
   });
-  const body = (await res.json()) as { access_token: string; expires_in: number };
+  const body = readJson(await res.text(), res, "POST", "/v1/oauth2/token") as { access_token: string; expires_in: number };
   if (!res.ok) throw new PayPalError(res.status, res.headers.get("paypal-debug-id"), body, "PayPal sign-in failed");
   cached = { value: body.access_token, exp: Date.now() + (body.expires_in - 60) * 1000 };
   return cached.value;
 }
 
+/** Parses a PayPal reply; a cut-off or non-JSON body becomes a PayPalError naming the call, not a bare SyntaxError. */
+function readJson(text: string, res: Response, method: string, path: string): unknown {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new PayPalError(res.ok ? 502 : res.status, res.headers.get("paypal-debug-id"), text.slice(0, 200), `PayPal ${method} ${path} sent an unreadable reply`);
+  }
+}
+
+const RETRYABLE = (e: unknown) => !(e instanceof PayPalError) || e.status === 429 || e.status >= 500;
+
 export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: { body?: unknown; rawBody?: string; headers?: Record<string, string> } = {}): Promise<T> {
+  // A read is safe to repeat: one retry after a moment rides out a sandbox blip (a cut-off reply failed the dispute
+  // sync on 28 Oct 2026). Writes are never repeated here; their outcome would be unknown.
+  if (method === "GET") {
+    try {
+      return await paypalOnce<T>(method, path, init);
+    } catch (e) {
+      if (!RETRYABLE(e)) throw e;
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+  return paypalOnce<T>(method, path, init);
+}
+
+async function paypalOnce<T>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: { body?: unknown; rawBody?: string; headers?: Record<string, string> }): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: { Authorization: `Bearer ${await token()}`, "Content-Type": "application/json", Prefer: "return=representation", ...init.headers },
@@ -34,7 +60,7 @@ export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DE
     cache: "no-store",
   });
   const text = await res.text();
-  const json = text ? (JSON.parse(text) as unknown) : null;
+  const json = readJson(text, res, method, path);
   if (!res.ok) {
     const err = json as { message?: string; details?: { field?: string; issue?: string; description?: string }[] } | null;
     const detail = err?.details?.[0];
@@ -48,7 +74,7 @@ export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DE
 export async function paypalMultipart<T = unknown>(path: string, form: FormData): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { method: "POST", headers: { Authorization: `Bearer ${await token()}` }, body: form, cache: "no-store" });
   const text = await res.text();
-  const json = text ? (JSON.parse(text) as unknown) : null;
+  const json = readJson(text, res, "POST", path);
   if (!res.ok) {
     const details = (json as { details?: { issue?: string; description?: string }[]; message?: string } | null) ?? {};
     throw new PayPalError(res.status, res.headers.get("paypal-debug-id"), json, details.details?.[0]?.description ?? details.details?.[0]?.issue ?? details.message ?? `PayPal POST ${path} failed`);
