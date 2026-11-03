@@ -54,7 +54,14 @@ const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1)
 const isImage = (e: Exhibit) => e.file && !!e.mime?.startsWith("image/");
 const exhibitIcon = (e: Exhibit) => (isImage(e) ? ImageIcon : KIND_ICON[e.kind] ?? FileTextIcon);
 
-export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, resolved, real, demo = false }: { disputeId: string; packet: PacketView | null; exhibits: Exhibit[]; canSubmit: boolean; resolved: boolean; real: boolean; demo?: boolean }) {
+/** What PayPal is doing with a real case after the evidence went in, in PayPal's own terms. */
+function sentLine(paypalStatus: string | null, stage: string | null) {
+  if (stage === "CHARGEBACK") return paypalStatus === "UNDER_REVIEW" ? "Sent to PayPal’s claim. PayPal is reviewing it." : "Escalated to a PayPal claim. Sending your approved reply to it…";
+  if (paypalStatus === "WAITING_FOR_BUYER_RESPONSE") return "Sent. PayPal asked the buyer to respond.";
+  return "Sent. PayPal is reviewing it.";
+}
+
+export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, resolved, real, demo = false, paypalStatus = null, stage = null }: { disputeId: string; packet: PacketView | null; exhibits: Exhibit[]; canSubmit: boolean; resolved: boolean; real: boolean; demo?: boolean; paypalStatus?: string | null; stage?: string | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const asked = useRef(false);
@@ -65,6 +72,17 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
   const working = !packet || WORKING.has(packet.status);
   const drafted = !!packet && !["gathering", "drafting", "checking"].includes(packet.status);
   const submitted = packet?.status === "submitted";
+
+  // After a real submission PayPal moves the case on by itself (a claim, a review, a decision): check every 20 s.
+  useEffect(() => {
+    if (!real || !submitted || resolved) return;
+    const t = setInterval(async () => {
+      const res = await fetch(`/api/cases/${disputeId}/packet`, { cache: "no-store" }).catch(() => null);
+      if (res?.ok) setPacket(((await res.json()) as { packet: PacketView | null }).packet);
+      router.refresh();
+    }, 20_000);
+    return () => clearInterval(t);
+  }, [real, submitted, resolved, disputeId, router]);
 
   // No packet yet: start the investigator once. While it works, poll to show each step as it lands.
   useEffect(() => {
@@ -135,7 +153,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
               <p className="inline-flex items-center gap-2 text-sm text-muted-foreground" role="status"><LoaderCircleIcon aria-hidden className="size-4 animate-spin" /> Sending to PayPal…</p>
             ) : submitted ? (
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-cleared-strong" role="status"><CheckIcon aria-hidden className="size-4" /> {real ? "Sent. PayPal is reviewing it." : "Sent (test dispute). Waiting for a decision."}</p>
+                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-cleared-strong" role="status"><CheckIcon aria-hidden className="size-4" /> {real ? sentLine(paypalStatus, stage) : "Sent (test dispute). Waiting for a decision."}</p>
                 {demo ? (
                   <Button
                     variant="outline"
@@ -144,6 +162,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                       start(async () => {
                         const r = await resolveLatestDispute();
                         if (!r.ok) toast.error(r.message);
+                        else if ("message" in r && r.message) toast(r.message);
                         router.refresh();
                       })
                     }

@@ -177,7 +177,7 @@ export const NODES: ArchNode[] = [
     sub: "/v1/customer/disputes",
     logo: "paypal",
     summary: "Where disputes live. Cleared reads them, answers with provide-evidence, and in the sandbox can ask PayPal to decide.",
-    facts: [["Calls", "list, get, provide-evidence, adjudicate (sandbox)"]],
+    facts: [["Calls", "list, get, provide-evidence, escalate and adjudicate (sandbox)"]],
     source: ["src/server/paypal/disputes.ts", "src/server/paypal/evidence.ts"],
   },
   {
@@ -245,7 +245,7 @@ export const EDGES: ArchEdge[] = [
   { id: "agent-injection", from: "draftPacket", to: "injection", label: "flags checked in code" },
   { id: "submit-disputes", from: "submitEvidence", to: "disputes", label: "provide-evidence" },
   { id: "submit-r2", from: "submitEvidence", to: "r2", label: "reads files" },
-  { id: "app-disputes", from: "app", to: "disputes", label: "adjudicate (sandbox)", kind: "event" },
+  { id: "app-disputes", from: "app", to: "disputes", label: "escalate, adjudicate (sandbox)", kind: "event" },
   { id: "reset-neon", from: "reset", to: "neon", label: "clears demo copies" },
 ];
 
@@ -296,7 +296,7 @@ export const JOURNEYS: Journey[] = [
     title: "PayPal decides",
     blurb: "From Under review to resolved",
     steps: [
-      { title: "PayPal reviews the evidence", sub: "In the sandbox, Cleared can ask it to decide", nodes: ["app", "disputes"], edges: ["app-disputes"], call: "POST /v1/customer/disputes/{id}/adjudicate" },
+      { title: "PayPal reviews the evidence", sub: "In the sandbox: escalated to a claim, reviewed, then decided", nodes: ["app", "disputes"], edges: ["app-disputes"], call: "POST /v1/customer/disputes/{id}/adjudicate" },
       { title: "PayPal sends the result", sub: "A signed event, and the next sync", nodes: ["events", "webhook", "sync", "disputes"], edges: ["events-webhook", "sync-disputes"], call: "CUSTOMER.DISPUTE.RESOLVED" },
       { title: "The case closes", sub: "Shown on Home and in Activity", nodes: ["webhook", "neon", "app"], edges: ["webhook-neon"], call: "Closed in your favor" },
     ],

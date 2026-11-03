@@ -38,7 +38,9 @@ function readJson(text: string, res: Response, method: string, path: string): un
 
 const RETRYABLE = (e: unknown) => !(e instanceof PayPalError) || e.status === 429 || e.status >= 500;
 
-export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: { body?: unknown; rawBody?: string; headers?: Record<string, string> } = {}): Promise<T> {
+type Init = { body?: unknown; rawBody?: string; headers?: Record<string, string>; /** false: omit `Prefer: return=representation` (adjudicate rejects its body with it). */ representation?: boolean };
+
+export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: Init = {}): Promise<T> {
   // A read is safe to repeat: one retry after a moment rides out a sandbox blip (a cut-off reply failed the dispute
   // sync on 28 Oct 2026). Writes are never repeated here; their outcome would be unknown.
   if (method === "GET") {
@@ -52,10 +54,10 @@ export async function paypal<T = unknown>(method: "GET" | "POST" | "PATCH" | "DE
   return paypalOnce<T>(method, path, init);
 }
 
-async function paypalOnce<T>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: { body?: unknown; rawBody?: string; headers?: Record<string, string> }): Promise<T> {
+async function paypalOnce<T>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, init: Init): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: { Authorization: `Bearer ${await token()}`, "Content-Type": "application/json", Prefer: "return=representation", ...init.headers },
+    headers: { Authorization: `Bearer ${await token()}`, "Content-Type": "application/json", ...(init.representation === false ? {} : { Prefer: "return=representation" }), ...init.headers },
     body: init.rawBody ?? (init.body === undefined ? undefined : JSON.stringify(init.body)),
     cache: "no-store",
   });

@@ -20,7 +20,7 @@ Cleared fixes both ends:
 2. Wait a few seconds on Home: a $250 dispute arrives ("I never received the files"). Click **Open the case**.
 3. Watch the agent work: its plan, each tool call, each file it opens. Click any file to see it in full.
 4. Read the reply. Every claim has exhibit letters; struck claims and anything the agent refused to do are shown.
-5. **Approve and send**. Cleared submits the evidence to PayPal. Then **Ask PayPal to decide** (a sandbox-only shortcut).
+5. **Approve and send**. Cleared submits the evidence to PayPal. Then **Ask PayPal to decide** (sandbox only): Cleared escalates the case to a PayPal claim and re-sends your approved reply; PayPal reviews it for about 30 minutes, then the same button gets PayPal's decision.
 6. Optional: **New sale** → *Try a sample* → **Check this sale**, to see the pre-sale check, the fixes and a real PayPal invoice.
 
 Each visitor gets a private copy of the workspace. **Sandbox** in the top bar holds the other side's actions (the client paying, opening a dispute, resetting).
@@ -34,7 +34,7 @@ Each visitor gets a private copy of the workspace. **Sandbox** in the top bar ho
 | Evidence | Submitted with the real `provide-evidence` call (a PDF summary plus notes); PayPal moves the case to *Under review* |
 | Webhooks | Every delivery is verified against PayPal's signature before it is stored |
 | AI | Real model calls on every case and every sale check. Each one is in **Settings → AI audit log** with its model, tokens and cost |
-| Decision | "Ask PayPal to decide" calls the sandbox-only `adjudicate` endpoint |
+| Decision | "Ask PayPal to decide" takes PayPal's real sandbox steps: it escalates the inquiry to a claim, re-sends the approved evidence when the claim asks for it, and once PayPal has reviewed it (about 30 minutes in the sandbox) calls the sandbox-only `adjudicate` endpoint |
 
 ## How the AI works
 

@@ -68,6 +68,8 @@ async function Case({ params }: { params: PageProps<"/cases/[id]">["params"] }) 
         resolved={dispute.status.startsWith("resolved") || dispute.status === "closed"}
         real={!dispute.paypalDisputeId.startsWith("SIM-")}
         demo={seller.isDemo}
+        paypalStatus={dispute.paypalStatus}
+        stage={dispute.stage}
         exhibits={exhibits}
         packet={dispute.packets[0] ? packetView(dispute.packets[0]) : null}
       />

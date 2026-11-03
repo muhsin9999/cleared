@@ -140,11 +140,38 @@ export async function claimPoolDispute(sellerId: string, saleId: string, saleAmo
   return upsertDispute(detail);
 }
 
-/** Sandbox only: asks PayPal to decide a dispute, when PayPal offers that step (the `adjudicate` link). */
-export async function adjudicate(paypalDisputeId: string, outcome: "SELLER_FAVOR" | "BUYER_FAVOR") {
-  const live = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${paypalDisputeId}`);
-  if (!(live.links ?? []).some((l) => l.rel === "adjudicate")) return { ok: false as const, status: live.status, stage: live.dispute_life_cycle_stage };
-  await paypal("POST", `/v1/customer/disputes/${paypalDisputeId}/adjudicate`, { body: { adjudication_outcome: outcome } });
-  await upsertDispute(await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${paypalDisputeId}`));
-  return { ok: true as const };
+export type SandboxStep = "decided" | "deciding" | "escalated" | "resend" | "reviewing";
+
+/**
+ * Sandbox only: takes a real dispute one step closer to PayPal's decision, doing whatever PayPal allows right now.
+ * Proven against the sandbox on 3 Nov 2026: evidence on an inquiry hands it to the buyer; the seller escalates it to a
+ * claim; PayPal asks for evidence again; once that is in, the claim is under review and PayPal offers `adjudicate`
+ * (about 30 minutes later); adjudicate closes it a minute or so after. Never fakes an outcome.
+ */
+export async function advanceSandboxDecision(paypalDisputeId: string): Promise<{ step: SandboxStep; status: string }> {
+  const path = `/v1/customer/disputes/${paypalDisputeId}`;
+  let live = await paypal<PayPalDispute>("GET", path);
+  const has = (rel: string) => (live.links ?? []).some((l) => l.rel === rel);
+  if (live.status === "RESOLVED") {
+    await upsertDispute(live);
+    return { step: "decided", status: live.status };
+  }
+  if (has("adjudicate")) {
+    await paypal("POST", `${path}/adjudicate`, { body: { adjudication_outcome: "SELLER_FAVOR" }, representation: false });
+    for (let i = 0; i < 6 && live.status !== "RESOLVED"; i++) {
+      await new Promise((r) => setTimeout(r, 5000));
+      live = await paypal<PayPalDispute>("GET", path);
+    }
+    await upsertDispute(live);
+    return { step: live.status === "RESOLVED" ? "decided" : "deciding", status: live.status };
+  }
+  // The claim is asking for evidence: the caller re-sends the seller's approved reply.
+  if (has("provide_evidence")) return { step: "resend", status: live.status };
+  if (live.dispute_life_cycle_stage === "INQUIRY" && has("escalate")) {
+    await paypal("POST", `${path}/escalate`, { body: { note: "Sandbox demo: escalating to a claim so PayPal can review the seller's evidence and decide." }, representation: false });
+    await upsertDispute(await paypal<PayPalDispute>("GET", path));
+    return { step: "escalated", status: live.status };
+  }
+  await upsertDispute(live);
+  return { step: "reviewing", status: live.status };
 }

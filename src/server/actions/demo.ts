@@ -1,15 +1,17 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { db, schema as s } from "@/db";
 import { seedDemo } from "@/db/seed";
 import { reasonText } from "@/lib/paypal-events";
 import { requireSeller } from "../auth";
-import { adjudicate, claimPoolDispute } from "../paypal/disputes";
+import { paypal } from "../paypal/client";
+import { advanceSandboxDecision, claimPoolDispute, type PayPalDispute } from "../paypal/disputes";
 import { createSession } from "../session";
-import { ensureDraft } from "../workflows";
+import { ensureDraft, startTask } from "../workflows";
 
 // Demo panel actions. Until judge mode is wired to the sandbox (PLAN day 9) the dispute buttons
 // create clearly labelled simulated records so the flow can be clicked through end to end.
@@ -74,18 +76,55 @@ export async function resolveLatestDispute() {
     ?? (await db.query.disputes.findFirst({ where: and(eq(s.disputes.sellerId, seller.id), eq(s.disputes.status, "waiting_for_seller")) }));
   if (!dispute) return { ok: false as const, message: "No open dispute to resolve." };
   if (!dispute.paypalDisputeId.startsWith("SIM-")) {
-    // A real sandbox dispute is only ever decided by PayPal. Never fake the outcome.
-    const r = await adjudicate(dispute.paypalDisputeId, "SELLER_FAVOR");
-    if (!r.ok) return { ok: false as const, message: `PayPal hasn’t opened this case for a decision yet (${r.status.toLowerCase().replaceAll("_", " ")}). In the sandbox that can take a while after evidence is sent.` };
-    await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "paypal", type: "CUSTOMER.DISPUTE.RESOLVED", summary: "PayPal closed the dispute in your favor (sandbox decision)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
-    revalidatePath("/", "layout");
-    return { ok: true as const, disputeId: dispute.id };
+    // A real sandbox dispute is only ever decided by PayPal: each click takes it one real step closer. Never fake it.
+    const r = await advanceSandboxDecision(dispute.paypalDisputeId);
+    const say = (message: string) => {
+      revalidatePath("/", "layout");
+      return { ok: true as const, disputeId: dispute.id, message };
+    };
+    if (r.step === "decided") {
+      await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "paypal", type: "CUSTOMER.DISPUTE.RESOLVED", summary: "PayPal closed the dispute in your favor (sandbox decision)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
+      return say("PayPal closed the dispute in your favor.");
+    }
+    if (r.step === "deciding") return say("PayPal is closing the case. This takes about a minute.");
+    if (r.step === "escalated") {
+      await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "cleared", type: "DISPUTE.ESCALATED", summary: "Escalated to a PayPal claim, so PayPal can review the evidence and decide (sandbox)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
+      // PayPal asks for the evidence again a few minutes after escalation; send the reply the seller already approved.
+      after(() => resendWhenAsked(dispute.id, dispute.paypalDisputeId));
+      return say("Escalated to a PayPal claim. Cleared sends your approved reply to it when PayPal asks, then PayPal reviews it (about 30 minutes in the sandbox).");
+    }
+    if (r.step === "resend") {
+      await resendApproved(dispute.id);
+      return say("Sent your approved reply to PayPal’s claim. PayPal reviews it next (about 30 minutes in the sandbox).");
+    }
+    return say("PayPal is reviewing the claim. In the sandbox its decision opens about 30 minutes after the evidence. Ask again then.");
   }
   await db.update(s.disputes).set({ status: "resolved_seller", paypalStatus: "RESOLVED", resolvedAt: new Date() }).where(eq(s.disputes.id, dispute.id));
   if (dispute.saleId) await db.update(s.sales).set({ status: "accepted" }).where(eq(s.sales.id, dispute.saleId));
   await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, type: "CUSTOMER.DISPUTE.RESOLVED", summary: "Dispute closed in your favor", simulated: true, payload: { dispute_id: dispute.paypalDisputeId, outcome: "RESOLVED_SELLER_FAVOUR" } });
   revalidatePath("/", "layout");
   return { ok: true as const, disputeId: dispute.id };
+}
+
+/** Re-sends the packet the seller approved, through the same submitEvidence task the approval started. */
+async function resendApproved(disputeId: string) {
+  const packet = await db.query.packets.findFirst({ where: and(eq(s.packets.disputeId, disputeId), eq(s.packets.status, "submitted")), orderBy: desc(s.packets.createdAt) });
+  if (!packet) return;
+  await db.update(s.packets).set({ status: "submitting", error: null }).where(eq(s.packets.id, packet.id));
+  try {
+    await startTask("submitEvidence", [packet.id]);
+  } catch (e) {
+    await db.update(s.packets).set({ status: "failed", error: (e as Error).message.slice(0, 500) }).where(eq(s.packets.id, packet.id));
+  }
+}
+
+/** After an escalation: waits (up to 10 minutes) for the claim to ask for evidence, then re-sends the approved reply. */
+async function resendWhenAsked(disputeId: string, paypalDisputeId: string) {
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 20_000));
+    const live = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${paypalDisputeId}`).catch(() => null);
+    if ((live?.links ?? []).some((l) => l.rel === "provide_evidence")) return resendApproved(disputeId);
+  }
 }
 
 /** The demo's opening moment: shortly after a visitor arrives, Maya's client disputes the album cover, the way a
