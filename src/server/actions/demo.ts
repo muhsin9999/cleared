@@ -77,13 +77,13 @@ export async function resolveLatestDispute() {
     // A real sandbox dispute is only ever decided by PayPal. Never fake the outcome.
     const r = await adjudicate(dispute.paypalDisputeId, "SELLER_FAVOR");
     if (!r.ok) return { ok: false as const, message: `PayPal hasn’t opened this case for a decision yet (${r.status.toLowerCase().replaceAll("_", " ")}). In the sandbox that can take a while after evidence is sent.` };
-    await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "paypal", type: "CUSTOMER.DISPUTE.RESOLVED", summary: "PayPal closed the dispute in your favour (sandbox decision)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
+    await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "paypal", type: "CUSTOMER.DISPUTE.RESOLVED", summary: "PayPal closed the dispute in your favor (sandbox decision)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
     revalidatePath("/", "layout");
     return { ok: true as const, disputeId: dispute.id };
   }
   await db.update(s.disputes).set({ status: "resolved_seller", paypalStatus: "RESOLVED", resolvedAt: new Date() }).where(eq(s.disputes.id, dispute.id));
   if (dispute.saleId) await db.update(s.sales).set({ status: "accepted" }).where(eq(s.sales.id, dispute.saleId));
-  await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, type: "CUSTOMER.DISPUTE.RESOLVED", summary: "Dispute closed in your favour", simulated: true, payload: { dispute_id: dispute.paypalDisputeId, outcome: "RESOLVED_SELLER_FAVOUR" } });
+  await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, type: "CUSTOMER.DISPUTE.RESOLVED", summary: "Dispute closed in your favor", simulated: true, payload: { dispute_id: dispute.paypalDisputeId, outcome: "RESOLVED_SELLER_FAVOUR" } });
   revalidatePath("/", "layout");
   return { ok: true as const, disputeId: dispute.id };
 }

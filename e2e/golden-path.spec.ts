@@ -56,9 +56,9 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
     await page.goBack();
   });
 
-  await test.step("the case resolves in Maya's favour", async () => {
+  await test.step("the case resolves in Maya's favor", async () => {
     await page.getByRole("button", { name: /ask paypal to decide/i }).click();
-    await expect(page.getByText(/Closed in your favour/).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Closed in your favor/).first()).toBeVisible({ timeout: 30_000 });
   });
 
   expect(errors, "uncaught browser errors").toEqual([]);

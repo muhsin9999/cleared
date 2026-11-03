@@ -1,2 +1,2 @@
-export const DISPUTE_LABEL: Record<string, string> = { open: "Open", waiting_for_seller: "Needs your response", under_review: "PayPal is reviewing", resolved_seller: "Closed in your favour", resolved_buyer: "Closed for the buyer", closed: "Closed" };
+export const DISPUTE_LABEL: Record<string, string> = { open: "Open", waiting_for_seller: "Needs your response", under_review: "PayPal is reviewing", resolved_seller: "Closed in your favor", resolved_buyer: "Closed for the buyer", closed: "Closed" };
 export const REASON_LABEL: Record<string, string> = { MERCHANDISE_OR_SERVICE_NOT_RECEIVED: "Says it never arrived", MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: "Says it wasn’t as described", UNAUTHORISED: "Says they didn’t make the payment" };

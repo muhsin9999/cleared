@@ -14,9 +14,9 @@ suite("PayPal event descriptions", () => {
     expect(describe(ev("CUSTOMER.DISPUTE.CREATED", { reason: "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" }), "Rowan Hale")).toBe("Rowan Hale opened a dispute: “not received”");
     expect(reasonText("SOME_NEW_REASON")).toBe("some new reason");
   });
-  it("says who a resolved dispute favoured", () => {
-    expect(describe(ev("CUSTOMER.DISPUTE.RESOLVED", { dispute_outcome: { outcome_code: "RESOLVED_SELLER_FAVOUR" } }))).toBe("Dispute closed in your favour");
-    expect(describe(ev("CUSTOMER.DISPUTE.RESOLVED", { dispute_outcome: { outcome_code: "RESOLVED_BUYER_FAVOUR" } }))).toBe("Dispute closed in the buyer’s favour");
+  it("says who a resolved dispute favored", () => {
+    expect(describe(ev("CUSTOMER.DISPUTE.RESOLVED", { dispute_outcome: { outcome_code: "RESOLVED_SELLER_FAVOUR" } }))).toBe("Dispute closed in your favor");
+    expect(describe(ev("CUSTOMER.DISPUTE.RESOLVED", { dispute_outcome: { outcome_code: "RESOLVED_BUYER_FAVOUR" } }))).toBe("Dispute closed in the buyer’s favor");
   });
   it("falls back to a readable name for unknown events", () => {
     expect(describe(ev("PAYMENT.PAYOUTS-ITEM.SUCCEEDED", {}))).toBe("payment · payouts-item · succeeded");

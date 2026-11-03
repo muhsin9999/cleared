@@ -298,7 +298,7 @@ export const JOURNEYS: Journey[] = [
     steps: [
       { title: "PayPal reviews the evidence", sub: "In the sandbox, Cleared can ask it to decide", nodes: ["app", "disputes"], edges: ["app-disputes"], call: "POST /v1/customer/disputes/{id}/adjudicate" },
       { title: "PayPal sends the result", sub: "A signed event, and the next sync", nodes: ["events", "webhook", "sync", "disputes"], edges: ["events-webhook", "sync-disputes"], call: "CUSTOMER.DISPUTE.RESOLVED" },
-      { title: "The case closes", sub: "Shown on Home and in Activity", nodes: ["webhook", "neon", "app"], edges: ["webhook-neon"], call: "Closed in your favour" },
+      { title: "The case closes", sub: "Shown on Home and in Activity", nodes: ["webhook", "neon", "app"], edges: ["webhook-neon"], call: "Closed in your favor" },
     ],
   },
 ];

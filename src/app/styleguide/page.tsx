@@ -450,7 +450,7 @@ export default function StyleguidePage() {
               <div>
                 <Label>Event row</Label>
                 <div className="divide-y divide-line rounded-[10px] border border-line bg-surface">
-                  <EventRow type="CUSTOMER.DISPUTE.RESOLVED" summary="Dispute closed in your favour. $400 stays in your balance." time="14:32" />
+                  <EventRow type="CUSTOMER.DISPUTE.RESOLVED" summary="Dispute closed in your favor. $400 stays in your balance." time="14:32" />
                   <EventRow type="INVOICING.INVOICE.PAID" summary="Northwind Studio paid $400" time="09:20" simulated />
                 </div>
               </div>

@@ -28,7 +28,7 @@ export function describe(event: WebhookEvent, clientName?: string | null) {
     case "INVOICING.INVOICE.PAID":
       return `${who} paid ${amountText(r.payments?.paid_amount ?? r.amount)}`.trim();
     case "INVOICING.INVOICE.CANCELLED":
-      return "The invoice was cancelled";
+      return "The invoice was canceled";
     case "CHECKOUT.ORDER.APPROVED":
       return `${who} approved the payment`;
     case "PAYMENT.CAPTURE.COMPLETED":
@@ -39,7 +39,7 @@ export function describe(event: WebhookEvent, clientName?: string | null) {
       return `The dispute was updated (${(r.status ?? "").toLowerCase().replaceAll("_", " ")})`;
     case "CUSTOMER.DISPUTE.RESOLVED": {
       const outcome = r.dispute_outcome?.outcome_code ?? "";
-      return outcome.includes("SELLER") ? "Dispute closed in your favour" : outcome.includes("BUYER") ? "Dispute closed in the buyer’s favour" : "Dispute closed";
+      return outcome.includes("SELLER") ? "Dispute closed in your favor" : outcome.includes("BUYER") ? "Dispute closed in the buyer’s favor" : "Dispute closed";
     }
     default:
       return event.event_type.toLowerCase().replaceAll("_", " ").replaceAll(".", " · ");

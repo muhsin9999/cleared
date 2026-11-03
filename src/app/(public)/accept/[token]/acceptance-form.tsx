@@ -91,7 +91,7 @@ export function AcceptanceForm({ token, sellerName }: { token: string; sellerNam
               minLength={3}
               maxLength={1000}
               rows={4}
-              placeholder="e.g. The layered file won't open, or the colours don't match what we agreed."
+              placeholder="e.g. The layered file won't open, or the colors don't match what we agreed."
               className="min-h-28 bg-surface text-base"
             />
             <FieldDescription>{firstName} sees this right away, before anything goes to PayPal.</FieldDescription>

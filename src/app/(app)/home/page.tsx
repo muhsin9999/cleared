@@ -54,7 +54,7 @@ async function Home() {
         <AgentCard
           mood={home.lastDispute?.status === "resolved_seller" ? "done" : "idle"}
           title="Watching your PayPal account"
-          body={home.lastDispute?.status === "resolved_seller" ? `Last dispute closed in your favour: ${money(home.lastDispute.amountCents)} kept.` : "Disputes, holds and notices land here first."}
+          body={home.lastDispute?.status === "resolved_seller" ? `Last dispute closed in your favor: ${money(home.lastDispute.amountCents)} kept.` : "Disputes, holds and notices land here first."}
         />
       )}
 
