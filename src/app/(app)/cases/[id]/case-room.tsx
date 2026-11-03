@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { approveAndSubmit, startDraft } from "@/server/actions/cases";
+import { approveAndSubmit, refreshCase, startDraft } from "@/server/actions/cases";
 import { resolveLatestDispute } from "@/server/actions/demo";
 import type { PacketView } from "@/server/packet-view";
 
@@ -77,6 +77,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
   useEffect(() => {
     if (!real || !submitted || resolved) return;
     const t = setInterval(async () => {
+      await refreshCase(disputeId).catch(() => null);
       const res = await fetch(`/api/cases/${disputeId}/packet`, { cache: "no-store" }).catch(() => null);
       if (res?.ok) setPacket(((await res.json()) as { packet: PacketView | null }).packet);
       router.refresh();

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { db, schema as s } from "@/db";
 import { requireSeller } from "../auth";
 import { ensureDraft, startTask } from "../workflows";
+import { paypal } from "../paypal/client";
+import { upsertDispute, type PayPalDispute } from "../paypal/disputes";
 
 type Claim = { text: string; exhibitIds: string[] };
 
@@ -50,4 +52,23 @@ export async function approveAndSubmit(disputeId: string) {
     revalidatePath(`/cases/${dispute.id}`);
     return { ok: false as const, message: `PayPal didn’t take the evidence: ${(e as Error).message}. Nothing was lost; you can try again.` };
   }
+}
+
+/** While a real case waits on PayPal, the case screen asks for PayPal's current status (a claim, a review, a decision)
+ *  instead of waiting for the next webhook or sync. Logs PayPal's decision once. */
+export async function refreshCase(disputeId: string) {
+  const seller = await requireSeller();
+  const dispute = await db.query.disputes.findFirst({ where: and(eq(s.disputes.id, disputeId), eq(s.disputes.sellerId, seller.id)) });
+  if (!dispute || dispute.paypalDisputeId.startsWith("SIM-") || dispute.status.startsWith("resolved") || dispute.status === "closed") return { changed: false };
+  const live = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${dispute.paypalDisputeId}`).catch(() => null);
+  if (!live) return { changed: false };
+  const changed = live.status !== dispute.paypalStatus || (live.dispute_life_cycle_stage ?? null) !== dispute.stage;
+  if (!changed) return { changed: false };
+  await upsertDispute(live);
+  if (live.status === "RESOLVED") {
+    const sellerWon = (live.dispute_outcome?.outcome_code ?? "").includes("SELLER");
+    await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "paypal", type: "CUSTOMER.DISPUTE.RESOLVED", summary: sellerWon ? "PayPal closed the dispute in your favor" : "PayPal closed the dispute", verified: true, payload: { dispute_id: dispute.paypalDisputeId, outcome: live.dispute_outcome?.outcome_code } });
+  }
+  revalidatePath(`/cases/${disputeId}`);
+  return { changed: true };
 }
