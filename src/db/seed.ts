@@ -70,7 +70,7 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
 
   const released = [
     { clientName: "Bloom Bakery", clientEmail: "hello@bloombakery.example", title: "Logo refresh", description: "Refreshed wordmark and two color variants, delivered as SVG and PNG.", kind: "digital" as const, amountCents: 8_000, paidAt: at(-52) },
-    { clientName: "Jonas Mensah", clientEmail: "jonas@mensah.example", title: "Pet portrait", description: "Digital portrait of a golden retriever, 3000×3000 PNG.", kind: "digital" as const, amountCents: 6_000, paidAt: at(-38) },
+    { clientName: "Jonas Miller", clientEmail: "jonas@miller.example", title: "Pet portrait", description: "Digital portrait of a golden retriever, 3000×3000 PNG.", kind: "digital" as const, amountCents: 6_000, paidAt: at(-38) },
     { clientName: "Rowan Hale", clientEmail: "rowan@hale.example", title: "Twitch emotes ×3", description: "Three custom emotes at 112, 56 and 28 px.", kind: "digital" as const, amountCents: 4_500, paidAt: at(-21) },
   ];
   for (const r of released) {

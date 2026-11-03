@@ -35,7 +35,7 @@ const INSTRUCTIONS = `You are Cleared AI, the assistant for a freelancer who sel
 type Ctx = { sellerId: string; upload: Upload | null; filed: string | null; actions: string[] };
 
 function tools(ctx: Ctx): AgentTool[] {
-  // A sale by its id, or by its client or title ("Ama Mensah", "logo").
+  // A sale by its id, or by its client or title ("Jonas Miller", "logo").
   const findSale = async (ref: string) => {
     const r = (ref ?? "").trim();
     if (!r) return undefined;
