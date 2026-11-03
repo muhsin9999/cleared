@@ -8,6 +8,7 @@ import { askClearedAction, forgetMemo } from "@/server/actions/assistant";
 import { AgentAvatar } from "@/components/brand/agent-avatar";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useDictation, VoiceButton } from "./voice-input";
 
 export type AskMessage = { id: string; kind: string; body: { text?: string; files?: string[]; steps?: string[]; seconds?: number; links?: { label: string; href: string }[]; actions?: string[] } };
 export type Memo = { id: string; text: string; about: string | null };
@@ -22,6 +23,7 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
   const [pending, setPending] = useState<{ text: string; file?: string } | null>(null);
   const [busy, start] = useTransition();
   const end = useRef<HTMLDivElement>(null);
+  const voice = useDictation(text, setText);
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest" });
@@ -30,6 +32,7 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
   const send = (value: string) => {
     const v = value.trim();
     if ((!v && !file) || busy) return;
+    if (voice.listening) voice.toggle();
     const fd = new FormData();
     fd.set("text", v);
     if (file) fd.set("file", file);
@@ -118,7 +121,8 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
             <Paperclip className="size-5" />
             <input type="file" className="sr-only" accept="application/pdf,image/png,image/jpeg,image/webp,text/csv,text/plain" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
           </label>
-          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} placeholder="Ask Cleared…" aria-label="Message Cleared AI" className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-paper px-3 text-sm outline-none focus:border-cleared" />
+          {voice.supported ? <VoiceButton listening={voice.listening} onToggle={voice.toggle} /> : null}
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} placeholder={voice.listening ? "Listening…" : "Ask Cleared…"} aria-label="Message Cleared AI" className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-paper px-3 text-sm outline-none focus:border-cleared" />
           <button type="submit" disabled={busy || (!text.trim() && !file)} className="grid size-10 place-items-center rounded-lg bg-cleared text-white hover:bg-cleared-strong disabled:opacity-50" aria-label="Send">
             <SendHorizontal className="size-4" />
           </button>

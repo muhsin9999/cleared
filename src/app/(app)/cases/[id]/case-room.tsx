@@ -160,7 +160,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
               <p className="text-sm text-muted-foreground" role="status">PayPal isn’t taking evidence on this case right now.</p>
             ) : null}
             {!submitted && !resolved && packet!.status !== "submitting" && packet!.claims.length && canSubmit ? (
-              <Approve packet={packet!} pending={pending} onApprove={() =>
+              <Approve packet={packet!} byId={byId} pending={pending} onApprove={() =>
                 start(async () => {
                   const r = await approveAndSubmit(disputeId);
                   if (r.ok) toast.success("Sending to PayPal…");
@@ -397,17 +397,33 @@ function Reply({ packet, byId, exhibits, onFocus }: { packet: PacketView; byId: 
   );
 }
 
-function Approve({ packet, pending, onApprove }: { packet: PacketView; pending: boolean; onApprove: () => void }) {
+function Approve({ packet, byId, pending, onApprove }: { packet: PacketView; byId: Record<string, Exhibit>; pending: boolean; onApprove: () => void }) {
   const [open, setOpen] = useState(false);
+  const cited = new Set(packet.claims.flatMap((c) => c.exhibitIds.filter((id) => byId[id])));
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button size="lg" className="w-full sm:w-auto sm:min-w-64" disabled={pending} />}>{pending ? "Sending to PayPal…" : "Approve and send to PayPal"}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{packet.status === "failed" ? "Try sending again?" : "Send this to PayPal?"}</DialogTitle>
-          <DialogDescription>{packet.claims.length} statements and your files go to PayPal as proof of delivery. You can’t edit them after.</DialogDescription>
+          <DialogTitle>{packet.status === "failed" ? "Try sending again?" : "Send your reply to PayPal?"}</DialogTitle>
+          <DialogDescription>
+            {packet.claims.length} {packet.claims.length === 1 ? "statement" : "statements"}, backed by {cited.size} {cited.size === 1 ? "exhibit" : "exhibits"}.
+          </DialogDescription>
         </DialogHeader>
-        <ol className="list-inside list-decimal space-y-1 text-sm">{packet.claims.map((c) => <li key={c.text}>{c.text}</li>)}</ol>
+        <ol className="max-h-[45svh] divide-y overflow-auto rounded-lg border">
+          {packet.claims.map((c, i) => (
+            <li key={c.text} className="flex items-start gap-3 px-3.5 py-3">
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-muted font-mono text-[0.7rem] text-muted-foreground tabular-nums">{i + 1}</span>
+              <p className="min-w-0 flex-1 text-sm text-pretty">{c.text}</p>
+              <span className="flex shrink-0 gap-1">
+                {c.exhibitIds.map((id) => (byId[id] ? <span key={id} className="rounded bg-cleared-tint px-1.5 py-0.5 font-mono text-[0.7rem] text-cleared-strong">{byId[id].letter}</span> : null))}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="flex items-center gap-2 rounded-md bg-caution-tint px-3 py-2 text-sm text-caution">
+          <TriangleAlertIcon aria-hidden className="size-4 shrink-0" /> Once it’s sent, you can’t change it.
+        </p>
         <DialogFooter>
           <DialogClose render={<Button variant="ghost" />}>Keep reviewing</DialogClose>
           <Button

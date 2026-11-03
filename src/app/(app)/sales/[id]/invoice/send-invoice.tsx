@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { SendIcon } from "lucide-react";
+import { CheckIcon, FlaskConicalIcon, SendIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { sendInvoice } from "@/server/actions/sales";
 
-export function SendInvoice({ saleId, clientEmail, amount, sandbox }: { saleId: string; clientEmail: string; amount: string; sandbox: boolean }) {
+export function SendInvoice({ saleId, clientName, clientEmail, item, amount, sandbox }: { saleId: string; clientName: string; clientEmail: string; item: string; amount: string; sandbox: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
@@ -21,14 +21,31 @@ export function SendInvoice({ saleId, clientEmail, amount, sandbox }: { saleId: 
           <SendIcon aria-hidden /> Send through PayPal
         </DialogTrigger>
       </div>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Send this invoice through PayPal?</DialogTitle>
-          <DialogDescription>
-            PayPal emails {clientEmail} an invoice for {amount} with the items and terms shown. They pay on PayPal’s page. You can cancel the invoice in PayPal until it’s paid.
-            {sandbox ? " In this sandbox demo, PayPal delivers it to the test buyer account so it can be paid." : ""}
-          </DialogDescription>
+          <DialogTitle>Send this invoice?</DialogTitle>
+          <DialogDescription className="sr-only">PayPal emails the invoice to {clientEmail}. You can cancel it in PayPal until it’s paid.</DialogDescription>
         </DialogHeader>
+        {/* The three facts that matter, in the order the eye wants them: how much, to whom, for what. */}
+        <div className="rounded-lg border bg-paper px-4 py-3.5">
+          <p className="text-3xl font-semibold tracking-tight tabular-nums">{amount}</p>
+          <p className="mt-1 text-sm">
+            to <span className="font-medium">{clientName}</span> <span className="break-all text-muted-foreground">· {clientEmail}</span>
+          </p>
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">{item}</p>
+        </div>
+        <ul className="space-y-2 text-sm">
+          {["PayPal emails it, and they pay on PayPal’s page.", "You can cancel it in PayPal until it’s paid."].map((t) => (
+            <li key={t} className="flex items-start gap-2.5">
+              <CheckIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-cleared" /> {t}
+            </li>
+          ))}
+        </ul>
+        {sandbox ? (
+          <p className="flex items-center gap-2 rounded-md bg-muted/70 px-3 py-2 text-xs text-muted-foreground">
+            <FlaskConicalIcon aria-hidden className="size-3.5 shrink-0" /> Sandbox demo: PayPal delivers it to the test buyer, so it can be paid.
+          </p>
+        ) : null}
         {error ? <p role="alert" className="rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">{error}</p> : null}
         <DialogFooter>
           <DialogClose render={<Button variant="ghost" />}>Not yet</DialogClose>
