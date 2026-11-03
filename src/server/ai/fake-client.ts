@@ -13,7 +13,7 @@ export const fakeAiEnabled = () => process.env.AI_FAKE === "true" && !process.en
 /** Stands in for the AI pre-flight pass: a pause, then one finding the rules can't raise. */
 export async function fakePreflight(): Promise<Finding[]> {
   await wait(2600);
-  return [{ id: "ai-0", severity: "caution", title: "Usage rights aren’t stated", reason: "Say whether the client may use the work commercially. A client who expected full rights can call it “not as described”.", ruleRef: "K16", weight: 6, source: "ai" }];
+  return [{ id: "ai-0", severity: "caution", title: "Usage rights aren’t stated", reason: "Say whether the client may use the work commercially. A client who expected full rights can call it “not as described”.", ruleRef: "K16", weight: 6, source: "ai", fix: { label: "State the usage rights", add: { field: "description", text: "The client may use the final art commercially; the seller keeps the right to show it in a portfolio." } } }];
 }
 
 export function fakeClient(c: CaseFile): OpenAI {

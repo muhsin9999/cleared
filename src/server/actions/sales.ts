@@ -116,9 +116,11 @@ export async function sendInvoice(saleId: string) {
 // rule-based findings remain.
 export async function suggestFindings(input: z.input<typeof Draft>) {
   const seller = await requireSeller();
-  const parsed = Draft.partial({ clientName: true, clientEmail: true }).safeParse(input);
-  if (!parsed.success) return { ok: false as const, findings: [] };
-  const draft = { clientName: "", clientEmail: "", ...parsed.data } as z.infer<typeof Draft>;
+  // The check runs on a draft before it's complete, so only what the review needs is required. A strict parse
+  // here used to turn a short description into "Unavailable right now" (review, 3 Nov).
+  const parsed = Draft.extend({ clientName: z.string(), clientEmail: z.string(), title: z.string().trim().min(1), description: z.string().trim() }).safeParse(input);
+  if (!parsed.success) return { ok: true as const, findings: [] };
+  const draft = parsed.data;
   try {
     const history = await sellerHistory();
     if (fakeAiEnabled()) return { ok: true as const, findings: await fakePreflight() };

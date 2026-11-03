@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { money } from "@/lib/format";
 import { RULES } from "@/lib/knowledge";
-import { type Finding, type History, preflight, type SaleDraft, scoreWith } from "@/lib/preflight";
+import { applyFix, type Finding, fixApplied, type History, preflight, type SaleDraft, scoreWith } from "@/lib/preflight";
 import { cn } from "@/lib/utils";
 import { createSale, suggestFindings } from "@/server/actions/sales";
 
@@ -57,7 +57,7 @@ const SEVERITY = {
   info: { icon: InfoIcon, className: "text-muted-foreground" },
 } as const;
 
-const applied = (draft: SaleDraft, f: Finding) => !!f.fix && Object.entries(f.fix.patch).every(([k, v]) => draft[k as keyof SaleDraft] === v);
+const applied = (draft: SaleDraft, f: Finding) => !!f.fix && fixApplied(draft, f.fix);
 
 /** One line in the agent's check log: the check it ran and what it found. */
 type CheckLine = { tool: string; arg?: string; icon: LucideIcon; doing: string; detail: string; tone?: "risk" | "caution"; at?: number };
@@ -66,6 +66,14 @@ type AiStatus = "idle" | "loading" | "done" | "failed";
 export function NewSaleFlow({ history, sample = false }: { history: History; sample?: boolean }) {
   const [step, setStep] = useState<"describe" | "scan" | "fix">("describe");
   const [draft, setDraft] = useState<SaleDraft>(sample ? SAMPLE : EMPTY);
+  // The price keeps what was typed ("12." on the way to "12.50"); the draft holds cents, 0 until the price is valid.
+  const [amountText, setAmountText] = useState(sample ? String(SAMPLE.amountCents / 100) : "");
+  const setAmount = (raw: string) => {
+    setAmountText(raw);
+    const n = /^\$?\s*\d[\d,]*(\.\d{0,2})?$/.test(raw.trim()) ? Number(raw.trim().replace(/[$,\s]/g, "")) : NaN;
+    setDraft((d) => ({ ...d, amountCents: n > 0 ? Math.round(n * 100) : 0 }));
+  };
+  const amountError = amountText.trim() && !draft.amountCents ? "Enter a price above $0, like 400 or 49.99" : undefined;
   const [initial, setInitial] = useState<Finding[]>([]);
   const [checks, setChecks] = useState<{ rules: CheckLine[]; proof: CheckLine }>({ rules: [], proof: proofLine(EMPTY) });
   const [ai, setAi] = useState<Finding[]>([]);
@@ -110,7 +118,10 @@ export function NewSaleFlow({ history, sample = false }: { history: History; sam
           <CardContent className="space-y-5 pt-6">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Try a sample:</span>
-              <Button type="button" variant="outline" size="sm" onClick={() => setDraft(SAMPLE)}>
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+                  setDraft(SAMPLE);
+                  setAmountText(String(SAMPLE.amountCents / 100));
+                }}>
                 <SparklesIcon aria-hidden /> $400 character sheet for a game studio
               </Button>
             </div>
@@ -132,8 +143,8 @@ export function NewSaleFlow({ history, sample = false }: { history: History; sam
               </Field>
               <Field>
                 <FieldLabel htmlFor="amount">Total price (USD)</FieldLabel>
-                <Input id="amount" inputMode="decimal" value={draft.amountCents ? String(draft.amountCents / 100) : ""} onChange={(e) => set("amountCents", Math.round(Number(e.target.value.replace(/[^0-9.]/g, "")) * 100) || 0)} placeholder="400" />
-                <FieldError errors={errors.amountCents?.map((message) => ({ message }))} />
+                <Input id="amount" inputMode="decimal" value={amountText} onChange={(e) => setAmount(e.target.value)} placeholder="400" aria-invalid={!!amountError || undefined} />
+                <FieldError errors={(amountError ? [amountError] : (errors.amountCents ?? [])).map((message) => ({ message }))} />
               </Field>
             </div>
             <Field>
@@ -347,7 +358,8 @@ function Fix({
   const fixed = findings.filter((x) => x.done);
   const notes = findings.filter((x) => !x.done && x.f.severity === "info");
   const fixable = open.filter((x) => x.f.fix);
-  const fixAll = () => setDraft((d) => fixable.reduce((acc, x) => ({ ...acc, ...x.f.fix!.patch }), d));
+  // Each fix is applied on top of the last, so two fixes to the description both land.
+  const fixAll = () => setDraft((d) => fixable.reduce((acc, x) => applyFix(acc, x.f.fix!), d));
   const deposit = draft.depositPercent ? Math.round((draft.amountCents * draft.depositPercent) / 100) : null;
 
   const actions = (
@@ -433,7 +445,7 @@ function Fix({
                         </p>
                         <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground text-pretty" title={f.reason}>{f.reason}</p>
                         {f.fix ? (
-                          <Button variant="outline" size="sm" className="mt-2.5 h-auto min-h-8 w-fit max-w-full py-1.5 text-left whitespace-normal" onClick={() => setDraft((d) => ({ ...d, ...f.fix!.patch }))}>
+                          <Button variant="outline" size="sm" className="mt-2.5 h-auto min-h-8 w-fit max-w-full py-1.5 text-left whitespace-normal" onClick={() => setDraft((d) => applyFix(d, f.fix!))}>
                             <WandSparklesIcon aria-hidden /> {f.fix.label}
                           </Button>
                         ) : null}

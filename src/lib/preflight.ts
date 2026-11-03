@@ -21,18 +21,42 @@ export type Finding = {
   title: string;
   reason: string;
   ruleRef: string;
-  fix?: { label: string; patch: Partial<SaleDraft> };
+  fix?: Fix;
   weight: number;
   /** "ai" for findings suggested by the model on top of the rules. */
   source?: "rules" | "ai";
 };
+
+/** A one-click fix. `patch` sets fields outright; `add` appends a sentence to a text field, so several fixes to
+ *  the same field (vague description, usage rights) stack instead of overwriting each other. */
+export type Fix = { label: string; patch?: Partial<SaleDraft>; add?: { field: "description" | "refundTerms"; text: string } };
+
+const joinSentences = (a: string, b: string) => {
+  const head = a.trim();
+  if (!head) return b.trim();
+  return `${/[.!?]$/.test(head) ? head : `${head}.`} ${b.trim()}`;
+};
+
+export function applyFix(draft: SaleDraft, fix: Fix): SaleDraft {
+  const next = { ...draft, ...fix.patch };
+  if (fix.add && !next[fix.add.field].includes(fix.add.text.trim())) next[fix.add.field] = joinSentences(next[fix.add.field], fix.add.text);
+  return next;
+}
+
+export function fixApplied(draft: SaleDraft, fix: Fix) {
+  const patched = Object.entries(fix.patch ?? {}).every(([k, v]) => draft[k as keyof SaleDraft] === v);
+  return patched && (!fix.add || draft[fix.add.field].includes(fix.add.text.trim()));
+}
+
+/** Template gaps a model sometimes leaves in suggested text: "[file format(s)]", "{size}", "<client>", "TBD". */
+export const hasPlaceholder = (text: string) => /\[[^\]]*\]|\{[^}]*\}|<[^>]*>|\bTBD\b|\bX{2,}\b/i.test(text);
 
 /** Weight of an AI finding in the readiness score (rules stay the main signal). */
 export const AI_WEIGHT = { risk: 12, caution: 6, info: 0 } as const;
 
 /** Score with AI findings counted until their fix is applied. */
 export function scoreWith(base: { score: number; findings: Finding[] }, ai: Finding[], draft: SaleDraft) {
-  const open = ai.filter((f) => !(f.fix && Object.entries(f.fix.patch).every(([k, v]) => draft[k as keyof SaleDraft] === v)));
+  const open = ai.filter((f) => !(f.fix && fixApplied(draft, f.fix)));
   return Math.max(0, base.score - open.reduce((sum, f) => sum + f.weight, 0));
 }
 
@@ -73,7 +97,7 @@ export function preflight(draft: SaleDraft, history: History): { score: number; 
       title: "The description is vague",
       reason: "Say exactly what the client gets: format, size, number of revisions. That wording becomes your evidence if the client later says the work wasn’t as described.",
       ruleRef: "K16",
-      fix: { label: "Spell out files, size and revisions", patch: { description: `${draft.description.trim().replace(/\.$/, "")}. Delivered as PNG (3000×3000 px) plus a layered source file, with 2 revision rounds.` } },
+      fix: { label: "Spell out files, size and revisions", add: { field: "description", text: "Delivered as PNG (3000×3000 px) plus a layered source file, with 2 revision rounds." } },
       weight: 16,
     });
   }
