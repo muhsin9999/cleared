@@ -88,6 +88,18 @@ What the plugin changed:
 - **Tests the plugin's way:** `tests/tracking.test.ts` runs the real SDK against a fake `fetch` that answers in PayPal's wire format: 12 cases covering the exact fields sent, a dropped connection settled or left unknown, an unreadable reply, a 500 that did or didn't land, a failed token request that is never re-read, a 422 and a 403.
 - **Checked against the live sandbox:** `scripts/spikes/sdk-smoke.ts` finds the order behind a paid sandbox invoice through the SDK.
 
+**The plugin in use.** Claude Code's own records show the plugin being installed on 22 Oct, and then six of its skills loading while it reviewed the tracking code that afternoon (times in UTC):
+
+![Claude Code's plugin record and session log: APIMatic's PayPal plugin 0.4.1 installed 22 Oct 2026, then six of its skills loaded between 15:55 and 15:57](docs/apimatic/plugin-skills-22-oct.png)
+
+**The contract sheet it produced,** [`paypal-plan.md`](paypal-plan.md):
+
+![The top of paypal-plan.md: written with APIMatic's PayPal Context Plugin, with the repo survey and host settings](docs/apimatic/paypal-plan.png)
+
+**The PayPal tests passing:** the 12 tracking tests written with the plugin's testing skill, plus 4 tests for the PayPal client's read retries:
+
+![Vitest output: tests/tracking.test.ts and tests/paypal-client.test.ts, 16 of 16 passing](docs/apimatic/paypal-tests.png)
+
 To reproduce: `npx context-plugins install paypal`, then `/reload-plugins` in Claude Code.
 
 ## Architecture
