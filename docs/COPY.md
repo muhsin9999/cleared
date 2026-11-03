@@ -10,7 +10,7 @@ Every user-visible line on `/` (src/app/(public)/page.tsx and src/components/mar
 
 ## Voice of the customer: what sellers actually say
 
-All from the r/paypal Atom feed (top posts, past year) captured 19 Oct 2026 into the research scratchpad (`painA/rss/paypal.xml`). Reddit returned 403 to direct fetches on 20 Oct, so the wording is from the feed copy of each post. It is self-selected anecdote, not a sample.
+All from the r/paypal Atom feed (top posts, past year) captured 19 Oct 2026. Reddit returned 403 to direct fetches on 20 Oct, so the wording is from the feed copy of each post. It is self-selected anecdote, not a sample.
 
 | # | Exact words | Who | Source |
 | --- | --- | --- | --- |
@@ -40,8 +40,8 @@ Landing v6 (21 Oct 2026): v5 plus the agent section after the hero. Landing v5 (
 | Line on the page | Why it is there (which pain) | Source | Status |
 | --- | --- | --- | --- |
 | **Header** lockup (stamp + "cleared.", link labelled "cleared, home"); nav "How it works", "For judges" (phone: "Judges"), "GitHub" | Way-finding; judges need the path and the code. No "Pricing" or "Sign in": there is neither | - | our promise |
-| **Hero** H1 "Get paid, and stay paid." | Kept. V1, V5, V11 all describe being paid and then losing access, so "stay paid" is exactly the gap | PRODUCT.md tagline | our promise |
-| "Check every sale before PayPal does, keep your proof, and answer disputes with evidence." | The three moments in 14 words; "evidence" because V3/V10/V11 sellers gather it too late. Says what Cleared does, not what PayPal will decide | PRODUCT.md F1, F4, F6 | our promise |
+| **Hero** H1 "Get paid, and stay paid." | Kept. V1, V5, V11 all describe being paid and then losing access, so "stay paid" is exactly the gap | the product tagline | our promise |
+| "Check every sale before PayPal does, keep your proof, and answer disputes with evidence." | The three moments in 14 words; "evidence" because V3/V10/V11 sellers gather it too late. Says what Cleared does, not what PayPal will decide | product features F1, F4, F6 | our promise |
 | Button "Try the live demo" / link "or start as a new seller" | Says what happens; no sign-up step hidden | session actions | our promise |
 | "PayPal sandbox · no sign-up · not affiliated with PayPal" | Honesty up front, not only in the footer | DESIGN.md brand rules | verified fact |
 | Hero card: art tile, "Character sheet: 3 poses", "Northwind Games", "$400.00", "Sale amount" | The app's own sample sale | new-sale-flow.tsx SAMPLE | illustrative |
@@ -61,16 +61,16 @@ Landing v6 (21 Oct 2026): v5 plus the agent section after the hero. Landing v5 (
 | "3,010" / "CFPB complaints about PayPal: “Trouble accessing funds”, Jan 2025 to Sep 2026." / "CFPB complaint database, filtered" | One public, official number; closed window so the link reproduces it. Issue name shortened inside the quote; the full name is "Trouble accessing funds in your mobile or digital wallet" and is in the link | CFPB, company "Paypal Holdings, Inc", 1 Jan 2025 to 30 Sep 2026: 3,010 matches, checked 20 Oct 2026 | verified fact |
 | **How it works** H2 "How it works" | Plain label, matches the nav | - | our framing |
 | "Check the sale before you invoice." / "Each finding says why PayPal cares, and comes with a fix." + ring 38 → 94 with "Split into deposit + final", "Delivery within 10 days", "Files, size and revisions", "Refund terms added" | F1 in one line; every finding in preflight.ts carries a reason and a fix | preflight.ts | our promise / illustrative |
-| "Keep the proof while you deliver." / "Files and the client's “I received the work”, kept on the sale." + locker: harmattan-cover-final.png 6.4 MB, harmattan-cover-layers.pdf 9.1 MB, "Tolu A. confirmed receipt" 18:00, "PayPal invoice, paid" $250, "Harmattan Tapes · proof kept", "4 of 4" | Answers V3; real seeded proof | PRODUCT.md F4; seed.ts | our promise / illustrative |
+| "Keep the proof while you deliver." / "Files and the client's “I received the work”, kept on the sale." + locker: harmattan-cover-final.png 6.4 MB, harmattan-cover-layers.pdf 9.1 MB, "Tolu A. confirmed receipt" 18:00, "PayPal invoice, paid" $250, "Harmattan Tapes · proof kept", "4 of 4" | Answers V3; real seeded proof | product features F4; seed.ts | our promise / illustrative |
 | "Answer a dispute with your exhibits." / "Cleared drafts the reply. You approve it. PayPal decides." + "Dispute: item not received", "Lagos Lo-Fi Records · $250.00", "Respond within 10 days" → "Reply to PayPal · drafted, for Ada to approve", "The files were delivered and the client confirmed receipt (A, B), as the invoice set out (C).", exhibits A/B/C, stamp | Never promise outcomes; the demo's simulated dispute is MERCHANDISE_OR_SERVICE_NOT_RECEIVED on the Harmattan sale; 10 days is PayPal's response window | server/actions/demo.ts; FLOWS §6; K15 | our promise / illustrative |
-| "Cleared can't lift a limitation, release a hold early, or change a PayPal decision." | Honest limit (P3, V12) | P3, K11, PRODUCT.md | our promise |
+| "Cleared can't lift a limitation, release a hold early, or change a PayPal decision." | Honest limit (P3, V12) | P3, K11 | our promise |
 | **Sellers' words** rotator: V1, V3, V5 with "who" lines and r/paypal links (unchanged wording from v3) | Sellers' own words, one at a time | V1, V3, V5 | seller's own words |
 | **For judges** H2 "For judges: try it as Ada, in about three minutes." / "PayPal Invoicing, Orders, Tracking, Disputes and Webhooks APIs, sandbox only. The AI only drafts." | Sponsor/API clarity | STACK.md, AI.md | our promise (check each API is live before submission) |
 | Closing band (merged with the old "For judges" section, v7): "Your next commission should stay paid." / "Try it as Ada Okafor, an illustrator, on the PayPal sandbox. About three minutes, no sign-up, no keys." / "The demo opens on three jobs:" 1 "A client disputes $250", 2 "A $400 job, before it’s invoiced", 3 "“Your account has been limited”" ; "Read the code on GitHub" | Same three jobs, same order, as the Start here card in the app, so the page and the product make one promise | start-here.tsx, demo.ts, new-sale-flow.tsx, notice-form.tsx | our promise |
-| **Closing CTA** H2 "Your next commission should stay paid." | The first-commission story (V1, V7) turned into the promise of the H1; "should", not "will": Cleared can't guarantee an outcome | V1, V7; PRODUCT.md tagline | our framing |
+| **Closing CTA** H2 "Your next commission should stay paid." | The first-commission story (V1, V7) turned into the promise of the H1; "should", not "will": Cleared can't guarantee an outcome | V1, V7; the product tagline | our framing |
 | "Try it as Ada on the PayPal sandbox. No sign-up." + button "Try the live demo" (pending: "Opening Ada's workspace…") | Says exactly what the button does | session actions (enterDemo) | our promise |
 | Stamp "CLEARED" on the desk-photo corner | The brand mark, decorative (hidden from screen readers) | DESIGN.md mark | our framing |
-| **Footer** lockup + "Get paid, and stay paid." | The tagline, repeated once | PRODUCT.md tagline | our promise |
+| **Footer** lockup + "Get paid, and stay paid." | The tagline, repeated once | the product tagline | our promise |
 | Columns: **Product** "How it works", "For judges", "Live demo" (pending: "Opening Ada's workspace…"); **Project** "GitHub", "README", "Legal & privacy", "Report an issue"; **Built on** "PayPal sandbox", "Render", "Neon", "Cloudflare R2", "OpenAI" | Way-finding; "Built on" is the actual stack, plain text, no logos | STACK.md | verified fact (re-check the stack before submission) |
 | Footer "Works with PayPal (sandbox). Not affiliated with or endorsed by PayPal." / "© 2026 cleared" | Required honesty | DESIGN.md | verified fact |
 
@@ -88,9 +88,7 @@ Landing v6 (21 Oct 2026): v5 plus the agent section after the hero. Landing v5 (
 
 ## Not verified, or changed
 
-- **"3,040" removed.** The old figure (PRODUCT.md, ch.12) could not be reproduced: the old link used company "PAYPAL HOLDINGS, INC.", which now returns **0 matches** in the CFPB search. The working company value is "Paypal Holdings, Inc". With that, the same issue gives 3,045 to 19 Oct 2026 and 3,010 to 30 Sep 2026. The page uses 3,010 with a closed window. CFPB may still publish a few late complaints in that window, so the count can creep up. The CFPB API (curl) returns 403; the count was read from the search page in a headless browser.
+- **"3,040" removed.** The old figure (an earlier draft) could not be reproduced: the old link used company "PAYPAL HOLDINGS, INC.", which now returns **0 matches** in the CFPB search. The working company value is "Paypal Holdings, Inc". With that, the same issue gives 3,045 to 19 Oct 2026 and 3,010 to 30 Sep 2026. The page uses 3,010 with a closed window. CFPB may still publish a few late complaints in that window, so the count can creep up. The CFPB API (curl) returns 403; the count was read from the search page in a headless browser.
 - **Reddit quotes** were taken from the RSS capture of 19 Oct 2026; Reddit blocked a direct re-fetch on 20 Oct. Posts can be edited or deleted.
 - **K8 / K13 wording** comes from KNOWLEDGE.md (help534, HELP393) and was not re-fetched today. HELP848 and pcc191 were re-fetched and match.
-- **"one third of top r/paypal posts"** (DEMO.md video script) is not on the page.
-- **DEMO.md says readiness 41 → 92.** The app's preflight.ts gives 38 → 94 for the sample against the fresh seed. The page uses 38 → 94. Update the video script, or the weights.
 - **Removed in v4 (visual pass):** the hero's two explanatory paragraphs (21/180-day sentence and the long "Cleared checks each sale..." line), the Harmattan sale-record card, the v3 "What Cleared does with Ada's next sale" section and its paragraphs, the PayPal-wording cards (their facts now sit in the numbers band), and "Start as a new seller" as a second button (now a text link). No new facts were added.

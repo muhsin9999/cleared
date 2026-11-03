@@ -14,7 +14,7 @@ This document decides **who uses Cleared, how they get in, every page, and the e
 **Decisions and why:**
 - **No sign-up form and no passwords in the demo.** Judges won't create accounts, and the rules require free, keyless judge access.
 - **No email magic links.** Judges have no inbox for them.
-- **"Log in with PayPal" + Partner Referrals** is the real-world onboarding. It goes in "What's next" and is shown as a disabled, explained option on the sign-in card. Multi-merchant onboarding is out of scope for the hackathon (see [PRODUCT.md](PRODUCT.md)).
+- **"Log in with PayPal" + Partner Referrals** is the real-world onboarding. It goes in "What's next" and is shown as a disabled, explained option on the sign-in card. Multi-merchant onboarding is out of scope for the hackathon.
 - **One sandbox business account** backs every demo workspace. Cleared tags its own PayPal objects with the workspace ID (invoice `reference`, order `custom_id`), so each workspace sees only its own sales.
 - **Every visitor gets a private copy of Ada's workspace** (tag `ada-<random>`), so judges never see each other's changes; a returning visitor keeps theirs. A nightly cron deletes copies older than 48 hours, with their R2 files. "Reset demo" in Settings restores the visitor's own copy instantly.
 

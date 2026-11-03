@@ -23,3 +23,6 @@ scripts/spikes/render-wf/node_modules/
 
 /test-results/
 /playwright-report/
+
+# Internal working notes (video script, plans, research); kept local, not public
+/notes/

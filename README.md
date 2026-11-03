@@ -132,7 +132,7 @@ npm run dev                     # http://localhost:3000 → Try the live demo
 
 Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui on Base UI, Motion · OpenAI Responses API · PayPal REST APIs and the APIMatic PayPal SDK · Render (web service, Workflows, cron) · Neon Postgres with Drizzle · Cloudflare R2 · Vitest and Playwright.
 
-Design and planning notes are in [docs/](docs/): product, flows, PayPal integration, AI design, stack, demo script.
+Design notes are in [docs/](docs/): flows, PayPal integration, AI design, PayPal's rules the AI may cite, stack and design.
 
 ## Licence
 

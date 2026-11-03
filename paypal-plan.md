@@ -89,7 +89,7 @@ Unknown outcomes: a timeout, a dropped connection, or an unreadable reply on a 2
 | `trackingNumber` | the task: the seller's tracking number; also the UNKNOWN OUTCOMES row searches by it | ✅ |
 | `carrier` | the task: the carrier the seller picks | ✅ |
 | `carrierNameOther` | the task, only when the carrier is Other | ✅ only for `OTHER` |
-| `notifyPayer` | YOUR CALL, decided: the product promise is that the client is told the goods shipped (docs/PRODUCT.md, F3) | ✅ `true` |
+| `notifyPayer` | YOUR CALL, decided: the product promise is that the client is told the goods shipped (Cleared's proof promise for shipped goods) | ✅ `true` |
 | `items` | nothing | ❌ |
 | `payPalAuthAssertion` | nothing (Cleared acts for its own sandbox seller, not a partner's) | ❌ |
 

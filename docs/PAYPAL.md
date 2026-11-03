@@ -32,7 +32,7 @@ All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 O
 - **Shop sales (goods path):** `POST /v2/checkout/orders` → buyer approves → `POST /v2/checkout/orders/{id}/capture`.
 - **Tracking:** `POST /v2/checkout/orders/{id}/track` with `{capture_id, tracking_number, carrier, notify_payer, items}`. Cancel with `PATCH …/trackers/{tracker_id}`.
   - **Do not** use `/v1/shipping/trackers-batch`; it is deprecated. The Agent Toolkit's tracking tool still uses it.
-- **Built with the APIMatic Context Plugin** (`npx context-plugins install paypal`). Keep transcripts and screenshots for [SPONSORS.md](SPONSORS.md).
+- **Built with the APIMatic Context Plugin** (`npx context-plugins install paypal`).
 - **Webhooks:** `CHECKOUT.ORDER.APPROVED`, `PAYMENT.CAPTURE.COMPLETED`, `.PENDING`, `.REFUNDED`, `.REVERSED`.
 - **Caveat:** `seller_protection.status=ELIGIBLE` is a snapshot of declared data, not a guarantee. Don't present it as one.
 

@@ -1,4 +1,4 @@
-// The judge path (docs/DEMO.md): check a sale, fix it, invoice through PayPal, get a dispute, watch the agent
+// The judge path (README, Try it in 60 seconds): check a sale, fix it, invoice through PayPal, get a dispute, watch the agent
 // build the case, approve, and see it resolved. Uses simulated disputes so the real sandbox stock is kept.
 import { expect, test } from "@playwright/test";
 import { enterDemo, watchErrors } from "./helpers";
