@@ -148,7 +148,7 @@ export type SandboxStep = "decided" | "deciding" | "escalated" | "resend" | "rev
  * claim; PayPal asks for evidence again; once that is in, the claim is under review and PayPal offers `adjudicate`
  * (about 30 minutes later); adjudicate closes it a minute or so after. Never fakes an outcome.
  */
-export async function advanceSandboxDecision(paypalDisputeId: string): Promise<{ step: SandboxStep; status: string }> {
+export async function advanceSandboxDecision(paypalDisputeId: string): Promise<{ step: SandboxStep; status: string; stage?: string }> {
   const path = `/v1/customer/disputes/${paypalDisputeId}`;
   let live = await paypal<PayPalDispute>("GET", path);
   const has = (rel: string) => (live.links ?? []).some((l) => l.rel === rel);
@@ -173,5 +173,5 @@ export async function advanceSandboxDecision(paypalDisputeId: string): Promise<{
     return { step: "escalated", status: live.status };
   }
   await upsertDispute(live);
-  return { step: "reviewing", status: live.status };
+  return { step: "reviewing", status: live.status, stage: live.dispute_life_cycle_stage };
 }

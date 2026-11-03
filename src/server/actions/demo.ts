@@ -88,14 +88,19 @@ export async function resolveLatestDispute() {
     }
     if (r.step === "deciding") return say("PayPal is closing the case. This takes about a minute.");
     if (r.step === "escalated") {
-      await db.insert(s.events).values({ sellerId: seller.id, saleId: dispute.saleId, source: "cleared", type: "DISPUTE.ESCALATED", summary: "Escalated to a PayPal claim, so PayPal can review the evidence and decide (sandbox)", verified: true, payload: { dispute_id: dispute.paypalDisputeId } });
+      await db.insert(s.events).values(escalatedEvent(seller.id, dispute.saleId, dispute.paypalDisputeId));
       // PayPal asks for the evidence again a few minutes after escalation; send the reply the seller already approved.
-      after(() => resendWhenAsked(dispute.id, dispute.paypalDisputeId));
+      after(() => driveToClaim(dispute.id, dispute.paypalDisputeId, seller.id, dispute.saleId));
       return say("Escalated to a PayPal claim. Cleared sends your approved reply to it when PayPal asks, then PayPal reviews it (about 30 minutes in the sandbox).");
     }
     if (r.step === "resend") {
       await resendApproved(dispute.id);
       return say("Sent your approved reply to PayPal’s claim. PayPal reviews it next (about 30 minutes in the sandbox).");
+    }
+    if (r.stage === "INQUIRY") {
+      // Too soon: PayPal is still processing the evidence (or a recent escalation). Carry on from here by itself.
+      after(() => driveToClaim(dispute.id, dispute.paypalDisputeId, seller.id, dispute.saleId));
+      return say("PayPal is still processing your evidence. Cleared escalates it to a PayPal claim as soon as PayPal allows and sends your approved reply to it; PayPal’s decision opens about 30 minutes after that.");
     }
     return say("PayPal is reviewing the claim. In the sandbox its decision opens about 30 minutes after the evidence. Ask again then.");
   }
@@ -118,12 +123,21 @@ async function resendApproved(disputeId: string) {
   }
 }
 
-/** After an escalation: waits (up to 10 minutes) for the claim to ask for evidence, then re-sends the approved reply. */
-async function resendWhenAsked(disputeId: string, paypalDisputeId: string) {
-  for (let i = 0; i < 30; i++) {
+const escalatedEvent = (sellerId: string, saleId: string | null, paypalDisputeId: string) => ({ sellerId, saleId, source: "cleared", type: "DISPUTE.ESCALATED", summary: "Escalated to a PayPal claim, so PayPal can review the evidence and decide (sandbox)", verified: true, payload: { dispute_id: paypalDisputeId } });
+
+/** Sandbox, in the background (up to 15 minutes): escalates the inquiry as soon as PayPal offers it, then re-sends
+ *  the approved reply when the claim asks for evidence. Stops once the claim has the evidence. */
+async function driveToClaim(disputeId: string, paypalDisputeId: string, sellerId: string, saleId: string | null) {
+  for (let i = 0; i < 45; i++) {
     await new Promise((r) => setTimeout(r, 20_000));
     const live = await paypal<PayPalDispute>("GET", `/v1/customer/disputes/${paypalDisputeId}`).catch(() => null);
-    if ((live?.links ?? []).some((l) => l.rel === "provide_evidence")) return resendApproved(disputeId);
+    const has = (rel: string) => (live?.links ?? []).some((l) => l.rel === rel);
+    if (!live || live.status === "RESOLVED") return;
+    if (live.dispute_life_cycle_stage === "INQUIRY" && has("escalate")) {
+      await paypal("POST", `/v1/customer/disputes/${paypalDisputeId}/escalate`, { body: { note: "Sandbox demo: escalating to a claim so PayPal can review the seller's evidence and decide." }, representation: false });
+      await db.insert(s.events).values(escalatedEvent(sellerId, saleId, paypalDisputeId));
+    } else if (live.dispute_life_cycle_stage !== "INQUIRY" && has("provide_evidence")) return resendApproved(disputeId);
+    else if (live.dispute_life_cycle_stage !== "INQUIRY" && live.status === "UNDER_REVIEW") return;
   }
 }
 
