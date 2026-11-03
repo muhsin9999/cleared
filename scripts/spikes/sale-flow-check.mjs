@@ -38,7 +38,7 @@ await page.waitForTimeout(500);
 const desc = await page.locator("#description").inputValue();
 ok((await page.locator("#title").inputValue()) === "Character sheet: 3 poses", "title kept after the missing-client bounce");
 ok((await amount.inputValue()) === "400", "price kept");
-ok(desc.includes("Delivered as PNG") && desc.includes("commercially"), `description kept with both fixes: "${desc}"`);
+ok(desc.includes("Delivered as PNG") && /commercial|usage|rights/i.test(desc) && (desc.match(/Delivered as/g) ?? []).length === 1, `description kept with both fixes: "${desc}"`);
 ok(await page.getByText("Add the client’s name").isVisible(), "missing client name is flagged");
 await page.screenshot({ path: `${out}/3-back-to-describe.png`, fullPage: true });
 await browser.close();
