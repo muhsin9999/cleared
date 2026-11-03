@@ -12,7 +12,7 @@ export function DemoButton({ className }: { className?: string }) {
   return (
     <form action={enterDemo} className={className}>
       <SubmitButton
-        pendingLabel="Opening Ada's workspace…"
+        pendingLabel="Opening Maya's workspace…"
         className="h-14 w-full gap-2.5 rounded-[10px] px-7 text-[1.05rem] font-semibold shadow-[0_1px_2px_rgb(11_18_21/0.12),0_8px_20px_-8px_rgb(15_123_95/0.55)] hover:bg-cleared-strong sm:w-auto"
       >
         Try the live demo

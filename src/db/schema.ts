@@ -254,11 +254,13 @@ export const assistantMessages = pgTable(
   {
     id: id(),
     sellerId: uuid("seller_id").notNull().references(() => sellers.id, { onDelete: "cascade" }),
+    // One conversation. Null for messages from before conversations existed (shown as one earlier conversation).
+    thread: uuid("thread"),
     kind: text("kind").notNull(), // user | agent
     body: jsonb("body").notNull(), // { text, files?, steps?, seconds?, links?, actions? }
     createdAt: createdAt(),
   },
-  (t) => [index("assistant_messages_seller_idx").on(t.sellerId, t.createdAt)],
+  (t) => [index("assistant_messages_seller_idx").on(t.sellerId, t.createdAt), index("assistant_messages_thread_idx").on(t.sellerId, t.thread, t.createdAt)],
 );
 
 // What the seller told Cleared AI to remember ("this client always approves on WhatsApp"). Context for the

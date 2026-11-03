@@ -157,7 +157,7 @@ export function SellersWords() {
 
 // What happens in the demo, in order: the same moments the app shows on Home.
 const DEMO_PATH = [
-  { n: "1", title: "A $250 dispute comes in", body: "Seconds after you arrive, Ada’s client disputes a paid album cover." },
+  { n: "1", title: "A $250 dispute comes in", body: "Seconds after you arrive, Maya’s client disputes a paid album cover." },
   { n: "2", title: "Watch the agent work", body: "Every tool it calls and every file it opens, live. Then a reply with each claim tied to a file." },
   { n: "3", title: "Approve and send", body: "Only you can send it to PayPal. Then play PayPal and decide the case." },
 ];
@@ -174,7 +174,7 @@ export function ClosingCta() {
           <h2 id="cta-title" className="max-w-[14ch] text-[clamp(2.5rem,5vw,4.25rem)] leading-[0.98] font-bold tracking-[-0.045em] text-balance">
             Your next commission should stay paid.
           </h2>
-          <p className="mt-6 max-w-md text-[1.12rem] leading-relaxed text-paper/75">Try it as Ada Okafor, an illustrator, on the PayPal sandbox. About three minutes, no sign-up, no keys.</p>
+          <p className="mt-6 max-w-md text-[1.12rem] leading-relaxed text-paper/75">Try it as Maya Brooks, an illustrator, on the PayPal sandbox. About three minutes, no sign-up, no keys.</p>
           <div className="mt-9 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-6">
             <DemoButton />
             <NewSellerLink className="text-center sm:text-left" linkClassName="text-paper/75 decoration-paper/30 hover:text-paper hover:decoration-paper" />
@@ -208,7 +208,7 @@ export function ClosingCta() {
             ))}
           </ol>
           <p className="mt-6 flex flex-col gap-2 text-[0.88rem] text-paper/60 sm:flex-row sm:items-center sm:justify-between">
-            <span>PayPal Invoicing, Orders, Tracking, Disputes and Webhooks APIs, sandbox only. The AI only drafts; Ada approves.</span>
+            <span>PayPal Invoicing, Orders, Tracking, Disputes and Webhooks APIs, sandbox only. The AI only drafts; Maya approves.</span>
             <SourceLink href={GITHUB_URL} className="text-paper/75 decoration-paper/30 hover:text-paper hover:decoration-paper">Read the code on GitHub</SourceLink>
           </p>
         </div>

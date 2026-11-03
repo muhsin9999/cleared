@@ -10,11 +10,11 @@ import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { resetDemo, resolveLatestDispute, simulateDispute } from "@/server/actions/demo";
 
-// Sandbox tools: in real life Ada's client and PayPal do these. In the demo the visitor can, on the PayPal sandbox.
+// Sandbox tools: in real life Maya's client and PayPal do these. In the demo the visitor can, on the PayPal sandbox.
 const GROUPS = [
-  { title: "As Ada’s client", actions: [{ key: "dispute", icon: ShieldAlertIcon, title: "Open a dispute" }] },
+  { title: "As Maya’s client", actions: [{ key: "dispute", icon: ShieldAlertIcon, title: "Open a dispute" }] },
   { title: "As PayPal", actions: [{ key: "resolve", icon: GavelIcon, title: "Decide the open dispute" }] },
-  { title: "This workspace", actions: [{ key: "reset", icon: RotateCcwIcon, title: "Reset Ada’s workspace" }] },
+  { title: "This workspace", actions: [{ key: "reset", icon: RotateCcwIcon, title: "Reset Maya’s workspace" }] },
 ] as const;
 type Key = (typeof GROUPS)[number]["actions"][number]["key"];
 
@@ -42,13 +42,13 @@ export function DemoPanel({ buyerEmail, payable, stock }: { buyerEmail: string |
       <SheetContent className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Sandbox</SheetTitle>
-          <SheetDescription>Do what Ada’s client or PayPal would. No real money moves.</SheetDescription>
+          <SheetDescription>Do what Maya’s client or PayPal would. No real money moves.</SheetDescription>
         </SheetHeader>
         <div className="space-y-5 px-4 pb-6">
           {GROUPS.map((g) => (
             <section key={g.title} className="space-y-2">
               <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{g.title}</h3>
-              {g.title === "As Ada’s client" ? (
+              {g.title === "As Maya’s client" ? (
                 <div className="rounded-lg border bg-surface p-4">
                   <div className="flex items-start gap-3">
                     <CreditCardIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />

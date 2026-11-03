@@ -77,10 +77,16 @@ export function useDictation(value: string, onChange: (text: string) => void, ma
   };
 
   const toggle = () => (listening ? rec.current?.stop() : start());
-  return { supported, listening, toggle };
+  /** Call before sending, so words still arriving don't refill the cleared box. */
+  const stop = () => {
+    if (!rec.current) return;
+    rec.current.onresult = null;
+    rec.current.stop();
+  };
+  return { supported, listening, toggle, stop };
 }
 
-export function VoiceButton({ listening, onToggle, className }: { listening: boolean; onToggle: () => void; className?: string }) {
+export function VoiceButton({ listening, onToggle, small = false, className }: { listening: boolean; onToggle: () => void; small?: boolean; className?: string }) {
   return (
     <button
       type="button"
@@ -89,13 +95,14 @@ export function VoiceButton({ listening, onToggle, className }: { listening: boo
       aria-label={listening ? "Stop voice typing" : "Voice typing"}
       title={listening ? "Stop" : "Speak instead of typing"}
       className={cn(
-        "relative grid size-10 shrink-0 place-items-center rounded-lg transition-colors",
+        "relative grid shrink-0 place-items-center rounded-lg transition-colors",
+        small ? "size-7" : "size-10",
         listening ? "bg-risk-tint text-risk" : "text-muted-foreground hover:bg-muted",
         className,
       )}
     >
       {listening ? <span aria-hidden className="absolute inset-1 animate-ping rounded-lg bg-risk/15" /> : null}
-      {listening ? <Square className="relative size-4 fill-current" /> : <Mic className="size-5" />}
+      {listening ? <Square className={cn("relative fill-current", small ? "size-3" : "size-4")} /> : <Mic className={small ? "size-4" : "size-5"} />}
     </button>
   );
 }

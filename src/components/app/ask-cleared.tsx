@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { ArrowUpRight, Brain, ChevronDown, FileText, Paperclip, SendHorizontal, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { ArrowLeft, ArrowUpRight, Brain, ChevronDown, FileText, History, Paperclip, SendHorizontal, SquarePen, X } from "lucide-react";
 import { toast } from "sonner";
 import { askClearedAction, forgetMemo } from "@/server/actions/assistant";
 import { AgentAvatar } from "@/components/brand/agent-avatar";
@@ -10,8 +10,27 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { cn } from "@/lib/utils";
 import { useDictation, VoiceButton } from "./voice-input";
 
-export type AskMessage = { id: string; kind: string; body: { text?: string; files?: string[]; steps?: string[]; seconds?: number; links?: { label: string; href: string }[]; actions?: string[] } };
+export type AskMessage = { id: string; thread?: string | null; at?: string; kind: string; body: { text?: string; files?: string[]; steps?: string[]; seconds?: number; links?: { label: string; href: string }[]; actions?: string[] } };
 export type Memo = { id: string; text: string; about: string | null };
+
+const EARLIER = "earlier";
+const keyOf = (m: AskMessage) => m.thread ?? EARLIER;
+const when = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+type Thread = { key: string; title: string; at: string; count: number };
+
+/** Conversations, newest first, titled by their first question. */
+function threadsOf(messages: AskMessage[]): Thread[] {
+  const by = new Map<string, Thread>();
+  for (const m of messages) {
+    const k = keyOf(m);
+    const t = by.get(k) ?? { key: k, title: "", at: m.at ?? "", count: 0 };
+    if (!t.title && m.kind === "user") t.title = (m.body.text ?? "").slice(0, 60) || "Shared a file";
+    t.at = m.at ?? t.at;
+    t.count++;
+    by.set(k, t);
+  }
+  return [...by.values()].map((t) => ({ ...t, title: t.key === EARLIER ? "Earlier conversation" : t.title || "New conversation" })).sort((a, b) => b.at.localeCompare(a.at));
+}
 
 const SUGGESTIONS = ["What did we do last?", "When does my held money release?", "Do I have any open cases?", "Remember: this client approves on WhatsApp"];
 
@@ -24,17 +43,28 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
   const [busy, start] = useTransition();
   const end = useRef<HTMLDivElement>(null);
   const voice = useDictation(text, setText);
+  const threads = useMemo(() => threadsOf(messages), [messages]);
+  // The open conversation: the latest one, until the seller starts a new chat or picks one from History.
+  const [thread, setThread] = useState<string>(() => threads[0]?.key ?? crypto.randomUUID());
+  const [showHistory, setShowHistory] = useState(false);
+  const shown = messages.filter((m) => keyOf(m) === thread);
+  const newChat = () => {
+    setThread(crypto.randomUUID());
+    setShowHistory(false);
+  };
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest" });
-  }, [messages.length, pending, open]);
+  }, [shown.length, pending, open, thread]);
 
   const send = (value: string) => {
     const v = value.trim();
     if ((!v && !file) || busy) return;
-    if (voice.listening) voice.toggle();
+    voice.stop();
+    setShowHistory(false);
     const fd = new FormData();
     fd.set("text", v);
+    fd.set("thread", thread === EARLIER ? "" : thread);
     if (file) fd.set("file", file);
     setPending({ text: v || `I've attached ${file!.name}.`, file: file?.name });
     setText("");
@@ -66,17 +96,50 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
       <SheetContent side="right" className="flex w-full flex-col gap-0 bg-surface p-0 sm:max-w-md">
         <header className="flex items-center gap-3 border-b border-border px-5 py-4 pr-12">
           <AgentAvatar mood={busy ? "working" : "idle"} label="Cleared AI" className="size-12" />
-          <div>
+          <div className="min-w-0 flex-1">
             <SheetTitle className="text-lg font-semibold leading-none">Cleared AI</SheetTitle>
             <p className="mt-1 text-xs text-muted-foreground">Answers from your sales and cases · remembers what you tell it</p>
           </div>
+          <button type="button" onClick={() => setShowHistory((v) => !v)} aria-pressed={showHistory} aria-label="Past conversations" title="Past conversations" className={cn("grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-ink", showHistory && "bg-muted text-ink")}>
+            <History className="size-[1.1rem]" />
+          </button>
+          <button type="button" onClick={newChat} aria-label="New chat" title="New chat" className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-ink">
+            <SquarePen className="size-[1.05rem]" />
+          </button>
         </header>
 
+        {showHistory ? (
+          <section className="flex-1 overflow-y-auto" aria-label="Past conversations">
+            <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+              <button type="button" onClick={() => setShowHistory(false)} className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-ink" aria-label="Back to the chat">
+                <ArrowLeft className="size-4" />
+              </button>
+              <p className="text-sm font-medium">Past conversations</p>
+            </div>
+            {threads.length ? (
+              <ul className="divide-y divide-border">
+                {threads.map((t) => (
+                  <li key={t.key}>
+                    <button type="button" onClick={() => { setThread(t.key); setShowHistory(false); }} className={cn("flex w-full flex-col gap-0.5 px-5 py-3 text-left hover:bg-muted/60", t.key === thread && "bg-cleared-tint/50")}>
+                      <span className="truncate text-sm font-medium">{t.title}</span>
+                      <span className="text-xs text-muted-foreground">{t.at ? when(t.at) : ""} · {t.count} {t.count === 1 ? "message" : "messages"}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-5 py-6 text-sm text-muted-foreground">No conversations yet. Ask anything to start one.</p>
+            )}
+          </section>
+        ) : null}
+
+        {showHistory ? null : (
+          <>
         <Memory memos={memos} />
 
         <ol className="flex-1 space-y-4 overflow-y-auto px-5 py-5" aria-live="polite">
-          {messages.length === 0 && !pending && <li className="text-sm text-muted-foreground">Ask about any sale, hold or case, attach a screenshot or PDF, or tell me something to remember.</li>}
-          {messages.map((m) => (
+          {shown.length === 0 && !pending && <li className="text-sm text-muted-foreground">Ask about any sale, hold or case, attach a screenshot or PDF, or tell me something to remember.</li>}
+          {shown.map((m) => (
             <li key={m.id}>
               <Bubble m={m} onNavigate={() => setOpen(false)} />
             </li>
@@ -92,7 +155,7 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
           <div ref={end} />
         </ol>
 
-        {messages.length === 0 && !pending && (
+        {shown.length === 0 && !pending && (
           <div className="flex flex-wrap gap-2 px-5 pb-3">
             {SUGGESTIONS.map((sug) => (
               <button key={sug} type="button" onClick={() => send(sug)} className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground hover:border-cleared hover:text-ink">
@@ -100,6 +163,8 @@ export function AskCleared({ messages, memos, compact = false }: { messages: Ask
               </button>
             ))}
           </div>
+        )}
+          </>
         )}
         {file && (
           <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm">

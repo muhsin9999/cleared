@@ -6,7 +6,7 @@ export const SAMPLE_NOTICES = {
     text: `From: service@paypal.com
 Subject: Your account access has been limited
 
-Hello Ada Okafor,
+Hello Maya Brooks,
 
 We noticed a recent change in your selling activity, and we need a little more information to understand your business. Until we review it, you can't send or withdraw money.
 

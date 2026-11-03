@@ -53,7 +53,7 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
     { label: `${sale.clientName} paid`, at: sale.paidAt },
     { label: "Work delivered", at: sale.deliveredAt },
     { label: "Client confirmed receipt", at: acceptance?.occurredAt ?? null },
-    { label: sale.releasedAt ? "Money released to Ada" : sale.expectedReleaseAt ? `Release expected ${shortDate(sale.expectedReleaseAt)}` : "Money released", at: sale.releasedAt },
+    { label: sale.releasedAt ? "Money released to Maya" : sale.expectedReleaseAt ? `Release expected ${shortDate(sale.expectedReleaseAt)}` : "Money released", at: sale.releasedAt },
   ];
   const current = steps.findIndex((s) => !s.at);
   const proofItems = sale.proofs.map((p) => ({

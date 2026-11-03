@@ -13,7 +13,7 @@ const { json: draft } = await pp("POST", "/v2/invoicing/invoices", { body: {
   detail: { invoice_number: num.invoice_number, currency_code: "USD", reference: "ws:spike",
     note: "Character sheet commission: 3 poses, 2 revisions, delivered as PNG within 10 days.",
     terms_and_conditions: "Refunds available until the first sketch is delivered.", payment_term: { term_type: "DUE_ON_RECEIPT" } },
-  invoicer: { name: { given_name: "Ada", surname: "Okafor" }, email_address: process.env.PAYPAL_SANDBOX_BUSINESS_EMAIL },
+  invoicer: { name: { given_name: "Maya", surname: "Brooks" }, email_address: process.env.PAYPAL_SANDBOX_BUSINESS_EMAIL },
   primary_recipients: [{ billing_info: { email_address: process.env.PAYPAL_SANDBOX_BUYER_EMAIL } }],
   items: [{ name: "Character sheet: 3 poses", description: "Full colour, 2 revision rounds", quantity: "1", unit_amount: { currency_code: "USD", value: "40.00" }, unit_of_measure: "AMOUNT" }],
 } });

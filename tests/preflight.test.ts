@@ -15,7 +15,7 @@ const ada: SaleDraft = {
 };
 
 describe("preflight", () => {
-  it("flags Ada's $400 jump as a risk against her history", () => {
+  it("flags Maya's $400 jump as a risk against her history", () => {
     const { findings, score } = preflight(ada, history);
     expect(findings.find((f) => f.id === "spike")).toMatchObject({ severity: "risk", ruleRef: "K8" });
     expect(findings.map((f) => f.id)).toEqual(expect.arrayContaining(["delivery", "vague", "refunds", "protection"]));

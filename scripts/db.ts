@@ -1,4 +1,4 @@
-// Applies migrations; `--seed` restores Ada's base workspace; `--cleanup` removes visitors' demo copies older than 48 h.
+// Applies migrations; `--seed` restores Maya's base workspace; `--cleanup` removes visitors' demo copies older than 48 h.
 // Usage: tsx scripts/db.ts [--seed] [--cleanup]   (uses DATABASE_URL)
 import "../src/lib/net";
 import { drizzle } from "drizzle-orm/postgres-js";

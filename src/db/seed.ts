@@ -1,4 +1,4 @@
-// Ada Okafor's demo workspace. Dates are relative to the time of seeding so the story never goes stale.
+// Maya Brooks's demo workspace. Dates are relative to the time of seeding so the story never goes stale.
 // Seeded history is written as Cleared’s own record (source "cleared", unverified): only events PayPal
 // really sent may show "From PayPal".
 import { and, eq, inArray, isNotNull, lt, ne } from "drizzle-orm";
@@ -18,11 +18,11 @@ type Db = PgDatabase<any, typeof s>;
 
 export const DEMO_TAG = "ada";
 
-// Real files for Ada's locker, rendered by scripts/demo-art and served from public/demo, so every proof opens.
-const FILES: Record<string, number> = { "harmattan-cover-final.png": 633_981, "harmattan-sketch-v1.png": 242_402, "harmattan-cover-layers.pdf": 689_136, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
+// Real files for Maya's locker, rendered by scripts/demo-art and served from public/demo, so every proof opens.
+const FILES: Record<string, number> = { "summer-static-cover-final.png": 630_472, "summer-static-sketch-v1.png": 243_735, "summer-static-cover-layers.pdf": 683_715, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
 const file = (fileName: string, mimeType = "image/png") => ({ fileName, fileKey: staticKey(`demo/${fileName}`), mimeType, sizeBytes: FILES[fileName] });
 
-/** Deletes demo workspaces (and their R2 files) created more than `hours` ago. Ada's base workspace stays. */
+/** Deletes demo workspaces (and their R2 files) created more than `hours` ago. Maya's base workspace stays. */
 export async function cleanupDemoWorkspaces(db: Db, hours = 48) {
   const cutoff = new Date(Date.now() - hours * 3_600_000);
   const stale = await db.select({ id: s.sellers.id }).from(s.sellers).where(and(eq(s.sellers.isDemo, true), lt(s.sellers.createdAt, cutoff), ne(s.sellers.tag, DEMO_TAG)));
@@ -55,9 +55,9 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     .insert(s.sellers)
     .values({
       tag,
-      name: "Ada Okafor",
-      businessName: "Okafor Studio",
-      email: "ada@okafor.studio",
+      name: "Maya Brooks",
+      businessName: "Maya Brooks Studio",
+      email: "maya@mayabrooks.studio",
       sells: "digital",
       typicalPriceCents: 6_000,
       typicalDeliveryDays: 7,
@@ -94,9 +94,9 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     .insert(s.sales)
     .values({
       sellerId: ada.id,
-      clientName: "Lagos Lo-Fi Records",
-      clientEmail: "studio@lagoslofi.example",
-      title: "Album cover: “Harmattan Tapes”",
+      clientName: "Golden Hour Records",
+      clientEmail: "studio@goldenhour.example",
+      title: "Album cover: “Summer Static”",
       description: "Square album cover, 3000×3000 px, with one layered source file. Two revision rounds included. Delivered within 10 days of payment.",
       kind: "digital",
       amountCents: 25_000,
@@ -126,15 +126,15 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
   });
   await db.insert(s.proofs).values([
     { saleId: cover.id, kind: "message", label: "Agreed scope (email thread)", text: "Square cover, retro tape aesthetic, 2 revision rounds, final PNG + layered source (PDF).", occurredAt: at(-7, 12) },
-    { saleId: cover.id, kind: "file", label: "Sketch v1", ...file("harmattan-sketch-v1.png"), occurredAt: at(-4, 16) },
-    { saleId: cover.id, kind: "file", label: "Final cover", ...file("harmattan-cover-final.png"), occurredAt: at(-2, 15) },
-    { saleId: cover.id, kind: "file", label: "Layered source", ...file("harmattan-cover-layers.pdf", "application/pdf"), occurredAt: at(-2, 15) },
-    { saleId: cover.id, kind: "acceptance", label: "Client confirmed receipt", meta: { name: "Tolu A., Lagos Lo-Fi Records", ip: "102.89.xx.xx", userAgent: "Safari 19 on iPhone" }, occurredAt: at(-2, 18) },
+    { saleId: cover.id, kind: "file", label: "Sketch v1", ...file("summer-static-sketch-v1.png"), occurredAt: at(-4, 16) },
+    { saleId: cover.id, kind: "file", label: "Final cover", ...file("summer-static-cover-final.png"), occurredAt: at(-2, 15) },
+    { saleId: cover.id, kind: "file", label: "Layered source", ...file("summer-static-cover-layers.pdf", "application/pdf"), occurredAt: at(-2, 15) },
+    { saleId: cover.id, kind: "acceptance", label: "Client confirmed receipt", meta: { name: "Jordan L., Golden Hour Records", ip: "73.162.xx.xx", userAgent: "Safari 19 on iPhone" }, occurredAt: at(-2, 18) },
   ]);
   await db.insert(s.events).values([
-    { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "INVOICING.INVOICE.PAID", summary: "Lagos Lo-Fi Records paid $250", verified: false, occurredAt: at(-6, 9) },
+    { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "INVOICING.INVOICE.PAID", summary: "Golden Hour Records paid $250", verified: false, occurredAt: at(-6, 9) },
     { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "PROOF.FILES_ADDED", summary: "Final files added to the proof locker", verified: true, occurredAt: at(-2, 15) },
-    { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "CLIENT.ACCEPTED", summary: "Lagos Lo-Fi Records confirmed they received the work", verified: true, occurredAt: at(-2, 18) },
+    { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "CLIENT.ACCEPTED", summary: "Golden Hour Records confirmed they received the work", verified: true, occurredAt: at(-2, 18) },
     { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "SALE.COMPLETED_MARKED", summary: "Marked completed in PayPal: release starts in 7 days", verified: true, occurredAt: at(-1, 9) },
   ]);
 

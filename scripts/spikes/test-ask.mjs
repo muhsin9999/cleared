@@ -1,6 +1,6 @@
 // Ask Cleared with real model calls: activity, holds, memory, filing a screenshot to a sale's proof locker.
 import { chromium } from "@playwright/test";
-const [out, shotFile, client = "Lagos Lo-Fi Records"] = process.argv.slice(2);
+const [out, shotFile, client = "Golden Hour Records"] = process.argv.slice(2);
 const BASE = process.env.BASE ?? "http://localhost:3000";
 const b = await chromium.launch({ executablePath: process.env.HOME + "/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome" });
 const p = await (await b.newContext({ viewport: { width: 1440, height: 950 } })).newPage();

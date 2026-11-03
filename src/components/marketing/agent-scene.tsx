@@ -207,9 +207,9 @@ function DisputeLetter() {
       <p className="mt-[0.35em] text-[1.05em] font-medium">Buyer says it never arrived</p>
       <dl className="mt-[1em] grid grid-cols-[auto_1fr] gap-x-[1em] gap-y-[0.3em] border-t border-[#1d2326]/10 pt-[0.8em] text-[0.74em]">
         <dt className="text-[#1d2326]/55">Order</dt>
-        <dd>Logo for Tolu’s Bakery</dd>
+        <dd>Logo for Jordan’s Bakery</dd>
         <dt className="text-[#1d2326]/55">Buyer</dt>
-        <dd>Tolu Adeyemi</dd>
+        <dd>Jordan Lee</dd>
         <dt className="text-[#1d2326]/55">Reply by</dt>
         <dd>Oct 30, 2026</dd>
       </dl>
@@ -234,7 +234,7 @@ function DisputeLetter() {
 }
 
 function SketchArt({ final }: { final?: boolean }) {
-  // Tolu's Bakery mark: a rolling pin under a rising sun, in a ring.
+  // Jordan's Bakery mark: a rolling pin under a rising sun, in a ring.
   const ink = final ? "#7A3E1D" : "#6b6457";
   return (
     <svg viewBox="0 0 64 64" className="block size-full" aria-hidden>
@@ -276,7 +276,7 @@ const EXHIBITS: ExhibitProps[] = [
     date: "Oct 8",
     body: (d) => (
       <>
-        <p className="text-[0.88em] text-[#1d2326]/55">Email from Tolu Adeyemi</p>
+        <p className="text-[0.88em] text-[#1d2326]/55">Email from Jordan Lee</p>
         <p className="mt-[0.2em] font-(family-name:--font-document) text-[1.08em]">
           “Love the rolling-pin idea. <Hl delay={d}>Final logo as PNG and SVG,</Hl> two rounds of changes.”
         </p>
@@ -293,7 +293,7 @@ const EXHIBITS: ExhibitProps[] = [
           <SketchArt />
         </div>
         <p className="font-(family-name:--font-document) text-[1.08em]">
-          <Hl delay={d}>Tolu: “Love it, go ahead with the final.”</Hl>
+          <Hl delay={d}>Jordan: “Love it, go ahead with the final.”</Hl>
         </p>
       </div>
     ),
@@ -308,8 +308,8 @@ const EXHIBITS: ExhibitProps[] = [
           <SketchArt final />
         </div>
         <div>
-          <p className="font-mono text-[0.9em]">tolus-bakery-logo.png</p>
-          <p className="mt-[0.2em] font-mono text-[0.9em]">tolus-bakery-logo.svg</p>
+          <p className="font-mono text-[0.9em]">jordans-bakery-logo.png</p>
+          <p className="mt-[0.2em] font-mono text-[0.9em]">jordans-bakery-logo.svg</p>
           <p className="mt-[0.35em]">
             <Hl delay={d}>Delivered Oct 15, 3:04 pm</Hl>
           </p>
@@ -324,7 +324,7 @@ const EXHIBITS: ExhibitProps[] = [
     body: (d) => (
       <>
         <p>
-          <Hl delay={d}>Tolu Adeyemi confirmed receiving the files</Hl> on Cleared’s delivery page.
+          <Hl delay={d}>Jordan Lee confirmed receiving the files</Hl> on Cleared’s delivery page.
         </p>
         <div className="mt-[0.45em] flex items-center gap-[0.9em]">
           <span className="relative px-[0.55em] py-[0.1em] font-semibold" style={{ color: GREEN }}>
@@ -530,7 +530,7 @@ const MINI = [
   { l: "A", title: "Agreed scope", line: "“Final logo as PNG and SVG”" },
   { l: "B", title: "Sketch", line: "“Love it, go ahead.”" },
   { l: "C", title: "Final logo", line: "Delivered Oct 15" },
-  { l: "D", title: "Receipt", line: "Tolu confirmed it" },
+  { l: "D", title: "Receipt", line: "Jordan confirmed it" },
 ];
 
 /**

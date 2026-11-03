@@ -23,7 +23,7 @@ export async function resetDemo() {
   redirect("/home?reset=1");
 }
 
-/** Brings in a dispute on Ada's delivered album cover. `draft` starts the agent now; otherwise it starts when the case is opened. */
+/** Brings in a dispute on Maya's delivered album cover. `draft` starts the agent now; otherwise it starts when the case is opened. */
 export async function simulateDispute(useReal = true, draft = true) {
   const seller = await requireSeller();
   const sale = await db.query.sales.findFirst({ where: and(eq(s.sales.sellerId, seller.id), eq(s.sales.status, "accepted")) });
@@ -88,7 +88,7 @@ export async function resolveLatestDispute() {
   return { ok: true as const, disputeId: dispute.id };
 }
 
-/** The demo's opening moment: shortly after a visitor arrives, Ada's client disputes the album cover, the way a
+/** The demo's opening moment: shortly after a visitor arrives, Maya's client disputes the album cover, the way a
  *  PayPal webhook would bring it in. Only once per workspace; the agent starts when the case is opened. */
 export async function arriveDemoDispute() {
   const seller = await requireSeller();

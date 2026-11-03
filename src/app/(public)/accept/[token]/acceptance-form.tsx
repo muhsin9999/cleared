@@ -53,7 +53,7 @@ export function AcceptanceForm({ token, sellerName }: { token: string; sellerNam
         <form action={acceptAction} className="space-y-5">
           <Field>
             <FieldLabel htmlFor="accept-name">Your name (optional)</FieldLabel>
-            <Input id="accept-name" name="name" autoComplete="name" maxLength={120} placeholder="e.g. Tolu Adeyemi" className="h-11 bg-surface text-base" />
+            <Input id="accept-name" name="name" autoComplete="name" maxLength={120} placeholder="e.g. Jordan Lee" className="h-11 bg-surface text-base" />
             <FieldDescription>Added to the confirmation record so {firstName} knows who confirmed.</FieldDescription>
           </Field>
           {error ? <ErrorLine message={error} /> : null}

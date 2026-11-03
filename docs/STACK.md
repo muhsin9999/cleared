@@ -24,7 +24,7 @@ Each choice is judged against four tests:
 | AI | **`openai` SDK, `gpt-5.4-mini`** (model set by `AI_MODEL`) | Cheap enough to run every eval and every judge click. Strict structured outputs, image/PDF input, function tools, automatic prompt caching. A stronger GPT model can replace it per job. See [AI.md](AI.md). | Claude Opus (stronger, but about 15× the cost); OpenRouter models (cheaper, but structured-output and tool support varies by provider; kept as a `baseURL` swap); Vercel AI SDK (adds little; version clash with the toolkit) |
 | Validation | **Zod** | One schema for each PayPal payload, AI output and form | — |
 | UI | **shadcn/ui (Base UI) + Tailwind v4 + Motion + Magic UI + Cult UI + NumberFlow + Sonner** | See [DESIGN.md](DESIGN.md) | Aceternity (licence), Origin/coss (AGPL), HeroUI (would mix two paradigms) |
-| Auth | **Seeded demo accounts + signed session cookie** ("Enter as Ada") | Judges need instant, keyless access. Magic links need an inbox. | Auth.js providers, Clerk |
+| Auth | **Seeded demo accounts + signed session cookie** ("Enter as Maya") | Judges need instant, keyless access. Magic links need an inbox. | Auth.js providers, Clerk |
 | Testing | **Vitest** (units: risk rules, claim checker, webhook verify) + **Playwright** (one golden path) | The golden-path test proves the demo before filming | — |
 | API collection | **Postman** public collection + environment | Judges can replay the PayPal flows. Pooja Mistry (Postman) is a judge. | — |
 

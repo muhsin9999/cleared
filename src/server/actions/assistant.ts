@@ -17,6 +17,8 @@ const HOURLY_CAP = Number(process.env.ASK_HOURLY_CAP || 120);
 export async function askClearedAction(form: FormData): Promise<Result> {
   const seller = await requireSeller();
   const text = String(form.get("text") ?? "").trim().slice(0, 1000);
+  const t = String(form.get("thread") ?? "");
+  const thread = z.uuid().safeParse(t).success ? t : null;
   const file = form.get("file");
   const hasFile = file instanceof File && file.size > 0;
   if (!text && !hasFile) return { ok: false, error: "Write a message or attach a file." };
@@ -25,10 +27,10 @@ export async function askClearedAction(form: FormData): Promise<Result> {
   const up = hasFile ? await readUpload(file) : null;
   if (up && "error" in up) return { ok: false, error: up.error };
   try {
-    await askCleared(seller.id, text || `I've attached ${up!.name}.`, up);
+    await askCleared(seller.id, text || `I've attached ${up!.name}.`, up, thread);
   } catch (e) {
     console.error("askCleared failed", e);
-    await db.insert(s.assistantMessages).values({ sellerId: seller.id, kind: "agent", body: { text: "I couldn't finish that just now. Nothing was changed. Try again." } });
+    await db.insert(s.assistantMessages).values({ sellerId: seller.id, thread, kind: "agent", body: { text: "I couldn't finish that just now. Nothing was changed. Try again." } });
   }
   revalidatePath("/", "layout");
   return { ok: true };

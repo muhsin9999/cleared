@@ -41,7 +41,7 @@ const TYPE = [
   { name: "Display", spec: "Geist 600 · 64/1.02 · −0.04em", className: "text-6xl leading-[1.02] font-semibold tracking-[-0.04em]", sample: "Get paid, and stay paid." },
   { name: "H1", spec: "Geist 600 · 36/1.15 · −0.03em", className: "text-4xl font-semibold tracking-[-0.03em]", sample: "Account health" },
   { name: "H2", spec: "Geist 600 · 24/1.25 · −0.02em", className: "text-2xl font-semibold tracking-[-0.02em]", sample: "Proof locker" },
-  { name: "H3", spec: "Geist 600 · 17/1.35 · −0.015em", className: "text-[1.05rem] font-semibold tracking-[-0.015em]", sample: "Album cover: “Harmattan Tapes”" },
+  { name: "H3", spec: "Geist 600 · 17/1.35 · −0.015em", className: "text-[1.05rem] font-semibold tracking-[-0.015em]", sample: "Album cover: “Summer Static”" },
   { name: "Body", spec: "Geist 400 · 16/1.6", className: "text-base leading-relaxed", sample: "Your $400 is on hold for 7 more days. Adding tracking usually speeds this up." },
   { name: "Small", spec: "Geist 400 · 14/1.5 · muted", className: "text-sm text-muted-foreground", sample: "Drafted by Cleared AI · check before sending" },
   { name: "Mono", spec: "Geist Mono 500 · 12 · event names, ids", className: "font-mono text-xs font-medium", sample: "CUSTOMER.DISPUTE.RESOLVED · INV2-SEED-COVR-0007" },
@@ -316,7 +316,7 @@ export default function StyleguidePage() {
                   </TableHeader>
                   <TableBody>
                     {[
-                      { client: "Lagos Lo-Fi Records", status: "accepted" as const, amount: "$250.00", release: "in 6 days" },
+                      { client: "Golden Hour Records", status: "accepted" as const, amount: "$250.00", release: "in 6 days" },
                       { client: "Kestrel Press", status: "sent" as const, amount: "$150.00", release: "—" },
                       { client: "Northwind Studio", status: "disputed" as const, amount: "$400.00", release: "On hold" },
                     ].map((r) => (

@@ -49,12 +49,12 @@ async function Account() {
 async function AskIsland() {
   const seller = await requireSeller();
   const [recent, memos] = await Promise.all([
-    db.select().from(schema.assistantMessages).where(eq(schema.assistantMessages.sellerId, seller.id)).orderBy(desc(schema.assistantMessages.createdAt)).limit(40),
+    db.select().from(schema.assistantMessages).where(eq(schema.assistantMessages.sellerId, seller.id)).orderBy(desc(schema.assistantMessages.createdAt)).limit(300),
     db.select({ id: schema.memos.id, text: schema.memos.text, sale: schema.sales.clientName }).from(schema.memos).leftJoin(schema.sales, eq(schema.sales.id, schema.memos.saleId)).where(eq(schema.memos.sellerId, seller.id)).orderBy(desc(schema.memos.createdAt)),
   ]);
   return (
     <AskCleared
-      messages={recent.reverse().map((m) => ({ id: m.id, kind: m.kind, body: m.body as Record<string, never> }))}
+      messages={recent.reverse().map((m) => ({ id: m.id, thread: m.thread, at: m.createdAt.toISOString(), kind: m.kind, body: m.body as Record<string, never> }))}
       memos={memos.map((m) => ({ id: m.id, text: m.text, about: m.sale }))}
     />
   );

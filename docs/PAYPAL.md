@@ -4,7 +4,7 @@ All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 O
 
 ## 1. Sandbox setup (day 1)
 
-1. In the Developer Dashboard, create a **US sandbox Business account** (Ada) and a **US sandbox Personal account** (the client/buyer). A forum report shows a non-US sandbox merchant getting 422s on capture ([forum](https://paypalaihackathon.devpost.com/forum_topics/45513-sandbox-we-aren-t-able-to-process-your-payment-using-your-paypal-account-at-this-time)).
+1. In the Developer Dashboard, create a **US sandbox Business account** (Maya) and a **US sandbox Personal account** (the client/buyer). A forum report shows a non-US sandbox merchant getting 422s on capture ([forum](https://paypalaihackathon.devpost.com/forum_topics/45513-sandbox-we-aren-t-able-to-process-your-payment-using-your-paypal-account-at-this-time)).
 2. Create a REST app linked to the US Business account. Enable these features: **Invoicing, Disputes (Customer disputes add-on), Transaction Search, Payouts (off)**. After changing features, request a new token so the new scopes take effect.
 3. Register the webhook URL and subscribe to the events in §6. Store `PAYPAL_WEBHOOK_ID`.
 
@@ -47,7 +47,7 @@ All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 O
 | Send message | `POST …/{id}/send-message` | Inquiry-stage message to the buyer |
 
 **Evidence types used:**
-- `PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED` (Ada's case)
+- `PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED` (Maya's case)
 - `PROOF_OF_FULFILLMENT`
 - `ONLINE_TRACKING_INFORMATION`
 - `COPY_OF_CONTRACT` (the invoice + terms)
@@ -74,7 +74,7 @@ All calls go to `https://api-m.sandbox.paypal.com`. Sources were checked on 19 O
 ## 7. Transaction Search (F1 history): cached only
 
 - `GET /v1/reporting/transactions` (feature must be enabled; max 31-day window per request).
-- Data **lags up to 3 hours**, so never rely on it in the live demo. Seed Ada's history on day 1 and cache it nightly.
+- Data **lags up to 3 hours**, so never rely on it in the live demo. Seed Maya's history on day 1 and cache it nightly.
 
 ## 7b. Day-1 spike results (20 Oct 2026)
 

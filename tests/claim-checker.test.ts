@@ -3,14 +3,14 @@ import { checkClaims } from "../src/lib/claim-checker";
 
 const exhibits = [
   { letter: "A", kind: "message", label: "Agreed scope (email thread)", date: "2026-10-13T12:00:00Z", text: "Square cover, 2 revision rounds" },
-  { letter: "B", kind: "file", label: "harmattan-cover-final.png", date: "2026-10-18T15:00:00Z" },
+  { letter: "B", kind: "file", label: "summer-static-cover-final.png", date: "2026-10-18T15:00:00Z" },
   { letter: "C", kind: "acceptance", label: "Client confirmed receipt", date: "2026-10-18T18:00:00Z" },
 ];
 const sale = { amountCents: 25_000 };
 
 describe("claim checker", () => {
   it("keeps a claim whose facts match its exhibits", () => {
-    const [c] = checkClaims([{ text: "The final file harmattan-cover-final.png was delivered on Oct 18 for $250.", exhibits: ["B"] }], exhibits, sale);
+    const [c] = checkClaims([{ text: "The final file summer-static-cover-final.png was delivered on Oct 18 for $250.", exhibits: ["B"] }], exhibits, sale);
     expect(c.ok).toBe(true);
   });
   it("strikes a claim with no citation", () => {

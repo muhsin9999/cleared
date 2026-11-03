@@ -7,7 +7,7 @@ import { db, schema } from "@/db";
 import { DEMO_TAG, seedDemo } from "@/db/seed";
 import { createSession, destroySession, readSession } from "../session";
 
-// "Try the live demo": every visitor gets a private copy of Ada's workspace, so judges never see each
+// "Try the live demo": every visitor gets a private copy of Maya's workspace, so judges never see each
 // other's changes. A returning visitor keeps their copy; the nightly clean-up removes copies after 48 hours.
 export async function enterDemo() {
   const session = await readSession();

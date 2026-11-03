@@ -28,7 +28,7 @@ for (let i = 0; i < Number(process.argv[2] ?? 3); i++) {
 }
 // The scene's struck line: an invented claim put through the real claim checker, to show what it catches.
 const c = scenario.caseFile;
-const invented = [{ text: "Tolu was sent a reminder on Oct 18, 2026.", exhibits: ["C"] }];
+const invented = [{ text: "Jordan was sent a reminder on Oct 18, 2026.", exhibits: ["C"] }];
 const checkerDemo = checkClaims(invented as Parameters<typeof checkClaims>[0], c.exhibits, { amountCents: c.sale.amountCents, invoiceAmounts: [], extraDates: [c.sale.paidAt, c.sale.deliveredAt, c.dispute.openedAt].filter(Boolean).map((x) => x!.toISOString()) });
 // The page quotes the latest full eval on the same model ("Right call in 39 of 39 tests"), so copy its totals.
 const latest = `evals/results/latest-${model}.json`;

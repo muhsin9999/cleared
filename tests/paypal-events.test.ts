@@ -5,7 +5,7 @@ const ev = (event_type: string, resource: Record<string, unknown>) => ({ id: "WH
 
 suite("PayPal event descriptions", () => {
   it("names the client and amount on a paid invoice", () => {
-    expect(describe(ev("INVOICING.INVOICE.PAID", { payments: { paid_amount: { value: "40.00", currency_code: "USD" } } }), "Lagos Lo-Fi Records")).toBe("Lagos Lo-Fi Records paid $40");
+    expect(describe(ev("INVOICING.INVOICE.PAID", { payments: { paid_amount: { value: "40.00", currency_code: "USD" } } }), "Golden Hour Records")).toBe("Golden Hour Records paid $40");
   });
   it("reads invoice events, which PayPal wraps in resource.invoice", () => {
     expect(describe(ev("INVOICING.INVOICE.PAID", { invoice: { id: "INV2-X", payments: { paid_amount: { value: "40.00", currency_code: "USD" } } } }), "Northwind Games")).toBe("Northwind Games paid $40");

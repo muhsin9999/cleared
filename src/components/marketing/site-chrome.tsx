@@ -90,7 +90,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <form action={enterDemo}>
-                  <TextSubmit pendingLabel="Opening Ada's workspace…" className={cn(FOOT_LINK, "no-underline")}>
+                  <TextSubmit pendingLabel="Opening Maya's workspace…" className={cn(FOOT_LINK, "no-underline")}>
                     Live demo
                   </TextSubmit>
                 </form>

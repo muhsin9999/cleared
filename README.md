@@ -16,7 +16,7 @@ Cleared fixes both ends:
 
 ## Try it in 60 seconds
 
-1. Open the live demo and click **Try the live demo**. You're Ada, an illustrator whose sandbox PayPal account is connected.
+1. Open the live demo and click **Try the live demo**. You're Maya, an illustrator whose sandbox PayPal account is connected.
 2. Wait a few seconds on Home: a $250 dispute arrives ("I never received the files"). Click **Open the case**.
 3. Watch the agent work: its plan, each tool call, each file it opens. Click any file to see it in full.
 4. Read the reply. Every claim has exhibit letters; struck claims and anything the agent refused to do are shown.

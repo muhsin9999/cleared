@@ -1,13 +1,13 @@
 # Pages, sign-in and user flows
 
-This document decides **who uses Cleared, how they get in, every page, and the exact path through the product**. Every page must work for two audiences at once: **Ada (the real user)** and **a judge with three minutes and no context**.
+This document decides **who uses Cleared, how they get in, every page, and the exact path through the product**. Every page must work for two audiences at once: **Maya (the real user)** and **a judge with three minutes and no context**.
 
 ## 1. Who uses it and how they get in
 
 | Role | Account? | How they get in | What they can do |
 | --- | --- | --- | --- |
-| **Seller** (Ada) | Yes: a Cleared workspace linked to a PayPal business account | **Demo:** one click, "Try the live demo", which signs them in as Ada with a signed session cookie.<br>**New seller:** "Start as a new seller" creates a fresh demo workspace and runs onboarding. | Everything in the app |
-| **Client / buyer** (the studio paying Ada) | **No Cleared account** | (1) Pays on **PayPal's hosted invoice page** through the link in PayPal's invoice email.<br>(2) Confirms delivery on Cleared's public **acceptance page** via a private tokenized link. | Pay; confirm receipt; report a problem |
+| **Seller** (Maya) | Yes: a Cleared workspace linked to a PayPal business account | **Demo:** one click, "Try the live demo", which signs them in as Maya with a signed session cookie.<br>**New seller:** "Start as a new seller" creates a fresh demo workspace and runs onboarding. | Everything in the app |
+| **Client / buyer** (the studio paying Maya) | **No Cleared account** | (1) Pays on **PayPal's hosted invoice page** through the link in PayPal's invoice email.<br>(2) Confirms delivery on Cleared's public **acceptance page** via a private tokenized link. | Pay; confirm receipt; report a problem |
 | **Judge** | No | Same as the seller demo, plus a **Demo panel** for sandbox actions that would normally come from the buyer or PayPal | Everything, plus the simulation buttons |
 | **PayPal** | n/a | Sends verified webhooks; receives API calls | — |
 
@@ -16,7 +16,7 @@ This document decides **who uses Cleared, how they get in, every page, and the e
 - **No email magic links.** Judges have no inbox for them.
 - **"Log in with PayPal" + Partner Referrals** is the real-world onboarding. It goes in "What's next" and is shown as a disabled, explained option on the sign-in card. Multi-merchant onboarding is out of scope for the hackathon.
 - **One sandbox business account** backs every demo workspace. Cleared tags its own PayPal objects with the workspace ID (invoice `reference`, order `custom_id`), so each workspace sees only its own sales.
-- **Every visitor gets a private copy of Ada's workspace** (tag `ada-<random>`), so judges never see each other's changes; a returning visitor keeps theirs. A nightly cron deletes copies older than 48 hours, with their R2 files. "Reset demo" in Settings restores the visitor's own copy instantly.
+- **Every visitor gets a private copy of Maya's workspace** (tag `ada-<random>`), so judges never see each other's changes; a returning visitor keeps theirs. A nightly cron deletes copies older than 48 hours, with their R2 files. "Reset demo" in Settings restores the visitor's own copy instantly.
 
 ## 2. Route map
 
@@ -59,12 +59,12 @@ Each page lists its purpose, contents, primary action and states. **Every page h
 ### `/` Landing
 - **Purpose:** in 10 seconds, who it's for, what it does, and a way in.
 - **Contents:**
-  - headline "Get paid, and stay paid.", with the Animated Beam Ada → cleared → PayPal;
+  - headline "Get paid, and stay paid.", with the Animated Beam Maya → cleared → PayPal;
   - three proof points (Check before you sell · Keep the proof · Answer PayPal in minutes);
   - one real quote from the evidence;
   - "How it works" in 4 steps;
   - footer: "Works with PayPal (sandbox). Not affiliated with PayPal."
-- **Primary action:** **Try the live demo** (as Ada). Secondary: **Start as a new seller**.
+- **Primary action:** **Try the live demo** (as Maya). Secondary: **Start as a new seller**.
 - **States:** a "waking up…" skeleton only if the server is slow (it shouldn't be, on Starter).
 
 ### `/onboarding` (new-seller workspaces only; three steps with a progress bar)
@@ -134,10 +134,10 @@ Each page lists its purpose, contents, primary action and states. **Every page h
   - **Client reported a problem:** a caution banner with their note and "Resolve before it becomes a dispute".
 
 ### `/accept/[token]` Client acceptance (public, no login, mobile-first)
-- **Contents:** "Ada Okafor marked your order as delivered", the sale summary (what, amount, invoice number) and the file list with previews where permitted.
+- **Contents:** "Maya Brooks marked your order as delivered", the sale summary (what, amount, invoice number) and the file list with previews where permitted.
 - **Actions:**
   - **Yes, I received the work.** Records the time, IP and user agent, and shows a thank-you.
-  - **Something's wrong.** A short form; Ada sees it immediately, as an early warning before a PayPal dispute.
+  - **Something's wrong.** A short form; Maya sees it immediately, as an early warning before a PayPal dispute.
 - **States:**
   - **Token expired or used:** a friendly message.
   - **Already confirmed:** shows the confirmation record.
@@ -186,7 +186,7 @@ Each page lists its purpose, contents, primary action and states. **Every page h
 - **Buttons, each with one plain sentence explaining what it simulates and which API it calls:**
   1. **Simulate buyer dispute** on a paid sale (sandbox dispute API).
   2. **Move to seller response** (`require-evidence`).
-  3. **Resolve in Ada's favour** (`adjudicate`).
+  3. **Resolve in Maya's favour** (`adjudicate`).
   4. **Send a sample PayPal notice** (genuine / phishing).
   5. **Reset demo**.
 - **Pay as the client:** paying an invoice needs the sandbox *buyer* to log in on PayPal's page. The panel shows the sandbox buyer login to copy and an **Open invoice in PayPal** button. Seeded sales are already paid, so judges can skip this step.
@@ -195,11 +195,11 @@ Each page lists its purpose, contents, primary action and states. **Every page h
 
 **J1 Judge, 3 minutes (most important)**
 1. `/`: **Try the live demo**.
-2. `/home` (as Ada) with a 3-step guided tour: "This is Ada's account health → start a sale → see a dispute handled." The **Demo panel** is pulsing.
+2. `/home` (as Maya) with a 3-step guided tour: "This is Maya's account health → start a sale → see a dispute handled." The **Demo panel** is pulsing.
 3. **New sale** → describe (sample chip) → scan → accept fixes → **Create invoice** → send. Real Invoicing API, sent to the sandbox buyer.
 4. Open the seeded **paid** sale → proof locker already complete → **Demo panel: Simulate buyer dispute**.
 5. Toast "Dispute opened" → `/cases/[id]` → investigation runs → packet assembles → **Approve & submit**.
-6. **Demo panel: Resolve in Ada's favour** → resolved event in the timeline.
+6. **Demo panel: Resolve in Maya's favour** → resolved event in the timeline.
 
 **J2 New seller's first sale:** `/` → Start as new seller → `/onboarding` 1–3 → `/home` (empty state) → New sale → check → fix → invoice → send → (client pays on PayPal) → paid toast → sale detail → upload work → send acceptance link → client accepts → hold coach: mark completed → **Released**.
 
@@ -209,7 +209,7 @@ Each page lists its purpose, contents, primary action and states. **Every page h
 
 **J5 PayPal email:** Cases → I got a PayPal email → paste → Resolution Center question → phishing verdict → (if genuine) requirements map → draft → manual upload checklist → done.
 
-**J6 Early warning:** client clicks **Something's wrong** on the acceptance page → Ada gets a caution banner and toast → she resolves it with the client, so the dispute never happens.
+**J6 Early warning:** client clicks **Something's wrong** on the acceptance page → Maya gets a caution banner and toast → she resolves it with the client, so the dispute never happens.
 
 ## 6. Copy and tone rules
 

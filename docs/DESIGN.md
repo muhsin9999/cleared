@@ -53,7 +53,7 @@
 1. **The pre-flight scan (F1):**
    - The sale card gets a Border Beam while scanning.
    - Checks stream in through an Animated List ("First sale over 3× your average", "Delivery date missing", "Refund terms unclear").
-   - A circular readiness ring and NumberFlow score climb from 38 to 94 as Ada accepts each one-click fix.
+   - A circular readiness ring and NumberFlow score climb from 38 to 94 as Maya accepts each one-click fix.
 2. **The packet assembles itself (F6):**
    - Exhibit cards (files, acceptance receipt, invoice, tracking) fly from the locker with Motion `layout` into a stacked Texture Card document.
    - Exhibit numbers stamp in, each claim's citation chip lights up, and finally the **cleared stamp seals the packet**.
@@ -63,7 +63,7 @@
    - A Dynamic Island at the top shows "$400 releases in 6 days."
 
 Supporting pieces:
-- **Landing:** Animated Beam (Ada → cleared → PayPal) and a single Blur Fade headline.
+- **Landing:** Animated Beam (Maya → cleared → PayPal) and a single Blur Fade headline.
 - **Home:** a Bento Grid with funds in flight, days to release, proof coverage and open cases.
 
 ## Accessibility (non-negotiable; Design is 20% of the score)

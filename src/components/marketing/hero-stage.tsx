@@ -8,7 +8,7 @@ import { Burst, useCelebration } from "@/components/brand/agent-avatar";
 import { cn } from "@/lib/utils";
 
 // The app's sample sale (src/app/(app)/sales/new/new-sale-flow.tsx) checked by src/lib/preflight.ts
-// against Ada's seeded history (average $109). Findings weigh 22 + 14 + 16 + 10, so it starts at 38.
+// against Maya's seeded history (average $109). Findings weigh 22 + 14 + 16 + 10, so it starts at 38.
 // Each accepted fix removes its weight (the split leaves 6 for the spike), so it ends at 94.
 const ROWS = [
   {
@@ -270,7 +270,7 @@ function PaperInvoice({ visible }: { visible: boolean }) {
         </p>
         <div className="text-right text-[0.78em] leading-snug">
           <p className="font-semibold">Invoice #0009</p>
-          <p className="opacity-75">Okafor Studio</p>
+          <p className="opacity-75">Maya Brooks Studio</p>
         </div>
       </div>
       <p className="mt-[1.4em] text-[0.72em] opacity-70">Billed to</p>

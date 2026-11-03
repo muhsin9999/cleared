@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Lands on the public page and opens a private copy of Ada's demo workspace. */
+/** Lands on the public page and opens a private copy of Maya's demo workspace. */
 export async function enterDemo(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: /try the live demo/i }).first().click();

@@ -10,13 +10,13 @@ await p.waitForTimeout(9000); await p.screenshot({ path: `${out}/1-case-working.
 await p.getByRole("button", { name: /approve and send to paypal/i }).waitFor({ timeout: 60000 }); await p.waitForTimeout(1500);
 await p.screenshot({ path: `${out}/2-case-ready.png`, fullPage: true });
 await p.getByRole("button", { name: /steps in/i }).click(); await p.waitForTimeout(600); await p.screenshot({ path: `${out}/3-case-log-open.png`, fullPage: true });
-await p.getByRole("button", { name: /harmattan-cover-final/i }).first().click(); await p.waitForTimeout(1200); await p.screenshot({ path: `${out}/4-viewer-image.png` });
+await p.getByRole("button", { name: /summer-static-cover-final/i }).first().click(); await p.waitForTimeout(1200); await p.screenshot({ path: `${out}/4-viewer-image.png` });
 await p.keyboard.press("Escape"); await p.waitForTimeout(400);
-await p.getByRole("button", { name: /harmattan-cover-layers/i }).first().click(); await p.waitForTimeout(2000); await p.screenshot({ path: `${out}/5-viewer-pdf.png` });
+await p.getByRole("button", { name: /summer-static-cover-layers/i }).first().click(); await p.waitForTimeout(2000); await p.screenshot({ path: `${out}/5-viewer-pdf.png` });
 await p.keyboard.press("Escape"); await p.waitForTimeout(400);
 await p.getByRole("button", { name: /client confirmed/i }).last().click({ force: true }); await p.waitForTimeout(800); await p.screenshot({ path: `${out}/6-viewer-record.png` });
 await p.keyboard.press("Escape");
-await p.goto("http://localhost:3000/sales"); await p.getByRole("link", { name: /Harmattan/ }).first().click(); await p.waitForTimeout(1500);
+await p.goto("http://localhost:3000/sales"); await p.getByRole("link", { name: /Summer Static/ }).first().click(); await p.waitForTimeout(1500);
 await p.screenshot({ path: `${out}/7-sale.png`, fullPage: true });
 await p.goto("http://localhost:3000/home"); await p.waitForTimeout(1500); await p.screenshot({ path: `${out}/8-home.png`, fullPage: true });
 const ph = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, storageState: await ctx.storageState() });

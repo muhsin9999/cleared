@@ -4,7 +4,7 @@
 // It can't submit anything to PayPal: that stays the seller's Approve and submit.
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema as s } from "@/db";
 import { checkEvidenceFile } from "@/lib/evidence-files";
@@ -169,10 +169,12 @@ function tools(ctx: Ctx): AgentTool[] {
   ];
 }
 
-/** One message from the seller to Cleared AI. Stores both sides of the conversation. */
-export async function askCleared(sellerId: string, text: string, upload: Upload | null) {
-  await db.insert(s.assistantMessages).values({ sellerId, kind: "user", body: { text, files: upload ? [upload.name] : [] } });
-  const recent = await db.select().from(s.assistantMessages).where(eq(s.assistantMessages.sellerId, sellerId)).orderBy(desc(s.assistantMessages.createdAt)).limit(10);
+/** One message from the seller to Cleared AI, in one conversation. Stores both sides; the AI reads only this
+ *  conversation's earlier turns (what it was told to remember is shared across all of them). */
+export async function askCleared(sellerId: string, text: string, upload: Upload | null, thread: string | null = null) {
+  await db.insert(s.assistantMessages).values({ sellerId, thread, kind: "user", body: { text, files: upload ? [upload.name] : [] } });
+  const inThread = thread ? eq(s.assistantMessages.thread, thread) : isNull(s.assistantMessages.thread);
+  const recent = await db.select().from(s.assistantMessages).where(and(eq(s.assistantMessages.sellerId, sellerId), inThread)).orderBy(desc(s.assistantMessages.createdAt)).limit(10);
   const history = recent
     .reverse()
     .slice(0, -1)
@@ -207,5 +209,5 @@ export async function askCleared(sellerId: string, text: string, upload: Upload 
     const ok = l.kind === "sale" ? await db.query.sales.findFirst({ where: and(eq(s.sales.sellerId, sellerId), eq(s.sales.id, l.id)), columns: { id: true } }) : await db.query.disputes.findFirst({ where: and(eq(s.disputes.sellerId, sellerId), eq(s.disputes.id, l.id)), columns: { id: true } });
     if (ok) links.push({ label: l.label.slice(0, 40), href: l.kind === "sale" ? `/sales/${l.id}` : `/cases/${l.id}` });
   }
-  await db.insert(s.assistantMessages).values({ sellerId, kind: "agent", body: { text: run.output.answer, steps, seconds: Math.round((Date.now() - started) / 1000), links, actions: ctx.actions } });
+  await db.insert(s.assistantMessages).values({ sellerId, thread, kind: "agent", body: { text: run.output.answer, steps, seconds: Math.round((Date.now() - started) / 1000), links, actions: ctx.actions } });
 }

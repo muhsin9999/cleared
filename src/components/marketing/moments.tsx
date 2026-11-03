@@ -70,11 +70,11 @@ export function CheckMoment() {
   );
 }
 
-// (b) Keep the proof: the evidence seeded on Ada's "Harmattan Tapes" sale (src/db/seed.ts) drops in.
+// (b) Keep the proof: the evidence seeded on Maya's "Summer Static" sale (src/db/seed.ts) drops in.
 const LOCKER = [
-  { icon: FileImage, label: "harmattan-cover-final.png", meta: "6.4 MB" },
-  { icon: FileText, label: "harmattan-cover-layers.pdf", meta: "9.1 MB" },
-  { icon: BadgeCheck, label: "Tolu A. confirmed receipt", meta: "18:00" },
+  { icon: FileImage, label: "summer-static-cover-final.png", meta: "6.4 MB" },
+  { icon: FileText, label: "summer-static-cover-layers.pdf", meta: "9.1 MB" },
+  { icon: BadgeCheck, label: "Jordan L. confirmed receipt", meta: "18:00" },
   { icon: ReceiptText, label: "PayPal invoice, paid", meta: "$250" },
 ];
 
@@ -83,12 +83,12 @@ export function LockerMoment() {
   return (
     <div ref={ref} className="w-full">
       <p className="mb-2 flex items-center justify-between text-[0.75rem] text-muted-foreground">
-        <span>Harmattan Tapes · proof kept</span>
+        <span>Summer Static · proof kept</span>
         <span className="tabular-nums">
           <NumberFlow value={step} /> of {LOCKER.length}
         </span>
       </p>
-      <ul className="space-y-1.5" aria-label="Proof kept on the Harmattan Tapes sale">
+      <ul className="space-y-1.5" aria-label="Proof kept on the Summer Static sale">
         {LOCKER.map(({ icon: Icon, label, meta }, i) => {
           const shown = step > i;
           return (
@@ -111,7 +111,7 @@ export function LockerMoment() {
   );
 }
 
-// (c) Answer disputes: the demo's simulated "not received" dispute on the delivered Harmattan cover
+// (c) Answer disputes: the demo's simulated "not received" dispute on the delivered Summer Static cover
 // (server/actions/demo.ts) becomes a drafted reply citing exhibits A–C, then the stamp seals it.
 const EXHIBITS = [
   { n: "A", line: "Final cover and layered file, delivered" },
@@ -123,7 +123,7 @@ export function DisputeMoment() {
   // 1: reply page replaces the notice · 2–4: exhibits A, B, C · 5: sealed
   const { ref, step } = useSteps(5, { gap: 420, start: 450, order: 2 });
   return (
-    <div ref={ref} className="relative mx-auto w-full max-w-[21rem]" role="img" aria-label="A “not received” dispute becomes a drafted reply citing three exhibits, sealed with the cleared stamp once Ada approves it">
+    <div ref={ref} className="relative mx-auto w-full max-w-[21rem]" role="img" aria-label="A “not received” dispute becomes a drafted reply citing three exhibits, sealed with the cleared stamp once Maya approves it">
       <AnimatePresence mode="wait" initial={false}>
         {step === 0 ? (
           <m.div
@@ -135,7 +135,7 @@ export function DisputeMoment() {
             <p className="flex items-center gap-1.5 text-[0.82rem] font-semibold text-caution">
               <TriangleAlert className="size-3.5" aria-hidden /> Dispute: item not received
             </p>
-            <p className="mt-2 text-[0.85rem] text-ink">Lagos Lo-Fi Records · $250.00</p>
+            <p className="mt-2 text-[0.85rem] text-ink">Golden Hour Records · $250.00</p>
             <p className="mt-1 text-[0.78rem] text-muted-foreground">Respond within 10 days</p>
             <div className="mt-4 space-y-1.5" aria-hidden>
               <div className="h-1.5 w-11/12 rounded-full bg-secondary" />
@@ -150,7 +150,7 @@ export function DisputeMoment() {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="relative rounded-[10px] border border-line bg-surface p-4 shadow-soft"
           >
-            <p className="pr-12 text-[0.75rem] text-muted-foreground">Reply to PayPal · drafted, for Ada to approve</p>
+            <p className="pr-12 text-[0.75rem] text-muted-foreground">Reply to PayPal · drafted, for Maya to approve</p>
             <p className="mt-1.5 text-[0.84rem] leading-snug text-ink">
               The files were delivered and the client confirmed receipt
               <sup className="ml-0.5 text-[0.6rem] font-semibold text-cleared-strong">A, B</sup>, as the invoice set out
