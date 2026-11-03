@@ -10,6 +10,6 @@ const [d] = await db.select().from(s.disputes).where(eq(s.disputes.saleId, sale.
 const [pk] = await db.select().from(s.packets).where(eq(s.packets.disputeId, d.id)).orderBy(desc(s.packets.createdAt)).limit(1);
 console.log("packet:", pk?.status, "·", pk?.recommendation);
 console.log("rationale:", pk?.rationale);
-console.log("claims:", JSON.stringify(pk?.claims)?.slice(0, 900));
+console.log("claims:", ((pk?.claims as { text: string }[] | null) ?? []).map((c, i) => `${i + 1}. ${c.text}`).join(" | "));
 console.log("missing:", JSON.stringify(pk?.missingEvidence));
 process.exit(0);
