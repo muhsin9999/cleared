@@ -19,6 +19,7 @@ await amount.fill("-50");
 ok(await page.getByText(/Enter a price above \$0/).isVisible(), "a negative price shows an error");
 ok(await page.getByRole("button", { name: "Check this sale" }).isDisabled(), "and the check can't start");
 await page.screenshot({ path: `${out}/1-negative-price.png` });
+if (process.env.PRICE_ONLY) { await browser.close(); process.exit(0); }
 await amount.fill("400");
 await page.locator("#title").fill("Character sheet: 3 poses");
 await page.locator("#description").fill("Character sheet for our game's main hero");
