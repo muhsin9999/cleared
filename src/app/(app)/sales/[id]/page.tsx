@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BadgeCheckIcon, CheckIcon, CreditCardIcon, ExternalLinkIcon, FileUpIcon, HourglassIcon, LockOpenIcon, MailIcon, PackageIcon, SendIcon, ShieldAlertIcon, ShieldCheckIcon, UserCheckIcon, type LucideIcon } from "lucide-react";
-import { CopyButton } from "@/components/app/copy-button";
-import { CoverageDots } from "@/components/app/coverage-dots";
+import { Confirmed, DeliveryLink } from "@/components/app/delivery-link";
 import { MessageProofForm } from "@/components/app/message-proof-form";
 import { ProofDropzone } from "@/components/app/proof-dropzone";
 import { TrackingForm } from "@/components/app/tracking-form";
@@ -53,9 +52,15 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
     { label: `${sale.clientName} paid`, at: sale.paidAt },
     { label: "Work delivered", at: sale.deliveredAt },
     { label: "Client confirmed receipt", at: acceptance?.occurredAt ?? null },
-    { label: sale.releasedAt ? "Money released to Maya" : sale.expectedReleaseAt ? `Release expected ${shortDate(sale.expectedReleaseAt)}` : "Money released", at: sale.releasedAt },
+    { label: sale.releasedAt ? "Money released to you" : sale.expectedReleaseAt ? `Release expected ${shortDate(sale.expectedReleaseAt)}` : "Money released", at: sale.releasedAt },
   ];
   const current = steps.findIndex((s) => !s.at);
+  const checklist = [
+    { label: "Terms on the PayPal invoice", ok: !!invoice?.sentAt },
+    { label: "Files you delivered", ok: c.files },
+    { label: `${sale.clientName} confirmed`, ok: !!acceptance },
+    ...(sale.kind === "physical" ? [{ label: "Tracking", ok: c.tracking }] : []),
+  ];
   const proofItems = sale.proofs.map((p) => ({
     id: p.id,
     label: p.fileName ?? p.label,
@@ -100,9 +105,19 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2"><ShieldCheckIcon aria-hidden className="size-4 text-cleared" /> Proof</CardTitle>
-              <span className="flex items-center gap-2 text-xs text-muted-foreground">{c.done} of {c.total} <CoverageDots {...c} /></span>
+              <span className="text-xs text-muted-foreground">{checklist.filter((x) => x.ok).length} of {checklist.length} covered</span>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* What a dispute would be answered with, in plain words: each piece Cleared keeps for this sale. */}
+              <ul aria-label="Proof checklist" className="flex flex-wrap gap-2">
+                {checklist.map((x) => (
+                  <li key={x.label} className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs", x.ok ? "border-cleared/30 bg-cleared-tint/50 text-cleared-strong" : "text-muted-foreground")}>
+                    {x.ok ? <CheckIcon aria-hidden className="size-3.5" /> : <span aria-hidden className="size-2 rounded-full border border-current" />}
+                    {x.label}
+                    <span className="sr-only">{x.ok ? " (done)" : " (not yet)"}</span>
+                  </li>
+                ))}
+              </ul>
               <ProofList items={proofItems} />
               <ProofDropzone saleId={sale.id} />
               <MessageProofForm saleId={sale.id} />
@@ -145,18 +160,20 @@ async function Sale({ params }: { params: PageProps<"/sales/[id]">["params"] }) 
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><UserCheckIcon aria-hidden className="size-4" /> Client confirmation</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><UserCheckIcon aria-hidden className="size-4" /> Deliver to {sale.clientName}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {acceptance ? (
-                <p className="flex items-center gap-1.5 text-sm font-medium text-cleared-strong"><CheckIcon aria-hidden className="size-4" /> Confirmed {shortDate(acceptance.occurredAt)}</p>
-              ) : null}
-              {sale.acceptanceToken ? (
-                <div className="flex flex-wrap gap-2">
-                  <CopyButton value={`/accept/${sale.acceptanceToken}`} label="Copy link for the client" toastMessage="Acceptance link copied" />
-                  <Link href={`/accept/${sale.acceptanceToken}`} target="_blank" className={buttonVariants({ variant: "ghost", size: "sm" })}>Preview</Link>
-                </div>
+                <Confirmed
+                  name={(acceptance.meta as { name?: string } | null)?.name ?? sale.clientName}
+                  when={shortDate(acceptance.occurredAt)}
+                  device={(acceptance.meta as { userAgent?: string } | null)?.userAgent}
+                />
+              ) : !sale.acceptanceToken ? (
+                <p className="text-sm text-muted-foreground">Ready once {sale.clientName} has paid.</p>
+              ) : !c.files ? (
+                <p className="text-sm text-muted-foreground text-pretty">Add the final files under Proof. Then send {sale.clientName} the delivery link to confirm.</p>
               ) : (
-                <p className="text-sm text-muted-foreground">Available once the client has paid.</p>
+                <DeliveryLink path={`/accept/${sale.acceptanceToken}`} client={sale.clientName} />
               )}
             </CardContent>
           </Card>
@@ -196,8 +213,8 @@ function nextStep(sale: SaleRow, x: { invoice: SaleRow["invoices"][number] | und
       body: `Invoice #${x.invoice.invoiceNumber} is with them on PayPal.`,
       cta: x.invoice.payerViewUrl ? { label: "Pay as the client", href: x.invoice.payerViewUrl, external: true } : undefined,
     };
-  if (!x.files) return { icon: FileUpIcon, tone: "act", title: "Add what you delivered", body: "Your proof if they say it never arrived." };
-  if (!x.acceptance) return { icon: UserCheckIcon, tone: "act", title: "Ask the client to confirm they received it", body: "Send them the acceptance link." };
+  if (!x.files) return { icon: FileUpIcon, tone: "act", title: "Add the files you delivered", body: "Your proof if they say it never arrived." };
+  if (!x.acceptance) return { icon: UserCheckIcon, tone: "act", title: `Send ${sale.clientName} the delivery link`, body: "They confirm with one click that they got the files." };
   if (sale.kind === "physical") return { icon: PackageIcon, tone: "act", title: "Add tracking", body: "PayPal releases the hold about 24 hours after the carrier confirms delivery." };
   if (sale.completedMarkedAt && x.days !== null)
     return { icon: HourglassIcon, tone: "done", title: `${money(sale.amountCents)} releases in ${x.days} ${x.days === 1 ? "day" : "days"}`, body: "PayPal releases service payments 7 days after the job is marked complete." };

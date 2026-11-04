@@ -56,7 +56,7 @@ const exhibitIcon = (e: Exhibit) => (isImage(e) ? ImageIcon : KIND_ICON[e.kind] 
 
 /** What PayPal is doing with a real case after the evidence went in, in PayPal's own terms. */
 function sentLine(paypalStatus: string | null, stage: string | null) {
-  if (stage === "CHARGEBACK") return paypalStatus === "UNDER_REVIEW" ? "Sent to PayPal’s claim. PayPal is reviewing it." : "Escalated to a PayPal claim. Sending your approved reply to it…";
+  if (stage === "CHARGEBACK") return paypalStatus === "UNDER_REVIEW" ? "Sent to PayPal’s claim. PayPal is reviewing it." : "Sending your reply to PayPal’s claim…";
   if (paypalStatus === "WAITING_FOR_BUYER_RESPONSE") return "Sent. PayPal asked the buyer to respond.";
   return "Sent. PayPal is reviewing it.";
 }
@@ -215,7 +215,7 @@ function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null;
   const firstMove = wrotePlan ? [] : steps.filter((s) => s.turn === 0).map((s) => PLAN_WORD[s.tool]).filter(Boolean);
   const active =
     !packet || packet.status === "gathering"
-      ? { tool: "start", label: "Starting on a Render Workflow" }
+      ? { tool: "start", label: "Opening the case" }
       : packet.status === "drafting"
         ? { tool: "think", label: steps.length ? "Thinking about what it found" : "Reading the case" }
         : packet.status === "checking"

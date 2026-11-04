@@ -36,8 +36,10 @@ export async function listNotices(sellerId: string) {
 /** Proof coverage for one sale: does it have files, client acceptance, and tracking (goods only)? */
 export function coverage(sale: { kind: string; proofs: { kind: string; meta?: unknown }[] }) {
   const has = (k: string) => sale.proofs.some((p) => p.kind === k && isConfirmedProof(p));
-  const checks = [has("file") || has("message"), has("acceptance"), ...(sale.kind === "physical" ? [has("tracking")] : [])];
-  return { done: checks.filter(Boolean).length, total: checks.length };
+  const files = has("file") || has("message");
+  const tracking = has("tracking");
+  const checks = [files, has("acceptance"), ...(sale.kind === "physical" ? [tracking] : [])];
+  return { done: checks.filter(Boolean).length, total: checks.length, files, tracking };
 }
 
 export async function getHome(sellerId: string) {

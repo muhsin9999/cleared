@@ -19,7 +19,7 @@ type Db = PgDatabase<any, typeof s>;
 export const DEMO_TAG = "ada";
 
 // Real files for Maya's locker, rendered by scripts/demo-art and served from public/demo, so every proof opens.
-const FILES: Record<string, number> = { "summer-static-cover-final.png": 630_472, "summer-static-sketch-v1.png": 243_735, "summer-static-cover-layers.pdf": 683_715, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
+const FILES: Record<string, number> = { "night-shift-cover-final.png": 214_008, "summer-static-cover-final.png": 630_472, "summer-static-sketch-v1.png": 243_735, "summer-static-cover-layers.pdf": 683_715, "logo-refresh-final.png": 79_162, "pet-portrait-final.png": 131_601, "twitch-emotes-3-final.png": 113_403 };
 const file = (fileName: string, mimeType = "image/png") => ({ fileName, fileKey: staticKey(`demo/${fileName}`), mimeType, sizeBytes: FILES[fileName] });
 
 /** Deletes demo workspaces (and their R2 files) created more than `hours` ago. Maya's base workspace stays. */
@@ -138,6 +138,44 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
     { sellerId: ada.id, saleId: cover.id, source: "cleared", type: "SALE.COMPLETED_MARKED", summary: "Marked completed in PayPal: release starts in 7 days", verified: true, occurredAt: at(-1, 9) },
   ]);
 
+  // Paid and delivered, waiting for the client to confirm: the sale where a visitor copies the delivery link, opens
+  // it as the client and confirms, and watches the proof land.
+  const [podcast] = await db
+    .insert(s.sales)
+    .values({
+      sellerId: ada.id,
+      clientName: "Night Shift Podcast",
+      clientEmail: "hello@nightshiftpod.example",
+      title: "Podcast cover art",
+      description: "Square podcast cover, 3000×3000 px PNG. One revision round. Delivered within 7 days of payment.",
+      kind: "digital",
+      amountCents: 11_000,
+      status: "delivered",
+      readinessScore: 92,
+      paidAt: at(-3, 10),
+      deliveredAt: at(-1, 16),
+      acceptanceToken: `seed-${tag}-podcast`,
+      createdAt: at(-4),
+    })
+    .returning();
+  await db.insert(s.invoices).values({
+    saleId: podcast.id,
+    invoiceNumber: "0009",
+    status: "PAID",
+    paypalInvoiceId: `SEED-${tag}-0009`,
+    draft: { items: [{ name: "Podcast cover art", description: "3000×3000 px PNG, 1 revision round", quantity: "1", unitAmount: "110.00" }], note: "Delivered within 7 days of payment.", terms: "Revisions: 1 round. Refunds available until the first draft is approved." },
+    sentAt: at(-4),
+    paidAt: at(-3, 10),
+  });
+  await db.insert(s.proofs).values([
+    { saleId: podcast.id, kind: "message", label: "Agreed scope (email)", text: "Square cover for Night Shift, night-sky look, 3000×3000 PNG, one revision round.", occurredAt: at(-4, 11) },
+    { saleId: podcast.id, kind: "file", label: "Final cover", ...file("night-shift-cover-final.png"), occurredAt: at(-1, 16) },
+  ]);
+  await db.insert(s.events).values([
+    { sellerId: ada.id, saleId: podcast.id, source: "cleared", type: "INVOICING.INVOICE.PAID", summary: "Night Shift Podcast paid $110", verified: false, occurredAt: at(-3, 10) },
+    { sellerId: ada.id, saleId: podcast.id, source: "cleared", type: "PROOF.FILES_ADDED", summary: "Final files added to the proof locker", verified: true, occurredAt: at(-1, 16) },
+  ]);
+
   // An invoice that is out and unpaid.
   const [deposit] = await db
     .insert(s.sales)
@@ -165,5 +203,5 @@ export async function seedDemo(db: Db, tag = DEMO_TAG) {
   });
   await db.insert(s.events).values({ sellerId: ada.id, saleId: deposit.id, source: "cleared", type: "INVOICING.INVOICE.SENT", summary: "Invoice #0008 sent to Kestrel Press", verified: true, occurredAt: at(-1, 14) });
 
-  return { seller: ada.id, sales: released.length + 2 };
+  return { seller: ada.id, sales: released.length + 3 };
 }

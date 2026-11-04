@@ -188,6 +188,7 @@ export function NewSaleFlow({ history, sample = false }: { history: History; sam
           rules={checks.rules}
           ai={aiCheck}
           proof={checks.proof}
+          pastSales={history.pastSales}
           onDone={(l) => {
             setLog(l);
             setStep("fix");
@@ -226,7 +227,7 @@ function plan(draft: SaleDraft, history: History, findings: Finding[]): CheckLin
   return [
     { tool: "get_sales_history", icon: HistoryIcon, doing: "Reading your sales history", detail: history.pastSales ? `${history.pastSales} paid sales · avg ${money(history.averageCents ?? 0)}` : "No paid sales yet" },
     { tool: "search_policy", arg: "holds, reserves, limits", icon: BookOpenIcon, doing: "Reading PayPal’s published rules", detail: `${RULES.length} rules loaded` },
-    { tool: "check_amount", icon: CircleDollarSignIcon, doing: "Comparing the price with your usual sales", ...(spike ? { detail: spike.title, tone: "risk" as const } : { detail: `${money(draft.amountCents)} is in line with your sales` }) },
+    { tool: "check_amount", icon: CircleDollarSignIcon, doing: "Comparing the price with your usual sales", ...(spike ? { detail: spike.title, tone: "risk" as const } : history.pastSales ? { detail: `${money(draft.amountCents)} is in line with your sales` } : { detail: "No past sales to compare with yet" }) },
     { tool: "check_delivery", icon: CalendarClockIcon, doing: "Looking for a delivery date", ...(by("delivery") ? { detail: "No delivery date", tone: "caution" as const } : { detail: `Delivery within ${draft.deliveryDays} days` }) },
     { tool: "check_description", icon: FileTextIcon, doing: "Reading what you’ll deliver", ...(by("vague") ? { detail: "Vague: no files, size or revisions", tone: "caution" as const } : { detail: "Deliverables are specific" }) },
     { tool: "check_terms", icon: ScaleIcon, doing: "Looking for refund and revision terms", ...(by("refunds") ? { detail: "No refund or revision terms", tone: "caution" as const } : { detail: "Terms are written down" }) },
@@ -247,7 +248,7 @@ function proofLine(draft: SaleDraft): CheckLine {
 
 const STEP_MS = 620;
 
-function Scan({ rules, ai, proof, onDone }: { rules: CheckLine[]; ai: CheckLine | null; proof: CheckLine; onDone: (log: CheckLine[]) => void }) {
+function Scan({ rules, ai, proof, pastSales, onDone }: { rules: CheckLine[]; ai: CheckLine | null; proof: CheckLine; pastSales: number; onDone: (log: CheckLine[]) => void }) {
   const started = useRef(0);
   const finish = useRef(onDone);
   useEffect(() => {
@@ -282,7 +283,7 @@ function Scan({ rules, ai, proof, onDone }: { rules: CheckLine[]; ai: CheckLine 
         <AgentAvatar mood={mood} label="" className="size-10" />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{finished ? "Checked" : "Checking this sale"}</p>
-          <p className="text-xs text-muted-foreground">Cleared AI · your history and PayPal’s rules</p>
+          <p className="text-xs text-muted-foreground">{pastSales ? `Cleared AI · compared with your ${pastSales} past sales and PayPal’s rules` : "Cleared AI · no past sales yet, so PayPal’s rules only"}</p>
         </div>
         {finished ? null : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-cleared-tint px-2.5 py-1 text-xs font-medium text-cleared-strong">
@@ -422,7 +423,10 @@ function Fix({
 
         <section aria-label="To fix" className="rounded-[10px] border bg-surface">
           <header className="flex min-h-13 items-center justify-between gap-3 border-b px-4 py-2.5 sm:px-5">
-            <h2 className="font-semibold">{open.length ? `To fix (${open.length})` : "Nothing left to fix"}</h2>
+            <div className="min-w-0">
+              <h2 className="font-semibold">{open.length ? `To fix (${open.length})` : "Nothing left to fix"}</h2>
+              {open.length ? <p className="text-xs text-muted-foreground text-pretty">Each fix writes the missing terms into the invoice, so they’re on record if a dispute ever comes.</p> : null}
+            </div>
             {fixable.length > 1 ? (
               <Button size="sm" onClick={fixAll}>
                 <WandSparklesIcon aria-hidden /> Fix all {fixable.length}
