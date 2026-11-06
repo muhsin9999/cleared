@@ -225,6 +225,11 @@ function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null;
   const opened = steps.filter((s) => s.ref).length;
   // Pointing at an exhibit in the reply opens the log, so the matching step can light up.
   const open = working || expanded || (!!focus && steps.some((s) => s.ref === focus));
+  // A fixed-height window that follows the newest step while the agent works, so the panel never grows down the page.
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (working) scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
+  }, [steps.length, working, active?.label]);
 
   return (
     <div className="border-t">
@@ -240,7 +245,9 @@ function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null;
       ) : null}
       <AnimatePresence initial={false}>
         {open ? (
-          <m.ol key="steps" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden px-2 pt-1 pb-2" aria-live="polite">
+          <m.div key="steps" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+          <div ref={scroller} className="max-h-[21rem] overflow-y-auto overscroll-contain px-2 pt-1 pb-2">
+          <ol aria-live="polite">
             {firstMove.length ? <Line icon={ListChecksIcon} name="plan" detail={`Check ${list(firstMove)}`} /> : null}
             {steps.map((st, i) =>
               st.plan?.length ? (
@@ -250,7 +257,9 @@ function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null;
               ),
             )}
             {working && active ? <ActiveLine label={active.label} name={active.tool === "think" || active.tool === "start" ? null : active.tool} /> : null}
-          </m.ol>
+          </ol>
+          </div>
+          </m.div>
         ) : null}
       </AnimatePresence>
     </div>
@@ -259,7 +268,7 @@ function AgentLog({ packet, working, byId, focus }: { packet: PacketView | null;
 
 function PlanBlock({ steps, elapsed }: { steps: string[]; elapsed: number }) {
   return (
-    <m.li layout="position" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="my-1 rounded-md border bg-paper px-2.5 py-2">
+    <m.li initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="sticky top-0 z-10 my-1 rounded-md border bg-paper px-2.5 py-2 shadow-[0_6px_10px_-8px_rgb(16_19_17/0.25)]">
       <p className="flex items-center gap-2.5">
         <ListChecksIcon aria-hidden className="size-3.5 shrink-0 text-cleared" />
         <span className="flex-1 font-mono text-[0.75rem]">write_plan</span>
