@@ -168,7 +168,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
                       })
                     }
                   >
-                    <GavelIcon aria-hidden /> {pending ? "Asking PayPal…" : "Ask PayPal to decide"}
+                    <GavelIcon aria-hidden /> {pending ? (real ? "Asking PayPal…" : "Deciding…") : real ? "Ask PayPal to decide" : "Decide the test case"}
                   </Button>
                 ) : null}
               </div>
@@ -180,7 +180,7 @@ export function CaseRoom({ disputeId, packet: initial, exhibits, canSubmit, reso
               <p className="text-sm text-muted-foreground" role="status">PayPal isn’t taking evidence on this case right now.</p>
             ) : null}
             {!submitted && !resolved && packet!.status !== "submitting" && packet!.claims.length && canSubmit ? (
-              <Approve packet={packet!} byId={byId} pending={pending} onApprove={() =>
+              <Approve packet={packet!} byId={byId} pending={pending} real={real} onApprove={() =>
                 start(async () => {
                   const r = await approveAndSubmit(disputeId);
                   if (r.ok) toast.success("Sending to PayPal…");
@@ -426,17 +426,19 @@ function Reply({ packet, byId, exhibits, onFocus }: { packet: PacketView; byId: 
   );
 }
 
-function Approve({ packet, byId, pending, onApprove }: { packet: PacketView; byId: Record<string, Exhibit>; pending: boolean; onApprove: () => void }) {
+// On a test dispute (no real sandbox dispute was left in stock) nothing goes to PayPal, and the labels say so.
+function Approve({ packet, byId, pending, onApprove, real }: { packet: PacketView; byId: Record<string, Exhibit>; pending: boolean; onApprove: () => void; real: boolean }) {
   const [open, setOpen] = useState(false);
   const cited = new Set(packet.claims.flatMap((c) => c.exhibitIds.filter((id) => byId[id])));
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="lg" className="w-full sm:w-auto sm:min-w-64" disabled={pending} />}>{pending ? "Sending to PayPal…" : "Approve and send to PayPal"}</DialogTrigger>
+      <DialogTrigger render={<Button size="lg" className="w-full sm:w-auto sm:min-w-64" disabled={pending} />}>{pending ? (real ? "Sending to PayPal…" : "Approving…") : real ? "Approve and send to PayPal" : "Approve (test dispute)"}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{packet.status === "failed" ? "Try sending again?" : "Send your reply to PayPal?"}</DialogTitle>
+          <DialogTitle>{packet.status === "failed" ? "Try sending again?" : real ? "Send your reply to PayPal?" : "Approve your reply?"}</DialogTitle>
           <DialogDescription>
             {packet.claims.length} {packet.claims.length === 1 ? "statement" : "statements"}, backed by {cited.size} {cited.size === 1 ? "exhibit" : "exhibits"}.
+            {real ? null : " This is a test dispute, so nothing is sent to PayPal."}
           </DialogDescription>
         </DialogHeader>
         <ol className="max-h-[45svh] divide-y overflow-auto rounded-lg border">
@@ -451,7 +453,7 @@ function Approve({ packet, byId, pending, onApprove }: { packet: PacketView; byI
           ))}
         </ol>
         <p className="flex items-center gap-2 rounded-md bg-caution-tint px-3 py-2 text-sm text-caution">
-          <TriangleAlertIcon aria-hidden className="size-4 shrink-0" /> Once it’s sent, you can’t change it.
+          <TriangleAlertIcon aria-hidden className="size-4 shrink-0" /> {real ? "Once it’s sent, you can’t change it." : "Once it’s approved, you can’t change it."}
         </p>
         <DialogFooter>
           <DialogClose render={<Button variant="ghost" />}>Keep reviewing</DialogClose>
@@ -462,7 +464,7 @@ function Approve({ packet, byId, pending, onApprove }: { packet: PacketView; byI
               onApprove();
             }}
           >
-            Approve and send
+            {real ? "Approve and send" : "Approve"}
           </Button>
         </DialogFooter>
       </DialogContent>

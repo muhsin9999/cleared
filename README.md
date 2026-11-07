@@ -10,6 +10,8 @@ Cleared fixes both ends:
 2. **While the work is delivered**, it keeps the proof: the files, the agreed scope, and the client's own confirmation of receipt.
 3. **When a dispute arrives from PayPal**, the agent investigates on its own: it plans, opens the evidence, checks PayPal's rules and drafts a reply where every claim cites an exhibit. Code checks each claim, the seller approves, and Cleared submits the evidence through PayPal's Disputes API.
 
+**How it differs:** dispute tools act after a buyer files. Cleared starts at the sale: it checks the sale before the invoice exists, keeps the proof as the work is delivered, and only then answers a dispute with that proof.
+
 **Live demo:** <https://cleared-web.onrender.com> → **Try the live demo** (no sign-up, no keys). Video: _link added at submission_.
 
 > Cleared is not affiliated with or endorsed by PayPal. It runs on the public PayPal sandbox; no real money moves.
@@ -42,7 +44,7 @@ Each visitor gets a private copy of the workspace. **Sandbox** in the top bar ho
 
 - **Plans first.** Its first call is `write_plan`: three to five steps written for this case.
 - **Read-only tools.** `get_dispute`, `get_sale`, `get_invoice`, `list_locker_items`, `read_locker_item`, `get_tracking` and `search_policy`. It has no tool that can send, refund or change anything.
-- **Claim checker** (`src/lib/claim-checker.ts`). Code, not the model, checks that each claim cites a real exhibit and that its dates, amounts and file names match that exhibit. Claims that fail are struck and shown to the seller.
+- **Claim checker** (`src/lib/claim-checker.ts`). Code, not the model, checks that each claim cites a real exhibit and that its dates, amounts and file names match that exhibit. Claims that fail are struck and shown to the seller. What it can't do: judge whether a sentence's meaning is true when its citation, dates and amounts all check out. That is why the seller reads and approves every claim before anything is sent.
 - **Prompt-injection guard.** Buyer messages and uploaded text are treated as data. The agent reports instructions it refused; `src/lib/injection.ts` keeps a flag only if the quote really appears in the case.
 - **Honest recommendations.** It can recommend *fight*, *offer a partial refund* or *accept*, and must say what proof is missing.
 - **Human approval.** Only an approval signed by the seller's session can start the `submitEvidence` task.
@@ -66,7 +68,7 @@ The two other AI jobs run while the seller waits: **the sale check** (`src/serve
 | API | Calls | Where |
 | --- | --- | --- |
 | Invoicing v2 | generate-next-invoice-number, create, send, get | `src/server/paypal/invoicing.ts` |
-| Disputes v1 | list, get, `provide-evidence` (multipart), `adjudicate` (sandbox) | `src/server/paypal/disputes.ts`, `evidence.ts` |
+| Disputes v1 | list, get, `provide-evidence` (multipart), `escalate` and `adjudicate` (sandbox) | `src/server/paypal/disputes.ts`, `evidence.ts` |
 | Webhooks | PayPal's certificate check on the raw body, with `verify-webhook-signature` as the fallback | `src/server/paypal/webhooks.ts`, `src/lib/paypal-signature.ts` |
 | Orders v2 and Payments v2, through the SDK from APIMatic's PayPal Context Plugin | `getCapturedPayment`, `createOrderTracking`, `getOrder` | `src/server/paypal/tracking.ts` |
 | Events received | `INVOICING.INVOICE.PAID/CANCELLED`, `CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED`, `PAYMENT.CAPTURE.COMPLETED`, `CHECKOUT.ORDER.APPROVED` | `src/app/api/paypal/webhook/route.ts` |
@@ -119,10 +121,10 @@ To reproduce: `npx context-plugins install paypal`, then `/reload-plugins` in Cl
 
 ## Run it locally
 
-Needs Node 22, a PayPal sandbox app, an OpenAI key and a Postgres database (Neon's free tier works).
+Needs Node 22, a PayPal sandbox app, an OpenAI key, a Postgres database (Neon's free tier works) and a Cloudflare R2 bucket for uploaded proof files. Without an OpenAI key, set `AI_FAKE=true` to run with a stand-in for the AI.
 
 ```bash
-git clone <this repo> && cd cleared
+git clone https://github.com/muhsin9999/cleared.git && cd cleared
 npm install
 cp .env.example .env.local      # fill in PayPal, OpenAI, DATABASE_URL, SESSION_SECRET
 npm run db:migrate && npm run db:seed

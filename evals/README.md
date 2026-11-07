@@ -1,7 +1,7 @@
 # Evals: the dispute investigator
 
 `npm run eval` runs the real agent (`src/server/ai/investigate.ts`, the same code the Render Workflow runs) on
-12 fixed dispute scenarios and scores every run. It calls OpenAI, so each full run costs money (about $0.07 on
+13 fixed dispute scenarios and scores every run. It calls OpenAI, so each full run costs money (about $0.07 on
 `gpt-5.4-mini`). Results are saved in `evals/results/`.
 
 ```

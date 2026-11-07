@@ -43,8 +43,8 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
   });
 
   await test.step("seller approves; Cleared submits", async () => {
-    await page.getByRole("button", { name: /approve and send to paypal/i }).click();
-    await page.getByRole("dialog").getByRole("button", { name: /^approve and send$/i }).click();
+    await page.getByRole("button", { name: /approve and send to paypal|approve \(test dispute\)/i }).click();
+    await page.getByRole("dialog").getByRole("button", { name: /^approve( and send)?$/i }).click();
     await expect(page.getByText(/Sent \(test dispute\)|PayPal is reviewing it/).first()).toBeVisible({ timeout: 60_000 });
   });
 
@@ -57,7 +57,7 @@ test("judge path: sale → invoice → dispute → agent → approve → resolve
   });
 
   await test.step("the case resolves in Maya's favor", async () => {
-    await page.getByRole("button", { name: /ask paypal to decide/i }).click();
+    await page.getByRole("button", { name: /ask paypal to decide|decide the test case/i }).click();
     await expect(page.getByText(/Closed in your favor/).first()).toBeVisible({ timeout: 30_000 });
   });
 
